@@ -30,7 +30,9 @@ import io.techcode.logbulk.component.Mailbox;
 import io.vertx.core.json.JsonObject;
 
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -39,51 +41,36 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public class AnonymiseTransform extends ComponentVerticle {
 
+    // Hashing constant
+    private static final Map<String, HashFunction> HASHING = new HashMap<String, HashFunction>() {{
+        put("sha1", Hashing.sha1());
+        put("sha256", Hashing.sha256());
+        put("sha384", Hashing.sha384());
+        put("sha512", Hashing.sha512());
+        put("alder32", Hashing.adler32());
+        put("crc32", Hashing.crc32());
+        put("crc32c", Hashing.crc32c());
+    }};
+
     @Override public void start() {
         // Configuration
         JsonObject config = config();
 
         // Setup
         List<String> fields = config.getJsonArray("fields").getList();
-        HashFunction hash;
-        switch (config.getString("hashing")) {
-            case "sha1":
-                hash = Hashing.sha1();
-                break;
-            case "sha256":
-                hash = Hashing.sha256();
-                break;
-            case "sha384":
-                hash = Hashing.sha384();
-                break;
-            case "sha512":
-                hash = Hashing.sha512();
-                break;
-            case "alder32":
-                hash = Hashing.adler32();
-                break;
-            case "crc32":
-                hash = Hashing.crc32();
-                break;
-            case "crc32c":
-                hash = Hashing.crc32c();
-                break;
-            default:
-                hash = Hashing.md5();
-                break;
-        }
+        HashFunction hash = HASHING.getOrDefault("hashing", Hashing.md5());
         String endpoint = config.getString("endpoint");
 
         // Register endpoint
         vertx.eventBus().<JsonObject>consumer(endpoint)
-                .handler(new Mailbox(this, endpoint, config.getInteger("mailbox", Mailbox.DEFAULT_THREEHOLD), evt -> {
+                .handler(new Mailbox(this, endpoint, config.getInteger("mailbox", Mailbox.DEFAULT_THREEHOLD), (headers, evt) -> {
                     // Process
                     fields.stream().filter(evt::containsKey).forEach(field -> {
                         evt.put(field, hash.hashString(evt.getString(field), StandardCharsets.UTF_8).toString());
                     });
 
                     // Send to the next endpoint
-                    forward(evt);
+                    forward(headers, evt);
                 }));
     }
 

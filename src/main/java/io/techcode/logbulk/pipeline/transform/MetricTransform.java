@@ -48,12 +48,12 @@ public class MetricTransform extends ComponentVerticle {
 
         // Register endpoint
         vertx.eventBus().<JsonObject>consumer(endpoint)
-                .handler(new Mailbox(this, endpoint, config.getInteger("mailbox", Mailbox.DEFAULT_THREEHOLD), evt -> {
+                .handler(new Mailbox(this, endpoint, config.getInteger("mailbox", Mailbox.DEFAULT_THREEHOLD), (headers, evt) -> {
                     // Process
                     request += 1;
 
                     // Send to the next endpoint
-                    forward(evt);
+                    forward(headers, evt);
                 }));
 
         // Flush everysecond

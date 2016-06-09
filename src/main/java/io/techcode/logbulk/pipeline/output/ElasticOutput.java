@@ -27,6 +27,7 @@ import com.google.common.collect.Iterators;
 import io.techcode.logbulk.component.ComponentVerticle;
 import io.techcode.logbulk.component.Mailbox;
 import io.vertx.core.Handler;
+import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
@@ -63,12 +64,12 @@ public class ElasticOutput extends ComponentVerticle {
 
         // Register endpoint
         vertx.eventBus().<JsonObject>consumer(endpoint)
-                .handler(new Mailbox(this, endpoint, config.getInteger("mailbox", Mailbox.DEFAULT_THREEHOLD), evt -> {
+                .handler(new Mailbox(this, endpoint, config.getInteger("mailbox", Mailbox.DEFAULT_THREEHOLD), (headers, evt) -> {
                     // Process
-                    bulk.add(evt);
+                    bulk.add(headers, evt);
 
                     // Send to the next endpoint
-                    forward(evt);
+                    forward(headers, evt);
                 }));
     }
 
@@ -146,18 +147,19 @@ public class ElasticOutput extends ComponentVerticle {
         /**
          * Add a document to the next flush
          *
-         * @param evt event to add.
+         * @param headers headers of the event
+         * @param evt     event to add.
          */
-        public void add(JsonObject evt) {
+        public void add(MultiMap headers, JsonObject evt) {
             String idx = index;
             if (evt.containsKey("_index")) {
                 idx += evt.getString("_index");
             }
-            sources.add(source(evt));
+            sources.add(source(headers));
             builder.append(new JsonObject().put("index", new JsonObject()
                     .put("_type", type)
                     .put("_index", idx)).encode()).append("\n");
-            builder.append(mask(evt).encode()).append("\n");
+            builder.append(evt.encode()).append("\n");
             if (++docs >= bulk) {
                 send();
             }

@@ -79,12 +79,12 @@ public class MutateTransform extends ComponentVerticle {
 
         // Register endpoint
         vertx.eventBus().<JsonObject>consumer(endpoint)
-                .handler(new Mailbox(this, endpoint, config.getInteger("mailbox", Mailbox.DEFAULT_THREEHOLD), evt -> {
+                .handler(new Mailbox(this, endpoint, config.getInteger("mailbox", Mailbox.DEFAULT_THREEHOLD), (headers, evt) -> {
                     // Process
                     pipeline.forEach(t -> t.accept(evt));
 
                     // Send to the next endpoint
-                    forward(evt);
+                    forward(headers, evt);
                 }));
     }
 

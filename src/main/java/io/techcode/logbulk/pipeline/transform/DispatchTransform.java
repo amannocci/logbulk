@@ -27,6 +27,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import io.techcode.logbulk.component.ComponentVerticle;
 import io.techcode.logbulk.component.Mailbox;
+import io.vertx.core.MultiMap;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -73,12 +74,12 @@ public class DispatchTransform extends ComponentVerticle {
 
         // Register endpoint
         vertx.eventBus().<JsonObject>consumer(endpoint)
-                .handler(new Mailbox(this, endpoint, config.getInteger("mailbox", Mailbox.DEFAULT_THREEHOLD), evt -> {
+                .handler(new Mailbox(this, endpoint, config.getInteger("mailbox", Mailbox.DEFAULT_THREEHOLD), (headers, evt) -> {
                     // Process
-                    dispatch.forEach(d -> d.dispatch(evt));
+                    dispatch.forEach(d -> d.dispatch(headers, evt));
 
                     // Send to the next endpoint
-                    if (forward) forward(evt);
+                    if (forward) forward(headers, evt);
                 }));
     }
 
@@ -110,13 +111,14 @@ public class DispatchTransform extends ComponentVerticle {
         /**
          * Dispatch the event.
          *
-         * @param evt event involved.
+         * @param headers headers of the event.
+         * @param evt     event involved.
          */
-        public void dispatch(JsonObject evt) {
+        public void dispatch(MultiMap headers, JsonObject evt) {
             JsonObject copy = evt.copy();
             copy.put("_current", 0);
             copy.put("_route", route);
-            forward(copy);
+            forward(headers, copy);
         }
 
     }
@@ -145,10 +147,10 @@ public class DispatchTransform extends ComponentVerticle {
             this.match = match;
         }
 
-        @Override public void dispatch(JsonObject evt) {
+        @Override public void dispatch(MultiMap headers, JsonObject evt) {
             String value = evt.getString(field);
             if (value.startsWith(match)) {
-                super.dispatch(evt);
+                super.dispatch(headers, evt);
             }
         }
     }
@@ -177,10 +179,10 @@ public class DispatchTransform extends ComponentVerticle {
             this.match = match;
         }
 
-        @Override public void dispatch(JsonObject evt) {
+        @Override public void dispatch(MultiMap headers, JsonObject evt) {
             String value = evt.getString(field);
             if (value.contains(match)) {
-                super.dispatch(evt);
+                super.dispatch(headers, evt);
             }
         }
     }

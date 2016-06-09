@@ -66,7 +66,7 @@ public class GrokTransform extends ComponentVerticle {
 
         // Register endpoint
         vertx.eventBus().<JsonObject>consumer(endpoint)
-                .handler(new Mailbox(this, endpoint, config.getInteger("mailbox", Mailbox.DEFAULT_THREEHOLD), evt -> {
+                .handler(new Mailbox(this, endpoint, config.getInteger("mailbox", Mailbox.DEFAULT_THREEHOLD), (headers, evt) -> {
                     // Process
                     String field = evt.getString(config.getString("match"));
                     if (field == null) return;
@@ -78,7 +78,7 @@ public class GrokTransform extends ComponentVerticle {
                         evt.mergeIn(new JsonObject(matcher.toMap()));
 
                         // Send to the next endpoint
-                        forward(evt);
+                        forward(headers, evt);
                     }
                 }));
     }

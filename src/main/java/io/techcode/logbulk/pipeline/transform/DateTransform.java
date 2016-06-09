@@ -73,7 +73,7 @@ public class DateTransform extends ComponentVerticle {
 
         // Register endpoint
         vertx.eventBus().<JsonObject>consumer(endpoint)
-                .handler(new Mailbox(this, endpoint, config.getInteger("mailbox", Mailbox.DEFAULT_THREEHOLD), evt -> {
+                .handler(new Mailbox(this, endpoint, config.getInteger("mailbox", Mailbox.DEFAULT_THREEHOLD), (headers, evt) -> {
                     // Process
                     String field = evt.getString(match);
                     if (field != null) {
@@ -85,7 +85,7 @@ public class DateTransform extends ComponentVerticle {
                     }
 
                     // Send to the next endpoint
-                    forward(evt);
+                    forward(headers, evt);
                 }));
     }
 

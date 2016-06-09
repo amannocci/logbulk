@@ -64,20 +64,20 @@ public class FileOutput extends ComponentVerticle {
         // Register endpoint
         EventBus bus = vertx.eventBus();
         bus.<JsonObject>consumer(endpoint)
-                .handler(new Mailbox(this, endpoint, config.getInteger("mailbox", Mailbox.DEFAULT_THREEHOLD), evt -> {
+                .handler(new Mailbox(this, endpoint, config.getInteger("mailbox", Mailbox.DEFAULT_THREEHOLD), (headers, evt) -> {
                     // Process the event
-                    buf.appendString(mask(evt).encode()).appendString(delimiter);
+                    buf.appendString(evt.encode()).appendString(delimiter);
                     if (buf.length() > chunkPartition) {
                         file.write(buf);
                         buf = Buffer.buffer(chunkPartition);
                         if (file.writeQueueFull()) {
-                            pause(source(evt), endpointUuid);
-                            file.drainHandler(h -> resume(source(evt), endpointUuid));
+                            pause(source(headers), endpointUuid);
+                            file.drainHandler(h -> resume(source(headers), endpointUuid));
                         }
                     }
 
                     // Send to the next endpoint
-                    forward(evt);
+                    forward(headers, evt);
                 }));
     }
 

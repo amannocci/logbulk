@@ -23,16 +23,21 @@
  */
 package io.techcode.logbulk.component;
 
+import com.google.common.primitives.Ints;
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.MultiMap;
 import io.vertx.core.eventbus.DeliveryOptions;
-import io.vertx.core.json.JsonArray;
+import io.vertx.core.http.CaseInsensitiveHeaders;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.parsetools.RecordParser;
 import io.vertx.core.streams.ReadStream;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.List;
 import java.util.UUID;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Component verticle helper.
@@ -46,33 +51,24 @@ public class ComponentVerticle extends AbstractVerticle {
     /**
      * Forward the event to the next stage.
      *
-     * @param evt event to forward.
+     * @param headers headers of the event.
+     * @param evt     event to forward.
      */
-    public void forward(JsonObject evt) {
+    public void forward(MultiMap headers, JsonObject evt) {
+        // Check arguments
+        checkNotNull(headers, "Headers can't be null");
+        checkNotNull(evt, "The event to forward can't be null");
+
         // Gets some stuff
-        int current = evt.getInteger("_current");
-        JsonArray routing = evt.getJsonArray("_route");
+        Integer currentRaw = Ints.tryParse(headers.get("_current"));
+        int current = currentRaw != null ? currentRaw : 0;
+        List<String> routing = headers.getAll("_route");
 
         // Determine next stage
         if (current < routing.size()) {
-            evt.put("_current", current + 1);
-            vertx.eventBus().send(routing.getString(current), evt, new DeliveryOptions().setCodecName("fastjsonobject"));
+            headers.set("_current", String.valueOf(current + 1));
+            vertx.eventBus().send(routing.get(current), evt, new DeliveryOptions().setCodecName("fastjsonobject").setHeaders(headers));
         }
-    }
-
-    /**
-     * Mask all internal fields.
-     *
-     * @param evt event to process.
-     * @return new masked event.
-     */
-    public JsonObject mask(JsonObject evt) {
-        JsonObject clone = evt.copy();
-        clone.remove("_route");
-        clone.remove("_current");
-        clone.remove("_source");
-        clone.remove("_index");
-        return clone;
     }
 
     /**
@@ -113,11 +109,11 @@ public class ComponentVerticle extends AbstractVerticle {
     /**
      * Returns the route source of the event.
      *
-     * @param evt event to analyze.
+     * @param headers headers of the event to analyze.
      * @return route source of the event.
      */
-    public String source(JsonObject evt) {
-        return "route." + evt.getString("_source");
+    public String source(MultiMap headers) {
+        return "route." + headers.get("_source");
     }
 
     /**
@@ -129,13 +125,16 @@ public class ComponentVerticle extends AbstractVerticle {
     public RecordParser inputParser(JsonObject config) {
         return RecordParser.newDelimited(config.getString("delimiter", "\n"), buf -> {
             // Create a new event
+            MultiMap headers = new CaseInsensitiveHeaders();
             JsonObject evt = new JsonObject().put("message", buf.toString());
-            evt.put("_route", config.getJsonObject("route").getJsonArray(config.getString("dispatch")));
-            evt.put("_current", 0);
-            evt.put("_source", config.getString("source"));
+
+            // Options
+            headers.add("_route", (Iterable<String>) config.getJsonObject("route").getJsonArray(config.getString("dispatch")).getList());
+            headers.add("_current", String.valueOf(0));
+            headers.add("_source", config.getString("source"));
 
             // Send to the next endpoint
-            forward(evt);
+            forward(headers, evt);
         });
     }
 
