@@ -189,7 +189,7 @@ public class ElasticOutput extends ComponentVerticle {
             pipeline += 1;
             req.exceptionHandler(err -> {
                 builder.append(payload);
-                docs += Integer.MAX_VALUE;
+                docs += documents;
             });
             req.end(payload);
             if (!paused && pipeline >= parallel) {
