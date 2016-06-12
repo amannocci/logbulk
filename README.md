@@ -12,6 +12,7 @@ It is fully free and fully open source. The license is MIT, meaning you are pret
 
 ## Cloning
 The following steps will ensure your project is cloned properly.
+
 1. `git clone https://github.com/amannocci/logbulk.git`
 2. `cd logbulk`
 
@@ -21,4 +22,5 @@ JAR files in `./target` but in most cases you'll only need `logbulk-x.x.x-fat.ja
 
 ## Updating your Clone
 The following steps will update your clone with the official repo.
+
 1. `git pull`
