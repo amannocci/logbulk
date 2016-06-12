@@ -102,7 +102,7 @@ public class Logbulk extends AbstractVerticle {
             // Map configuration & deploy
             Handler<AsyncResult<String>> deploy = event -> {
                 deployment.setConfig(conf);
-                int idx = el.getKey().indexOf('-');
+                int idx = el.getKey().indexOf('/');
                 String type = (idx != -1) ? el.getKey().substring(0, idx) : el.getKey();
                 vertx.deployVerticle(registry.getComponent(section + '.' + type), deployment);
             };
