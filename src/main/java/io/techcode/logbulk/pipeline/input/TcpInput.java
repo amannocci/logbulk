@@ -47,8 +47,7 @@ public class TcpInput extends ComponentVerticle {
     private List<NetSocket> connections = Lists.newLinkedList();
 
     @Override public void start() {
-        // Configuration
-        JsonObject config = config();
+        super.start();
 
         // Setup processing task
         int port = config.getInteger("port");
@@ -59,7 +58,7 @@ public class TcpInput extends ComponentVerticle {
         server.connectHandler(c -> {
             connections.add(c);
             c.handler(inputParser(config));
-            handleBackPressure(c, config);
+            handlePressure(c, config);
             c.closeHandler(h -> connections.remove(c));
         });
 

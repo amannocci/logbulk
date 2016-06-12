@@ -25,7 +25,7 @@ package io.techcode.logbulk.pipeline.output;
 
 import com.google.common.collect.Iterators;
 import io.techcode.logbulk.component.ComponentVerticle;
-import io.techcode.logbulk.component.Mailbox;
+import io.techcode.logbulk.util.ConvertHandler;
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
@@ -54,28 +54,27 @@ public class ElasticOutput extends ComponentVerticle {
     private Iterator<String> hosts;
 
     @Override public void start() {
-        // Configuration
-        JsonObject config = config();
+        super.start();
 
         // Setup
         hosts = Iterators.cycle(config.getJsonArray("hosts").<String>getList());
-        String endpoint = config.getString("endpoint");
         BulkRequestBuilder bulk = new BulkRequestBuilder(vertx, config);
 
         // Register endpoint
-        vertx.eventBus().<JsonObject>consumer(endpoint)
-                .handler(new Mailbox(this, endpoint, config.getInteger("mailbox", Mailbox.DEFAULT_THREEHOLD), (headers, evt) -> {
-                    // Process
-                    bulk.add(headers, evt);
+        vertx.eventBus().<JsonObject>localConsumer(endpoint)
+                .handler(new ConvertHandler() {
+                    @Override public void handle(MultiMap headers, JsonObject evt) {
+                        // Process
+                        bulk.add(headers, evt);
 
-                    // Send to the next endpoint
-                    forward(headers, evt);
-                }));
+                        // Send to the next endpoint
+                        forward(headers, evt);
+                    }
+                });
     }
 
     @Override public JsonObject config() {
         JsonObject config = super.config();
-        checkState(config.getString("endpoint") != null, "The endpoint is required");
         checkState(config.getString("index") != null, "The index is required");
         checkState(config.getString("type") != null, "The type is required");
         checkState(config.getJsonArray("hosts") != null
@@ -105,7 +104,6 @@ public class ElasticOutput extends ComponentVerticle {
         private String type;
 
         // Pipeline
-        private String endpoint;
         private int parallel;
         private int pipeline = 0;
         private Set<String> sources = new HashSet<>();
@@ -139,7 +137,6 @@ public class ElasticOutput extends ComponentVerticle {
             this.flush = config.getInteger("flush", 1);
             this.index = config.getString("index");
             this.type = config.getString("type");
-            this.endpoint = config.getString("endpoint") + '.' + getUuid();
             this.parallel = config.getInteger("parallel", DEFAULT_MAX_POOL_SIZE);
             vertx.setTimer(flush, flusher);
         }
@@ -155,7 +152,7 @@ public class ElasticOutput extends ComponentVerticle {
             if (evt.containsKey("_index")) {
                 idx += evt.getString("_index");
             }
-            sources.add(source(headers));
+            sources.add(previous(headers).get());
             builder.append(new JsonObject().put("index", new JsonObject()
                     .put("_type", type)
                     .put("_index", idx)).encode()).append("\n");
@@ -185,7 +182,7 @@ public class ElasticOutput extends ComponentVerticle {
                     log.error("Failed to index document: statusCode=" + res.statusCode());
                 }
                 if (paused && --pipeline < parallel) {
-                    sources.forEach(s -> resume(s, endpoint));
+                    sources.forEach(ElasticOutput.this::tooglePressure);
                     paused = false;
                 }
             });
@@ -196,7 +193,7 @@ public class ElasticOutput extends ComponentVerticle {
             });
             req.end(payload);
             if (!paused && pipeline >= parallel) {
-                sources.forEach(s -> pause(s, endpoint));
+                sources.forEach(ElasticOutput.this::tooglePressure);
                 paused = true;
             }
 

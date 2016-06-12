@@ -44,15 +44,16 @@ public class StdInput extends ComponentVerticle {
     private AsyncInputStream stream;
 
     @Override public void start() {
+        super.start();
+
         // Configuration
-        JsonObject config = config();
         parser = inputParser(config);
 
         // Stream
         stream = new AsyncInputStream(vertx, Executors.newSingleThreadExecutor(), System.in);
 
         // Handle back-pressure
-        handleBackPressure(stream, config);
+        handlePressure(stream, config);
 
         // Begin to read
         stream.handler(buf -> parser.handle(buf));

@@ -24,7 +24,8 @@
 package io.techcode.logbulk.pipeline.transform;
 
 import io.techcode.logbulk.component.ComponentVerticle;
-import io.techcode.logbulk.component.Mailbox;
+import io.techcode.logbulk.util.ConvertHandler;
+import io.vertx.core.MultiMap;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import oi.thekraken.grok.api.Grok;
@@ -42,9 +43,7 @@ import static com.google.common.base.Preconditions.checkState;
 public class GrokTransform extends ComponentVerticle {
 
     @Override public void start() {
-        // Configuration
-        JsonObject config = config();
-        String endpoint = config.getString("endpoint");
+        super.start();
 
         // Grok parser
         Grok grok = new Grok();
@@ -65,28 +64,29 @@ public class GrokTransform extends ComponentVerticle {
         }
 
         // Register endpoint
-        vertx.eventBus().<JsonObject>consumer(endpoint)
-                .handler(new Mailbox(this, endpoint, config.getInteger("mailbox", Mailbox.DEFAULT_THREEHOLD), (headers, evt) -> {
-                    // Process
-                    String field = evt.getString(config.getString("match"));
-                    if (field == null) return;
+        vertx.eventBus().<JsonObject>localConsumer(endpoint)
+                .handler(new ConvertHandler() {
+                    @Override public void handle(MultiMap headers, JsonObject evt) {
+                        // Process
+                        String field = evt.getString(config.getString("match"));
+                        if (field == null) return;
 
-                    Match matcher = grok.match(field);
-                    matcher.captures();
-                    if (!matcher.isNull()) {
-                        // Compose
-                        evt.mergeIn(new JsonObject(matcher.toMap()));
+                        Match matcher = grok.match(field);
+                        matcher.captures();
+                        if (!matcher.isNull()) {
+                            // Compose
+                            evt.mergeIn(new JsonObject(matcher.toMap()));
 
-                        // Send to the next endpoint
-                        forward(headers, evt);
+                            // Send to the next endpoint
+                            forward(headers, evt);
+                        }
                     }
-                }));
+                });
     }
 
     @Override public JsonObject config() {
         JsonObject config = super.config();
         checkState(config.getString("path") != null, "The path is required");
-        checkState(config.getString("endpoint") != null, "The endpoint is required");
         checkState(config.getString("match") != null, "The match is required");
         checkState(config.getString("format") != null, "The format is required");
         return config;

@@ -23,97 +23,126 @@
  */
 package io.techcode.logbulk.component;
 
-import com.google.common.base.Strings;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import io.techcode.logbulk.util.HeaderHandler;
-import io.vertx.core.Context;
 import io.vertx.core.Handler;
-import io.vertx.core.MultiMap;
-import io.vertx.core.VoidHandler;
+import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonObject;
+import lombok.extern.slf4j.Slf4j;
 
-import java.util.Iterator;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Mailbox implementation.
  */
-public class Mailbox implements Handler<Message<JsonObject>> {
+@Slf4j
+public class Mailbox extends ComponentVerticle implements Handler<Message<JsonObject>> {
 
     // Default threehold
     public final static int DEFAULT_THREEHOLD = 1000;
 
-    // Mailbox handler
-    private final VoidHandler MAILBOX_HANDLER = new VoidHandler() {
-        @Override protected void handle() {
-            if (pending.size() > threehold) {
-                for (Iterator<Message<JsonObject>> it = pending.iterator(); it.hasNext(); ) {
-                    Message<JsonObject> evt = it.next();
-                    handler.handle(evt.headers(), evt.body());
-                    it.remove();
-                }
-                limited.forEach(s -> verticle.resume(s, Mailbox.this.endpoint));
-                limited.clear();
-            } else {
-                Message<JsonObject> evt = pending.poll();
-                handler.handle(evt.headers(), evt.body());
-            }
-        }
-    };
-
-    // Component verticle owner
-    private ComponentVerticle verticle;
-
-    // Endpoint
-    private String endpoint;
-
     // Treehold
     private int threehold;
-
-    private HeaderHandler<MultiMap, JsonObject> handler;
-
-    // Context
-    private Context ctx;
+    private int busy;
 
     // Pending message to process
-    private Queue<Message<JsonObject>> pending = Lists.newLinkedList();
+    private Queue<Message<JsonObject>> buffer = Lists.newLinkedList();
 
-    // Limited source
-    private Set<String> limited = Sets.newHashSet();
+    // Workers
+    private Set<String> workers = Sets.newTreeSet();
+    private Map<String, Integer> workersJob = Maps.newHashMap();
 
-    /**
-     * Create a new mailbox.
-     *
-     * @param verticle  verticle owning the mailbox.
-     * @param threehold threehold of the mailbox.
-     * @param handler   component logic.
-     */
-    public Mailbox(ComponentVerticle verticle, String endpoint, int threehold, HeaderHandler<MultiMap, JsonObject> handler) {
-        checkNotNull(verticle, "The verticle can't be null");
-        checkArgument(!Strings.isNullOrEmpty(endpoint), "The endpoint can't be null or empty");
-        checkArgument(threehold > 0, "The threehold can't be inferior to 1");
-        checkNotNull(handler, "The handle can't be null");
-        this.verticle = verticle;
-        this.endpoint = endpoint + ".mailbox." + verticle.getUuid();
-        this.threehold = threehold;
-        this.handler = handler;
-        this.ctx = verticle.getVertx().getOrCreateContext();
+    // Back pressure
+    private Set<String> previousPressure = Sets.newHashSet();
+    private Set<String> nextPressure = Sets.newHashSet();
+
+    @Override public void start() {
+        super.start();
+
+        // Retrieve configuration settings
+        threehold = config.getInteger("mailbox");
+        busy = threehold / 2;
+        int componentCount = config.getInteger("instance");
+        threehold *= componentCount;
+
+        // Setup
+        getEventBus().<JsonObject>localConsumer(endpoint).handler(this);
+        getEventBus().<String>localConsumer(endpoint + ".worker").handler(event -> {
+            // Decrease job
+            String worker = event.body();
+            int job = workersJob.getOrDefault(worker, 1);
+            workersJob.put(worker, --job);
+
+            // Check busy
+            if (job < busy) workers.add(worker);
+
+            // Check if there is work to be done
+            if (buffer.size() > 0) {
+                process(buffer.poll(), Optional.of(event.body()));
+
+                // Handle pressure
+                if (buffer.size() < busy) {
+                    previousPressure.forEach(this::tooglePressure);
+                    previousPressure.clear();
+                }
+            }
+        });
+        getEventBus().<String>localConsumer(endpoint + ".pressure").handler(event -> {
+            String component = event.body();
+            if (nextPressure.contains(component)) {
+                nextPressure.remove(component);
+            } else {
+                nextPressure.add(component);
+            }
+        });
     }
 
     @Override public void handle(Message<JsonObject> event) {
-        pending.add(event);
-        if (pending.size() > threehold && !limited.contains(verticle.source(event.headers()))) {
-            String source = verticle.source(event.headers());
-            verticle.pause(source, endpoint);
-            limited.add(source);
+        if (workers.isEmpty()) {
+            handlePressure(event);
+        } else {
+            Optional<String> nextOpt = next(event.headers());
+            if (nextOpt.isPresent() && nextPressure.contains(nextOpt.get())) {
+                handlePressure(event);
+            } else {
+                process(event, Optional.empty());
+            }
         }
-        ctx.runOnContext(MAILBOX_HANDLER);
+    }
+
+    /**
+     * Add event in buffer and handle back pressure.
+     *
+     * @param event event to add in buffer.
+     */
+    private void handlePressure(Message<JsonObject> event) {
+        buffer.add(event);
+        if (buffer.size() > threehold) {
+            notifyPressure(previousPressure, event.headers());
+        }
+    }
+
+    /**
+     * Send event to an available worker.
+     *
+     * @param evt       event to process.
+     * @param workerOpt optional worker.
+     */
+    private void process(Message<JsonObject> evt, Optional<String> workerOpt) {
+        // Increase job
+        String worker = workerOpt.orElseGet(() -> Iterables.getLast(workers));
+        int job = workersJob.getOrDefault(worker, 0);
+        workersJob.put(worker, ++job);
+
+        // Evict if busy & send job
+        if (job >= busy) workers.remove(worker);
+        getEventBus().send(worker, evt.body(), new DeliveryOptions().setHeaders(evt.headers()).setCodecName("fastjsonobject"));
     }
 
 }

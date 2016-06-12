@@ -45,8 +45,9 @@ public class FileInput extends ComponentVerticle {
     private AsyncFile file;
 
     @Override public void start() {
+        super.start();
+
         // Configuration
-        JsonObject config = config();
         parser = inputParser(config);
 
         // Setup processing task
@@ -56,7 +57,7 @@ public class FileInput extends ComponentVerticle {
         file.setReadBufferSize(chunk);
 
         // Handle back-pressure
-        handleBackPressure(file, config);
+        handlePressure(file, config);
 
         // Begin to read
         file.handler(buf -> parser.handle(buf));

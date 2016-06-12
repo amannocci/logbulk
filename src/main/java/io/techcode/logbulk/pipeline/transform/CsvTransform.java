@@ -28,7 +28,8 @@ import com.google.common.primitives.Ints;
 import com.univocity.parsers.csv.CsvParser;
 import com.univocity.parsers.csv.CsvParserSettings;
 import io.techcode.logbulk.component.ComponentVerticle;
-import io.techcode.logbulk.component.Mailbox;
+import io.techcode.logbulk.util.ConvertHandler;
+import io.vertx.core.MultiMap;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 
@@ -43,12 +44,10 @@ import static com.google.common.base.Preconditions.checkState;
 public class CsvTransform extends ComponentVerticle {
 
     @Override public void start() {
-        // Configuration
-        JsonObject config = config();
+        super.start();
 
         // Setup
         String source = config.getString("field");
-        String endpoint = config.getString("endpoint");
         String separator = config.getString("separator");
         String delimiter = config.getString("delimiter");
         JsonObject rawColumns = config.getJsonObject("columns");
@@ -66,27 +65,28 @@ public class CsvTransform extends ComponentVerticle {
         CsvParser parser = new CsvParser(settings);
 
         // Register endpoint
-        vertx.eventBus().<JsonObject>consumer(endpoint)
-                .handler(new Mailbox(this, endpoint, config.getInteger("mailbox", Mailbox.DEFAULT_THREEHOLD), (headers, evt) -> {
-                    // Process
-                    String field = evt.getString(source);
-                    if (field != null) {
-                        String[] cols = parser.parseLine(field);
-                        if (cols.length >= columns.size()) {
-                            for (int key : columns.keySet()) {
-                                evt.put(columns.get(key), cols[key]);
+        vertx.eventBus().<JsonObject>localConsumer(endpoint)
+                .handler(new ConvertHandler() {
+                    @Override public void handle(MultiMap headers, JsonObject evt) {
+                        // Process
+                        String field = evt.getString(source);
+                        if (field != null) {
+                            String[] cols = parser.parseLine(field);
+                            if (cols.length >= columns.size()) {
+                                for (int key : columns.keySet()) {
+                                    evt.put(columns.get(key), cols[key]);
+                                }
                             }
                         }
-                    }
 
-                    // Send to the next endpoint
-                    forward(headers, evt);
-                }));
+                        // Send to the next endpoint
+                        forward(headers, evt);
+                    }
+                });
     }
 
     @Override public JsonObject config() {
         JsonObject config = super.config();
-        checkState(config.getString("endpoint") != null, "The endpoint is required");
         checkState(config.getString("field") != null, "The field is required");
         checkState(config.getString("separator") != null, "The separator is required");
         checkState(config.getString("delimiter") != null, "The delimiter is required");

@@ -26,7 +26,7 @@ package io.techcode.logbulk.pipeline.transform;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import io.techcode.logbulk.component.ComponentVerticle;
-import io.techcode.logbulk.component.Mailbox;
+import io.techcode.logbulk.util.ConvertHandler;
 import io.vertx.core.MultiMap;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -46,11 +46,9 @@ public class DispatchTransform extends ComponentVerticle {
     private List<SimpleDispatch> dispatch = Lists.newArrayList();
 
     @Override public void start() {
-        // Configuration
-        JsonObject config = config();
+        super.start();
 
         // Setup
-        String endpoint = config.getString("endpoint");
         JsonObject rawDispatch = config.getJsonObject("dispatch");
         boolean forward = config.getBoolean("forward", true);
 
@@ -73,19 +71,20 @@ public class DispatchTransform extends ComponentVerticle {
         }
 
         // Register endpoint
-        vertx.eventBus().<JsonObject>consumer(endpoint)
-                .handler(new Mailbox(this, endpoint, config.getInteger("mailbox", Mailbox.DEFAULT_THREEHOLD), (headers, evt) -> {
-                    // Process
-                    dispatch.forEach(d -> d.dispatch(headers, evt));
+        vertx.eventBus().<JsonObject>localConsumer(endpoint)
+                .handler(new ConvertHandler() {
+                    @Override public void handle(MultiMap headers, JsonObject evt) {
+                        // Process
+                        dispatch.forEach(d -> d.dispatch(headers, evt));
 
-                    // Send to the next endpoint
-                    if (forward) forward(headers, evt);
-                }));
+                        // Send to the next endpoint
+                        if (forward) forward(headers, evt);
+                    }
+                });
     }
 
     @Override public JsonObject config() {
         JsonObject config = super.config();
-        checkState(config.getString("endpoint") != null, "The endpoint is required");
         checkState(config.getJsonObject("dispatch") != null, "The routes is required");
         return config;
     }

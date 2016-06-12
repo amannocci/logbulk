@@ -28,7 +28,8 @@ import com.google.common.collect.Maps;
 import com.google.common.primitives.Floats;
 import com.google.common.primitives.Ints;
 import io.techcode.logbulk.component.ComponentVerticle;
-import io.techcode.logbulk.component.Mailbox;
+import io.techcode.logbulk.util.ConvertHandler;
+import io.vertx.core.MultiMap;
 import io.vertx.core.json.JsonObject;
 
 import java.util.ArrayList;
@@ -38,7 +39,6 @@ import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Mutate transformer pipeline component.
@@ -46,9 +46,7 @@ import static com.google.common.base.Preconditions.checkState;
 public class MutateTransform extends ComponentVerticle {
 
     @Override public void start() {
-        // Configuration
-        JsonObject config = config();
-        String endpoint = config.getString("endpoint");
+        super.start();
 
         // Aggregate all operations perform
         List<Consumer<JsonObject>> pipeline = Lists.newArrayList();
@@ -78,14 +76,16 @@ public class MutateTransform extends ComponentVerticle {
         ((ArrayList) pipeline).trimToSize();
 
         // Register endpoint
-        vertx.eventBus().<JsonObject>consumer(endpoint)
-                .handler(new Mailbox(this, endpoint, config.getInteger("mailbox", Mailbox.DEFAULT_THREEHOLD), (headers, evt) -> {
-                    // Process
-                    pipeline.forEach(t -> t.accept(evt));
+        vertx.eventBus().<JsonObject>localConsumer(endpoint)
+                .handler(new ConvertHandler() {
+                    @Override public void handle(MultiMap headers, JsonObject evt) {
+                        // Process
+                        pipeline.forEach(t -> t.accept(evt));
 
-                    // Send to the next endpoint
-                    forward(headers, evt);
-                }));
+                        // Send to the next endpoint
+                        forward(headers, evt);
+                    }
+                });
     }
 
     /**
@@ -311,12 +311,6 @@ public class MutateTransform extends ComponentVerticle {
             });
         }
 
-    }
-
-    @Override public JsonObject config() {
-        JsonObject config = super.config();
-        checkState(config.getString("endpoint") != null, "The endpoint is required");
-        return config;
     }
 
 }

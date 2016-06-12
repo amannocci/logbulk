@@ -24,11 +24,10 @@
 package io.techcode.logbulk.pipeline.output;
 
 import io.techcode.logbulk.component.ComponentVerticle;
-import io.techcode.logbulk.component.Mailbox;
+import io.techcode.logbulk.util.ConvertHandler;
+import io.vertx.core.MultiMap;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
-
-import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Standard output pipeline component.
@@ -37,25 +36,19 @@ import static com.google.common.base.Preconditions.checkState;
 public class StdOutput extends ComponentVerticle {
 
     @Override public void start() {
-        // Configuration
-        JsonObject config = config();
-        String endpoint = config.getString("endpoint");
+        super.start();
 
         // Register endpoint
-        vertx.eventBus().<JsonObject>consumer(endpoint)
-                .handler(new Mailbox(this, endpoint, config.getInteger("mailbox", Mailbox.DEFAULT_THREEHOLD), (headers, evt) -> {
-                    // Process the event
-                    log.info(evt.encode());
+        vertx.eventBus().<JsonObject>localConsumer(endpoint)
+                .handler(new ConvertHandler() {
+                    @Override public void handle(MultiMap headers, JsonObject evt) {
+                        // Process the event
+                        log.info(evt.encode());
 
-                    // Send to the next endpoint
-                    forward(headers, evt);
-                }));
-    }
-
-    @Override public JsonObject config() {
-        JsonObject config = super.config();
-        checkState(config.getString("endpoint") != null, "The endpoint is required");
-        return config;
+                        // Send to the next endpoint
+                        forward(headers, evt);
+                    }
+                });
     }
 
 }

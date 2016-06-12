@@ -26,7 +26,8 @@ package io.techcode.logbulk.pipeline.transform;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import io.techcode.logbulk.component.ComponentVerticle;
-import io.techcode.logbulk.component.Mailbox;
+import io.techcode.logbulk.util.ConvertHandler;
+import io.vertx.core.MultiMap;
 import io.vertx.core.json.JsonObject;
 
 import java.nio.charset.StandardCharsets;
@@ -53,30 +54,29 @@ public class AnonymiseTransform extends ComponentVerticle {
     }};
 
     @Override public void start() {
-        // Configuration
-        JsonObject config = config();
+        super.start();
 
         // Setup
         List<String> fields = config.getJsonArray("fields").getList();
         HashFunction hash = HASHING.getOrDefault("hashing", Hashing.md5());
-        String endpoint = config.getString("endpoint");
 
         // Register endpoint
-        vertx.eventBus().<JsonObject>consumer(endpoint)
-                .handler(new Mailbox(this, endpoint, config.getInteger("mailbox", Mailbox.DEFAULT_THREEHOLD), (headers, evt) -> {
-                    // Process
-                    fields.stream().filter(evt::containsKey).forEach(field -> {
-                        evt.put(field, hash.hashString(evt.getString(field), StandardCharsets.UTF_8).toString());
-                    });
+        vertx.eventBus().<JsonObject>localConsumer(endpoint)
+                .handler(msg -> new ConvertHandler() {
+                    @Override public void handle(MultiMap headers, JsonObject evt) {
+                        // Process
+                        fields.stream().filter(evt::containsKey).forEach(field -> {
+                            evt.put(field, hash.hashString(evt.getString(field), StandardCharsets.UTF_8).toString());
+                        });
 
-                    // Send to the next endpoint
-                    forward(headers, evt);
-                }));
+                        // Send to the next endpoint
+                        forward(headers, evt);
+                    }
+                });
     }
 
     @Override public JsonObject config() {
         JsonObject config = super.config();
-        checkState(config.getString("endpoint") != null, "The endpoint is required");
         checkState(config.getString("hashing") != null, "The hashing is required");
         checkState(config.getJsonArray("fields") != null
                 && config.getJsonArray("fields").size() > 0, "The fields is required");

@@ -24,11 +24,10 @@
 package io.techcode.logbulk.pipeline.transform;
 
 import io.techcode.logbulk.component.ComponentVerticle;
-import io.techcode.logbulk.component.Mailbox;
+import io.techcode.logbulk.util.ConvertHandler;
+import io.vertx.core.MultiMap;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
-
-import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Metric transformer pipeline component.
@@ -40,33 +39,25 @@ public class MetricTransform extends ComponentVerticle {
     private long request = 0;
 
     @Override public void start() {
-        // Configuration
-        JsonObject config = config();
-
-        // Setup
-        String endpoint = config.getString("endpoint");
+        super.start();
 
         // Register endpoint
-        vertx.eventBus().<JsonObject>consumer(endpoint)
-                .handler(new Mailbox(this, endpoint, config.getInteger("mailbox", Mailbox.DEFAULT_THREEHOLD), (headers, evt) -> {
-                    // Process
-                    request += 1;
+        vertx.eventBus().<JsonObject>localConsumer(endpoint)
+                .handler(new ConvertHandler() {
+                    @Override public void handle(MultiMap headers, JsonObject evt) {
+                        // Process
+                        request += 1;
 
-                    // Send to the next endpoint
-                    forward(headers, evt);
-                }));
+                        // Send to the next endpoint
+                        forward(headers, evt);
+                    }
+                });
 
         // Flush everysecond
         vertx.setPeriodic(1000, h -> {
             log.info(endpoint + " req/s: " + request);
             request = 0;
         });
-    }
-
-    @Override public JsonObject config() {
-        JsonObject config = super.config();
-        checkState(config.getString("endpoint") != null, "The endpoint is required");
-        return config;
     }
 
 }

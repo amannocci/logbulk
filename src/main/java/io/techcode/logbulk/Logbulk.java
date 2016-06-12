@@ -26,10 +26,13 @@ package io.techcode.logbulk;
 import com.typesafe.config.ConfigRenderOptions;
 import com.typesafe.config.ConfigValue;
 import io.techcode.logbulk.component.ComponentRegistry;
+import io.techcode.logbulk.component.Mailbox;
 import io.techcode.logbulk.io.AppConfig;
 import io.techcode.logbulk.io.FastJsonObjectMessageCodec;
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.AsyncResult;
 import io.vertx.core.DeploymentOptions;
+import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 
@@ -84,20 +87,38 @@ public class Logbulk extends AbstractVerticle {
             // Extract json configuration
             DeploymentOptions deployment = new DeploymentOptions();
             JsonObject conf = new JsonObject(el.getValue().render(ConfigRenderOptions.concise().setJson(true)));
+            int instance = conf.getInteger("instance", 1);
+            String endpoint = el.getKey();
 
             // Handle special case
-            conf.put("source", conf.getString("route"));
-            if ("transform".equals(section)) deployment.setInstances(conf.getInteger("instance", 1));
+            conf.put("endpoint", endpoint);
+            if ("transform".equals(section)) deployment.setInstances(instance);
+            if ("input".equals(section)) conf.put("origin", true);
             conf.put("route", config.routes());
 
             // Handle generic case
             if (conf.getBoolean("worker", false)) deployment.setWorker(true);
 
             // Map configuration & deploy
-            deployment.setConfig(conf);
-            int idx = el.getKey().indexOf('-');
-            String type = (idx != -1) ? el.getKey().substring(0, idx) : el.getKey();
-            vertx.deployVerticle(registry.getComponent(section + '.' + type), deployment);
+            Handler<AsyncResult<String>> deploy = event -> {
+                deployment.setConfig(conf);
+                int idx = el.getKey().indexOf('-');
+                String type = (idx != -1) ? el.getKey().substring(0, idx) : el.getKey();
+                vertx.deployVerticle(registry.getComponent(section + '.' + type), deployment);
+            };
+
+            // Deploy mailbox first
+            if ("input".equals(section)) {
+                deploy.handle(null);
+            } else {
+                JsonObject mailboxConf = new JsonObject();
+                mailboxConf.put("route", conf.getJsonObject("route"));
+                mailboxConf.put("instance", instance);
+                mailboxConf.put("endpoint", endpoint);
+                mailboxConf.put("origin", true);
+                mailboxConf.put("mailbox", conf.getInteger("mailbox", Mailbox.DEFAULT_THREEHOLD));
+                vertx.deployVerticle(Mailbox.class.getName(), new DeploymentOptions().setConfig(mailboxConf), deploy);
+            }
         }
     }
 

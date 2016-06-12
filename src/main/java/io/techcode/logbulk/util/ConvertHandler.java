@@ -21,57 +21,22 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.logbulk.component;
+package io.techcode.logbulk.util;
 
-import com.google.common.collect.Sets;
 import io.vertx.core.Handler;
+import io.vertx.core.MultiMap;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.streams.ReadStream;
-
-import java.util.Set;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Sourcebox implementation.
+ * Convert a message to a pair of headers and event.
  */
-public class Sourcebox implements Handler<Message<JsonObject>> {
+public abstract class ConvertHandler implements Handler<Message<JsonObject>>, HeaderHandler<MultiMap, JsonObject> {
 
-    // Limited demand
-    private Set<String> limited = Sets.newHashSet();
-
-    // Stream source
-    private ReadStream stream;
-
-    // State of the stream
-    private boolean paused = false;
-
-    /**
-     * Create a new sourcebox.
-     *
-     * @param stream stream to handle.
-     */
-    public Sourcebox(ReadStream stream) {
-        checkNotNull(stream, "The stream can't be null");
-        this.stream = stream;
+    @Override public void handle(Message<JsonObject> event) {
+        handle(event.headers(), event.body());
     }
 
-    @Override public void handle(Message<JsonObject> e) {
-        JsonObject evt = e.body();
-        if ("resume".equals(evt.getString("action"))) {
-            limited.remove(evt.getString("endpoint"));
-        } else {
-            limited.add(evt.getString("endpoint"));
-        }
-        if (paused && limited.isEmpty()) {
-            stream.resume();
-            paused = false;
-        }
-        if (!paused && limited.size() > 0) {
-            stream.pause();
-            paused = true;
-        }
-    }
+    public abstract void handle(MultiMap headers, JsonObject evt);
 
 }

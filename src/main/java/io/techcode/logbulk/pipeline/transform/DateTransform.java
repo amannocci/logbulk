@@ -25,7 +25,8 @@ package io.techcode.logbulk.pipeline.transform;
 
 import com.google.common.base.Strings;
 import io.techcode.logbulk.component.ComponentVerticle;
-import io.techcode.logbulk.component.Mailbox;
+import io.techcode.logbulk.util.ConvertHandler;
+import io.vertx.core.MultiMap;
 import io.vertx.core.json.JsonObject;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
@@ -48,13 +49,11 @@ public class DateTransform extends ComponentVerticle {
     private DateTimeFormatter metaFormatter;
 
     @Override public void start() {
-        // Configuration
-        JsonObject config = config();
+        super.start();
 
         // Setup
         String target = config.getString("target", "@timestamp");
         String match = config.getString("match", "date");
-        String endpoint = config.getString("endpoint");
         String meta = config.getString("meta");
 
         // Formatter
@@ -72,26 +71,27 @@ public class DateTransform extends ComponentVerticle {
         }
 
         // Register endpoint
-        vertx.eventBus().<JsonObject>consumer(endpoint)
-                .handler(new Mailbox(this, endpoint, config.getInteger("mailbox", Mailbox.DEFAULT_THREEHOLD), (headers, evt) -> {
-                    // Process
-                    String field = evt.getString(match);
-                    if (field != null) {
-                        DateTime time = formatter.parseDateTime(field);
-                        evt.put(target, ISO_FORMATTER.print(time));
-                        if (metaFormatter != null) {
-                            evt.put("_index", metaFormatter.print(time));
+        vertx.eventBus().<JsonObject>localConsumer(endpoint)
+                .handler(new ConvertHandler() {
+                    @Override public void handle(MultiMap headers, JsonObject evt) {
+                        // Process
+                        String field = evt.getString(match);
+                        if (field != null) {
+                            DateTime time = formatter.parseDateTime(field);
+                            evt.put(target, ISO_FORMATTER.print(time));
+                            if (metaFormatter != null) {
+                                evt.put("_index", metaFormatter.print(time));
+                            }
                         }
-                    }
 
-                    // Send to the next endpoint
-                    forward(headers, evt);
-                }));
+                        // Send to the next endpoint
+                        forward(headers, evt);
+                    }
+                });
     }
 
     @Override public JsonObject config() {
         JsonObject config = super.config();
-        checkState(config.getString("endpoint") != null, "The endpoint is required");
         checkState(config.getString("match") != null, "The match is required");
         checkState(config.getString("format") != null, "The format is required");
         return config;

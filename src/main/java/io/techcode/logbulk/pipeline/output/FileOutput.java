@@ -23,14 +23,18 @@
  */
 package io.techcode.logbulk.pipeline.output;
 
+import com.google.common.collect.Sets;
 import io.techcode.logbulk.component.ComponentVerticle;
-import io.techcode.logbulk.component.Mailbox;
+import io.techcode.logbulk.util.ConvertHandler;
+import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.file.AsyncFile;
 import io.vertx.core.file.OpenOptions;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -46,15 +50,15 @@ public class FileOutput extends ComponentVerticle {
     // Use a sub buffer
     private Buffer buf;
 
+    // Back pressure
+    private Set<String> previousPressure = Sets.newHashSet();
+
     @Override public void start() {
-        // Configuration
-        JsonObject config = config();
+        super.start();
 
         // Setup processing task
         String path = config.getString("path");
         String delimiter = config.getString("delimiter", "\n");
-        String endpoint = config.getString("endpoint");
-        String endpointUuid = endpoint + '.' + getUuid();
         int chunk = config.getInteger("chunk", 8192);
         int chunkPartition = chunk / 4;
         file = vertx.fileSystem().openBlocking(path, new OpenOptions().setWrite(true).setCreate(true));
@@ -63,22 +67,27 @@ public class FileOutput extends ComponentVerticle {
 
         // Register endpoint
         EventBus bus = vertx.eventBus();
-        bus.<JsonObject>consumer(endpoint)
-                .handler(new Mailbox(this, endpoint, config.getInteger("mailbox", Mailbox.DEFAULT_THREEHOLD), (headers, evt) -> {
-                    // Process the event
-                    buf.appendString(evt.encode()).appendString(delimiter);
-                    if (buf.length() > chunkPartition) {
-                        file.write(buf);
-                        buf = Buffer.buffer(chunkPartition);
-                        if (file.writeQueueFull()) {
-                            pause(source(headers), endpointUuid);
-                            file.drainHandler(h -> resume(source(headers), endpointUuid));
+        bus.<JsonObject>localConsumer(endpoint)
+                .handler(new ConvertHandler() {
+                    @Override public void handle(MultiMap headers, JsonObject evt) {
+                        // Process the event
+                        buf.appendString(evt.encode()).appendString(delimiter);
+                        if (buf.length() > chunkPartition) {
+                            file.write(buf);
+                            buf = Buffer.buffer(chunkPartition);
+                            if (file.writeQueueFull()) {
+                                notifyPressure(previousPressure, headers);
+                                file.drainHandler(h -> {
+                                    previousPressure.forEach(FileOutput.this::tooglePressure);
+                                    previousPressure.clear();
+                                });
+                            }
                         }
-                    }
 
-                    // Send to the next endpoint
-                    forward(headers, evt);
-                }));
+                        // Send to the next endpoint
+                        forward(headers, evt);
+                    }
+                });
     }
 
     @Override public void stop() {
@@ -89,7 +98,6 @@ public class FileOutput extends ComponentVerticle {
 
     @Override public JsonObject config() {
         JsonObject config = super.config();
-        checkState(config.getString("endpoint") != null, "The endpoint is required");
         checkState(config.getString("path") != null, "The path is required");
         return config;
     }
