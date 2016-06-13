@@ -24,6 +24,7 @@
 package io.techcode.logbulk.pipeline.output;
 
 import com.google.common.collect.Iterators;
+import com.google.common.collect.Sets;
 import io.techcode.logbulk.component.ComponentVerticle;
 import io.techcode.logbulk.util.ConvertHandler;
 import io.vertx.core.Handler;
@@ -35,7 +36,6 @@ import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -106,8 +106,10 @@ public class ElasticOutput extends ComponentVerticle {
         // Pipeline
         private int parallel;
         private int pipeline = 0;
-        private Set<String> sources = new HashSet<>();
         private boolean paused = false;
+
+        // Back pressure
+        private Set<String> previousPressure = Sets.newHashSet();
 
         // Flusher logic
         private Handler<Long> flusher = new Handler<Long>() {
@@ -152,7 +154,7 @@ public class ElasticOutput extends ComponentVerticle {
             if (evt.containsKey("_index")) {
                 idx += evt.getString("_index");
             }
-            sources.add(previous(headers).get());
+            if (paused) notifyPressure(previousPressure, headers);
             builder.append(new JsonObject().put("index", new JsonObject()
                     .put("_type", type)
                     .put("_index", idx)).encode()).append("\n");
@@ -182,7 +184,8 @@ public class ElasticOutput extends ComponentVerticle {
                     log.error("Failed to index document: statusCode=" + res.statusCode());
                 }
                 if (paused && --pipeline < parallel) {
-                    sources.forEach(ElasticOutput.this::tooglePressure);
+                    previousPressure.forEach(ElasticOutput.this::tooglePressure);
+                    previousPressure.clear();
                     paused = false;
                 }
             });
@@ -192,10 +195,7 @@ public class ElasticOutput extends ComponentVerticle {
                 docs += documents;
             });
             req.end(payload);
-            if (!paused && pipeline >= parallel) {
-                sources.forEach(ElasticOutput.this::tooglePressure);
-                paused = true;
-            }
+            if (!paused && pipeline >= parallel) paused = true;
 
             // Reset size
             docs = 0;
