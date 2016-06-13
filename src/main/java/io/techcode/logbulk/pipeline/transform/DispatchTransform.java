@@ -28,7 +28,7 @@ import com.google.common.collect.Sets;
 import io.techcode.logbulk.component.ComponentVerticle;
 import io.techcode.logbulk.util.ConvertHandler;
 import io.vertx.core.MultiMap;
-import io.vertx.core.json.JsonArray;
+import io.vertx.core.http.CaseInsensitiveHeaders;
 import io.vertx.core.json.JsonObject;
 
 import java.util.List;
@@ -58,15 +58,14 @@ public class DispatchTransform extends ComponentVerticle {
             checkState(cachedRoute.contains(d), "The route '" + d + "' doesn't exist");
             JsonObject dispatchRoute = rawDispatch.getJsonObject(d);
             String mode = dispatchRoute.getString("mode");
-            JsonArray route = config.getJsonObject("route").getJsonArray(d);
             if (mode != null) {
                 if ("start".equals(mode)) {
-                    dispatch.add(new StartDispatch(dispatchRoute.getString("field"), dispatchRoute.getString("match"), route));
+                    dispatch.add(new StartDispatch(dispatchRoute.getString("field"), dispatchRoute.getString("match"), d));
                 } else {
-                    dispatch.add(new ContainsDispatch(dispatchRoute.getString("field"), dispatchRoute.getString("match"), route));
+                    dispatch.add(new ContainsDispatch(dispatchRoute.getString("field"), dispatchRoute.getString("match"), d));
                 }
             } else {
-                dispatch.add(new SimpleDispatch(route));
+                dispatch.add(new SimpleDispatch(d));
             }
         }
 
@@ -95,14 +94,14 @@ public class DispatchTransform extends ComponentVerticle {
     private class SimpleDispatch {
 
         // Routes
-        private JsonArray route;
+        private String route;
 
         /**
          * Create a new simple dispatch.
          *
          * @param route route dispatching.
          */
-        public SimpleDispatch(JsonArray route) {
+        public SimpleDispatch(String route) {
             checkNotNull(route, "The route can't be null");
             this.route = route;
         }
@@ -114,10 +113,11 @@ public class DispatchTransform extends ComponentVerticle {
          * @param evt     event involved.
          */
         public void dispatch(MultiMap headers, JsonObject evt) {
-            JsonObject copy = evt.copy();
-            copy.put("_current", 0);
-            copy.put("_route", route);
-            forward(headers, copy);
+            MultiMap copy = new CaseInsensitiveHeaders();
+            copy.addAll(headers);
+            copy.set("_current", "0");
+            copy.set("_route", route);
+            forward(copy, evt.copy());
         }
 
     }
@@ -140,7 +140,7 @@ public class DispatchTransform extends ComponentVerticle {
          * @param match pattern to match.
          * @param route route dispatching.
          */
-        public StartDispatch(String field, String match, JsonArray route) {
+        public StartDispatch(String field, String match, String route) {
             super(route);
             this.field = field;
             this.match = match;
@@ -172,7 +172,7 @@ public class DispatchTransform extends ComponentVerticle {
          * @param match pattern to match.
          * @param route route dispatching.
          */
-        public ContainsDispatch(String field, String match, JsonArray route) {
+        public ContainsDispatch(String field, String match, String route) {
             super(route);
             this.field = field;
             this.match = match;
