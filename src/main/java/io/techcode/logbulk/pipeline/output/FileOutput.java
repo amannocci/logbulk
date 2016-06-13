@@ -27,6 +27,7 @@ import com.google.common.collect.Sets;
 import io.techcode.logbulk.component.ComponentVerticle;
 import io.techcode.logbulk.util.ConvertHandler;
 import io.vertx.core.MultiMap;
+import io.vertx.core.VoidHandler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.file.AsyncFile;
@@ -53,6 +54,14 @@ public class FileOutput extends ComponentVerticle {
     // Back pressure
     private Set<String> previousPressure = Sets.newHashSet();
 
+    // Handle pressure
+    private final VoidHandler HANDLE_PRESSURE = new VoidHandler() {
+        @Override protected void handle() {
+            previousPressure.forEach(FileOutput.this::tooglePressure);
+            previousPressure.clear();
+        }
+    };
+
     @Override public void start() {
         super.start();
 
@@ -77,10 +86,7 @@ public class FileOutput extends ComponentVerticle {
                             buf = Buffer.buffer(chunkPartition);
                             if (file.writeQueueFull()) {
                                 notifyPressure(previousPressure, headers);
-                                file.drainHandler(h -> {
-                                    previousPressure.forEach(FileOutput.this::tooglePressure);
-                                    previousPressure.clear();
-                                });
+                                file.drainHandler(HANDLE_PRESSURE);
                             }
                         }
 
