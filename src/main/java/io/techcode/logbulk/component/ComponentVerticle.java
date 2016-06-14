@@ -67,6 +67,9 @@ public class ComponentVerticle extends AbstractVerticle {
     // Configuration
     protected JsonObject config;
 
+    // Mailbox
+    private boolean hasMailbox = true;
+
     @Override public void start() {
         this.config = config();
         eventBus = vertx.eventBus();
@@ -162,7 +165,7 @@ public class ComponentVerticle extends AbstractVerticle {
             headers.set("_current", String.valueOf(current + 1));
             eventBus.send(nextOpt.get(), evt, new DeliveryOptions().setCodecName("fastjsonobject").setHeaders(headers));
         }
-        eventBus.send(parentEndpoint + ".worker", endpoint);
+        if (hasMailbox) eventBus.send(parentEndpoint + ".worker", endpoint);
     }
 
     /**
@@ -239,6 +242,7 @@ public class ComponentVerticle extends AbstractVerticle {
 
         if (config.getBoolean("origin", false)) {
             endpoint = parentEndpoint;
+            hasMailbox = false;
         } else {
             endpoint = parentEndpoint + ".worker." + uuid;
             eventBus.send(parentEndpoint + ".worker", endpoint);
