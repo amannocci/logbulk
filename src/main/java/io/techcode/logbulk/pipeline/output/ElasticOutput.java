@@ -153,6 +153,7 @@ public class ElasticOutput extends ComponentVerticle {
             String idx = index;
             if (evt.containsKey("_index")) {
                 idx += evt.getString("_index");
+                evt.remove("_index");
             }
             if (paused) notifyPressure(previousPressure, headers);
             builder.append(new JsonObject().put("index", new JsonObject()
@@ -189,13 +190,12 @@ public class ElasticOutput extends ComponentVerticle {
                     paused = false;
                 }
             });
-            pipeline += 1;
             req.exceptionHandler(err -> {
                 builder.append(payload);
                 docs += documents;
             });
             req.end(payload);
-            if (!paused && pipeline >= parallel) paused = true;
+            if (!paused && ++pipeline >= parallel) paused = true;
 
             // Reset size
             docs = 0;
