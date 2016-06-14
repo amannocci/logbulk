@@ -50,7 +50,6 @@ public class DispatchTransform extends ComponentVerticle {
 
         // Setup
         JsonObject rawDispatch = config.getJsonObject("dispatch");
-        boolean forward = config.getBoolean("forward", true);
 
         // Check routes
         Set<String> cachedRoute = Sets.newHashSet(config.getJsonObject("route").fieldNames());
@@ -77,7 +76,7 @@ public class DispatchTransform extends ComponentVerticle {
                         dispatch.forEach(d -> d.dispatch(headers, evt));
 
                         // Send to the next endpoint
-                        if (forward) forward(headers, evt);
+                        forward(headers, evt);
                     }
                 });
     }
