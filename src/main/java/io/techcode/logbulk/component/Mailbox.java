@@ -23,6 +23,7 @@
  */
 package io.techcode.logbulk.component;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -83,20 +84,13 @@ public class Mailbox extends ComponentVerticle implements Handler<Message<JsonOb
             if (job < busy) workers.add(worker);
 
             // Check if there is work to be done
-            if (buffer.size() > 0) {
-                process(buffer.poll(), Optional.of(event.body()));
-
-                // Handle pressure
-                if (buffer.size() < busy) {
-                    previousPressure.forEach(this::tooglePressure);
-                    previousPressure.clear();
-                }
-            }
+            processBuffer(Optional.of(event.body()));
         });
         getEventBus().<String>localConsumer(endpoint + ".pressure").handler(event -> {
             String component = event.body();
             if (nextPressure.contains(component)) {
                 nextPressure.remove(component);
+                processBuffer(Optional.empty());
             } else {
                 nextPressure.add(component);
             }
@@ -135,14 +129,34 @@ public class Mailbox extends ComponentVerticle implements Handler<Message<JsonOb
      * @param workerOpt optional worker.
      */
     private void process(Message<JsonObject> evt, Optional<String> workerOpt) {
+        // Retrieve a worker
+        String worker = workerOpt.orElseGet(() -> workers.isEmpty() ? null : Iterables.getLast(workers));
+        if (Strings.isNullOrEmpty(worker)) return;
+
         // Increase job
-        String worker = workerOpt.orElseGet(() -> Iterables.getLast(workers));
         int job = workersJob.getOrDefault(worker, 0);
         workersJob.put(worker, ++job);
 
         // Evict if busy & send job
         if (job >= busy) workers.remove(worker);
         getEventBus().send(worker, evt.body(), new DeliveryOptions().setHeaders(evt.headers()).setCodecName("fastjsonobject"));
+    }
+
+    /**
+     * Attempt to process an event in the buffer.
+     *
+     * @param workerOpt optional worker.
+     */
+    private void processBuffer(Optional<String> workerOpt) {
+        if (buffer.size() > 0) {
+            process(buffer.poll(), workerOpt);
+
+            // Handle pressure
+            if (buffer.size() < busy && previousPressure.size() > 0) {
+                previousPressure.forEach(this::tooglePressure);
+                previousPressure.clear();
+            }
+        }
     }
 
 }
