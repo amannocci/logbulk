@@ -6,7 +6,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <main.verticle>io.techcode.logbulk.Logbulk</main.verticle>
-        <vertx.version>3.2.1</vertx.version>
+        <vertx.version>3.3.0</vertx.version>
         <guava.version>19.0</guava.version>
         <grok.version>0.1.4</grok.version>
         <joda-time.version>2.9.4</joda-time.version>
