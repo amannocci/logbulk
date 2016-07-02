@@ -50,7 +50,7 @@ public class Mailbox extends ComponentVerticle implements Handler<Message<JsonOb
 
     // Treehold
     private int threehold;
-    private int busy;
+    private int idle;
 
     // Pending message to process
     private Queue<Message<JsonObject>> buffer = Lists.newLinkedList();
@@ -68,7 +68,7 @@ public class Mailbox extends ComponentVerticle implements Handler<Message<JsonOb
 
         // Retrieve configuration settings
         threehold = config.getInteger("mailbox");
-        busy = threehold / 2;
+        idle = threehold / 2;
         int componentCount = config.getInteger("instance");
         threehold *= componentCount;
 
@@ -80,8 +80,8 @@ public class Mailbox extends ComponentVerticle implements Handler<Message<JsonOb
             int job = workersJob.getOrDefault(worker, 1);
             workersJob.put(worker, --job);
 
-            // Check busy
-            if (job < busy) workers.add(worker);
+            // Check idle
+            if (job < idle) workers.add(worker);
 
             // Check if there is work to be done
             processBuffer(Optional.of(event.body()));
@@ -138,7 +138,7 @@ public class Mailbox extends ComponentVerticle implements Handler<Message<JsonOb
         workersJob.put(worker, ++job);
 
         // Evict if busy & send job
-        if (job >= busy) workers.remove(worker);
+        if (job >= threehold) workers.remove(worker);
         getEventBus().send(worker, evt.body(), new DeliveryOptions().setHeaders(evt.headers()).setCodecName("fastjsonobject"));
     }
 
@@ -152,7 +152,7 @@ public class Mailbox extends ComponentVerticle implements Handler<Message<JsonOb
             process(buffer.poll(), workerOpt);
 
             // Handle pressure
-            if (buffer.size() < busy && previousPressure.size() > 0) {
+            if (buffer.size() < idle && previousPressure.size() > 0) {
                 previousPressure.forEach(this::tooglePressure);
                 previousPressure.clear();
             }
