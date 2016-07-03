@@ -29,7 +29,6 @@ import com.google.common.primitives.Floats;
 import com.google.common.primitives.Ints;
 import io.techcode.logbulk.component.ComponentVerticle;
 import io.techcode.logbulk.util.ConvertHandler;
-import io.vertx.core.MultiMap;
 import io.vertx.core.json.JsonObject;
 
 import java.util.ArrayList;
@@ -78,12 +77,13 @@ public class MutateTransform extends ComponentVerticle {
         // Register endpoint
         vertx.eventBus().<JsonObject>localConsumer(endpoint)
                 .handler(new ConvertHandler() {
-                    @Override public void handle(MultiMap headers, JsonObject evt) {
+                    @Override public void handle(JsonObject msg) {
                         // Process
+                        JsonObject evt = event(msg);
                         pipeline.forEach(t -> t.accept(evt));
 
                         // Send to the next endpoint
-                        forward(headers, evt);
+                        forward(msg);
                     }
                 });
     }

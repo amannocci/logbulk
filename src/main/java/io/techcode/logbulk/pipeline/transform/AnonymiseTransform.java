@@ -63,14 +63,15 @@ public class AnonymiseTransform extends ComponentVerticle {
         // Register endpoint
         vertx.eventBus().<JsonObject>localConsumer(endpoint)
                 .handler(msg -> new ConvertHandler() {
-                    @Override public void handle(MultiMap headers, JsonObject evt) {
+                    @Override public void handle(JsonObject msg) {
                         // Process
+                        JsonObject evt = event(msg);
                         fields.stream().filter(evt::containsKey).forEach(field -> {
                             evt.put(field, hash.hashString(evt.getString(field), StandardCharsets.UTF_8).toString());
                         });
 
                         // Send to the next endpoint
-                        forward(headers, evt);
+                        forward(msg);
                     }
                 });
     }

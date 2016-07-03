@@ -24,19 +24,18 @@
 package io.techcode.logbulk.util;
 
 import io.vertx.core.Handler;
-import io.vertx.core.MultiMap;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonObject;
 
 /**
  * Convert a message to a pair of headers and event.
  */
-public abstract class ConvertHandler implements Handler<Message<JsonObject>>, HeaderHandler<MultiMap, JsonObject> {
+public abstract class ConvertHandler implements Handler<Message<JsonObject>> {
 
     @Override public void handle(Message<JsonObject> event) {
-        handle(event.headers(), event.body());
+        handle(event.body());
     }
 
-    public abstract void handle(MultiMap headers, JsonObject evt);
+    public abstract void handle(JsonObject message);
 
 }

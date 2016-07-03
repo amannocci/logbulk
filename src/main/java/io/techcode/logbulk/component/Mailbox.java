@@ -28,9 +28,9 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import io.techcode.logbulk.util.ConvertHandler;
 import io.vertx.core.Handler;
 import io.vertx.core.eventbus.DeliveryOptions;
-import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 
@@ -43,7 +43,7 @@ import java.util.Set;
  * Mailbox implementation.
  */
 @Slf4j
-public class Mailbox extends ComponentVerticle implements Handler<Message<JsonObject>> {
+public class Mailbox extends ComponentVerticle implements Handler<JsonObject> {
 
     // Default threehold
     public final static int DEFAULT_THREEHOLD = 1000;
@@ -53,7 +53,7 @@ public class Mailbox extends ComponentVerticle implements Handler<Message<JsonOb
     private int idle;
 
     // Pending message to process
-    private Queue<Message<JsonObject>> buffer = Lists.newLinkedList();
+    private Queue<JsonObject> buffer = Lists.newLinkedList();
 
     // Workers
     private Set<String> workers = Sets.newTreeSet();
@@ -73,7 +73,11 @@ public class Mailbox extends ComponentVerticle implements Handler<Message<JsonOb
         threehold *= componentCount;
 
         // Setup
-        getEventBus().<JsonObject>localConsumer(endpoint).handler(this);
+        getEventBus().<JsonObject>localConsumer(endpoint).handler(new ConvertHandler() {
+            @Override public void handle(JsonObject message) {
+                Mailbox.this.handle(message);
+            }
+        });
         getEventBus().<String>localConsumer(endpoint + ".worker").handler(event -> {
             // Decrease job
             String worker = event.body();
@@ -97,15 +101,15 @@ public class Mailbox extends ComponentVerticle implements Handler<Message<JsonOb
         });
     }
 
-    @Override public void handle(Message<JsonObject> event) {
+    @Override public void handle(JsonObject msg) {
         if (workers.isEmpty()) {
-            handlePressure(event);
+            handlePressure(msg);
         } else {
-            Optional<String> nextOpt = next(event.headers());
+            Optional<String> nextOpt = next(headers(msg));
             if (nextOpt.isPresent() && nextPressure.contains(nextOpt.get())) {
-                handlePressure(event);
+                handlePressure(msg);
             } else {
-                process(event, Optional.empty());
+                process(msg, Optional.empty());
             }
         }
     }
@@ -113,22 +117,22 @@ public class Mailbox extends ComponentVerticle implements Handler<Message<JsonOb
     /**
      * Add event in buffer and handle back pressure.
      *
-     * @param event event to add in buffer.
+     * @param msg message to add in buffer.
      */
-    private void handlePressure(Message<JsonObject> event) {
-        buffer.add(event);
+    private void handlePressure(JsonObject msg) {
+        buffer.add(msg);
         if (buffer.size() > threehold) {
-            notifyPressure(previousPressure, event.headers());
+            notifyPressure(previousPressure, headers(msg));
         }
     }
 
     /**
      * Send event to an available worker.
      *
-     * @param evt       event to process.
+     * @param msg       message to process.
      * @param workerOpt optional worker.
      */
-    private void process(Message<JsonObject> evt, Optional<String> workerOpt) {
+    private void process(JsonObject msg, Optional<String> workerOpt) {
         // Retrieve a worker
         String worker = workerOpt.orElseGet(() -> workers.isEmpty() ? null : Iterables.getLast(workers));
         if (Strings.isNullOrEmpty(worker)) return;
@@ -139,7 +143,7 @@ public class Mailbox extends ComponentVerticle implements Handler<Message<JsonOb
 
         // Evict if busy & send job
         if (job >= threehold) workers.remove(worker);
-        getEventBus().send(worker, evt.body(), new DeliveryOptions().setHeaders(evt.headers()).setCodecName("fastjsonobject"));
+        getEventBus().send(worker, msg, new DeliveryOptions().setCodecName("fastjsonobject"));
     }
 
     /**

@@ -27,8 +27,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import io.techcode.logbulk.component.ComponentVerticle;
 import io.techcode.logbulk.util.ConvertHandler;
-import io.vertx.core.MultiMap;
-import io.vertx.core.http.CaseInsensitiveHeaders;
 import io.vertx.core.json.JsonObject;
 
 import java.util.List;
@@ -71,12 +69,12 @@ public class DispatchTransform extends ComponentVerticle {
         // Register endpoint
         vertx.eventBus().<JsonObject>localConsumer(endpoint)
                 .handler(new ConvertHandler() {
-                    @Override public void handle(MultiMap headers, JsonObject evt) {
+                    @Override public void handle(JsonObject msg) {
                         // Process
-                        dispatch.forEach(d -> d.dispatch(headers, evt));
+                        dispatch.forEach(d -> d.dispatch(msg));
 
                         // Send to the next endpoint
-                        forward(headers, evt);
+                        forward(msg);
                     }
                 });
     }
@@ -108,15 +106,14 @@ public class DispatchTransform extends ComponentVerticle {
         /**
          * Dispatch the event.
          *
-         * @param headers headers of the event.
-         * @param evt     event involved.
+         * @param msg message involved.
          */
-        public void dispatch(MultiMap headers, JsonObject evt) {
-            MultiMap copy = new CaseInsensitiveHeaders();
-            copy.addAll(headers);
-            copy.set("_current", "0");
-            copy.set("_route", route);
-            forward(copy, evt.copy());
+        public void dispatch(JsonObject msg) {
+            JsonObject copy = msg.copy();
+            JsonObject headers = headers(copy);
+            headers.put("_current", 0);
+            headers.put("_route", route);
+            forward(msg);
         }
 
     }
@@ -145,10 +142,10 @@ public class DispatchTransform extends ComponentVerticle {
             this.match = match;
         }
 
-        @Override public void dispatch(MultiMap headers, JsonObject evt) {
-            String value = evt.getString(field);
+        @Override public void dispatch(JsonObject msg) {
+            String value = event(msg).getString(field);
             if (value.startsWith(match)) {
-                super.dispatch(headers, evt);
+                super.dispatch(msg);
             }
         }
     }
@@ -177,10 +174,10 @@ public class DispatchTransform extends ComponentVerticle {
             this.match = match;
         }
 
-        @Override public void dispatch(MultiMap headers, JsonObject evt) {
-            String value = evt.getString(field);
+        @Override public void dispatch(JsonObject msg) {
+            String value = event(msg).getString(field);
             if (value.contains(match)) {
-                super.dispatch(headers, evt);
+                super.dispatch(msg);
             }
         }
     }

@@ -25,7 +25,6 @@ package io.techcode.logbulk.pipeline.output;
 
 import io.techcode.logbulk.component.ComponentVerticle;
 import io.techcode.logbulk.util.ConvertHandler;
-import io.vertx.core.MultiMap;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 
@@ -41,12 +40,12 @@ public class StdOutput extends ComponentVerticle {
         // Register endpoint
         vertx.eventBus().<JsonObject>localConsumer(endpoint)
                 .handler(new ConvertHandler() {
-                    @Override public void handle(MultiMap headers, JsonObject evt) {
+                    @Override public void handle(JsonObject msg) {
                         // Process the event
-                        log.info(evt.encode());
+                        log.info(event(msg).encode());
 
                         // Send to the next endpoint
-                        forward(headers, evt);
+                        forward(msg);
                     }
                 });
     }

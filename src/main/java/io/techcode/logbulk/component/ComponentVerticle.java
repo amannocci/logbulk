@@ -24,13 +24,10 @@
 package io.techcode.logbulk.component;
 
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.primitives.Ints;
 import io.techcode.logbulk.util.PressureHandler;
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.MultiMap;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
-import io.vertx.core.http.CaseInsensitiveHeaders;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.parsetools.RecordParser;
 import io.vertx.core.streams.ReadStream;
@@ -83,24 +80,43 @@ public class ComponentVerticle extends AbstractVerticle {
     }
 
     /**
+     * Extract headers part of the message.
+     *
+     * @param message message to process.
+     * @return headers part.
+     */
+    public JsonObject headers(JsonObject message) {
+        return message.getJsonObject("headers");
+    }
+
+    /**
+     * Extract event part of the message.
+     *
+     * @param message message to process.
+     * @return event part.
+     */
+    public JsonObject event(JsonObject message) {
+        return message.getJsonObject("event");
+    }
+
+    /**
      * Returns the previous component processor for this event.
      *
      * @param headers headers of the event.
      * @return previous component processor for this event.
      */
-    public Optional<String> previous(MultiMap headers) {
+    public Optional<String> previous(JsonObject headers) {
         checkNotNull(headers, "Headers can't be null");
 
         // Gets some stuff
-        Integer currentRaw = Ints.tryParse(headers.get("_current"));
-        int current = currentRaw != null ? currentRaw : 0;
+        int current = headers.getInteger("_current", 0);
         int previous = current - 1;
 
         // Possible previous component
         if (previous >= 0) {
-            String route = headers.get("_route");
-            List<String> routing = this.routing.get(route);
-            return Optional.of(routing.get(previous));
+            String route = headers.getString("_route");
+            List<String> endpoints = this.routing.get(route);
+            return Optional.of(endpoints.get(previous));
         } else {
             return Optional.empty();
         }
@@ -112,12 +128,11 @@ public class ComponentVerticle extends AbstractVerticle {
      * @param headers headers of the event.
      * @return next component processor for this event.
      */
-    public Optional<String> next(MultiMap headers) {
+    public Optional<String> next(JsonObject headers) {
         checkNotNull(headers, "Headers can't be null");
 
         // Gets some stuff
-        Integer currentRaw = Ints.tryParse(headers.get("_current"));
-        int current = currentRaw != null ? currentRaw : 0;
+        int current = headers.getInteger("_current", 0);
         return next(headers, current);
     }
 
@@ -127,19 +142,19 @@ public class ComponentVerticle extends AbstractVerticle {
      * @param headers headers of the event.
      * @return next component processor for this event.
      */
-    private Optional<String> next(MultiMap headers, int current) {
+    private Optional<String> next(JsonObject headers, int current) {
         checkNotNull(headers, "Headers can't be null");
 
         // Gets some stuff
         int next = current + 1;
 
         // Retrieve routing
-        String route = headers.get("_route");
-        List<String> routing = this.routing.get(route);
+        String route = headers.getString("_route");
+        List<String> endpoints = this.routing.get(route);
 
         // Possible next component
-        if (next < routing.size()) {
-            return Optional.of(routing.get(next));
+        if (next < endpoints.size()) {
+            return Optional.of(endpoints.get(next));
         } else {
             return Optional.empty();
         }
@@ -148,22 +163,20 @@ public class ComponentVerticle extends AbstractVerticle {
     /**
      * Forward the event to the next stage.
      *
-     * @param headers headers of the event.
-     * @param evt     event to forward.
+     * @param msg message to forward.
      */
-    public void forward(MultiMap headers, JsonObject evt) {
-        checkNotNull(headers, "Headers can't be null");
-        checkNotNull(evt, "The event to forward can't be null");
+    public void forward(JsonObject msg) {
+        checkNotNull(msg, "The message to forward can't be null");
 
         // Gets some stuff
-        Integer currentRaw = Ints.tryParse(headers.get("_current"));
-        int current = currentRaw != null ? currentRaw : 0;
+        JsonObject headers = headers(msg);
+        int current = headers.getInteger("_current", 0);
 
         // Determine next stage
         Optional<String> nextOpt = next(headers, current);
         if (nextOpt.isPresent()) {
-            headers.set("_current", String.valueOf(current + 1));
-            eventBus.send(nextOpt.get(), evt, new DeliveryOptions().setCodecName("fastjsonobject").setHeaders(headers));
+            headers.put("_current", current + 1);
+            eventBus.send(nextOpt.get(), msg, new DeliveryOptions().setCodecName("fastjsonobject"));
         }
         if (hasMailbox) eventBus.send(parentEndpoint + ".worker", endpoint);
     }
@@ -188,15 +201,18 @@ public class ComponentVerticle extends AbstractVerticle {
     public RecordParser inputParser(JsonObject config) {
         return RecordParser.newDelimited(config.getString("delimiter", "\n"), buf -> {
             // Create a new event
-            MultiMap headers = new CaseInsensitiveHeaders();
+            JsonObject headers = new JsonObject();
             JsonObject evt = new JsonObject().put("message", buf.toString());
 
             // Options
-            headers.add("_route", config.getString("dispatch"));
-            headers.add("_current", "0");
+            headers.put("_route", config.getString("dispatch"));
+            headers.put("_current", 0);
 
             // Send to the next endpoint
-            forward(headers, evt);
+            forward(new JsonObject()
+                    .put("headers", headers)
+                    .put("event", evt)
+            );
         });
     }
 
@@ -206,7 +222,7 @@ public class ComponentVerticle extends AbstractVerticle {
      * @param previousPressure already notified component.
      * @param headers          headers event involved.
      */
-    public void notifyPressure(Set<String> previousPressure, MultiMap headers) {
+    public void notifyPressure(Set<String> previousPressure, JsonObject headers) {
         // Always return a previous in mailbox context
         Optional<String> previousOpt = previous(headers);
         if (previousOpt.isPresent()) {

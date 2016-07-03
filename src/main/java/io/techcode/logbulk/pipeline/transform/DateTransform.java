@@ -26,7 +26,6 @@ package io.techcode.logbulk.pipeline.transform;
 import com.google.common.base.Strings;
 import io.techcode.logbulk.component.ComponentVerticle;
 import io.techcode.logbulk.util.ConvertHandler;
-import io.vertx.core.MultiMap;
 import io.vertx.core.json.JsonObject;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
@@ -73,8 +72,9 @@ public class DateTransform extends ComponentVerticle {
         // Register endpoint
         vertx.eventBus().<JsonObject>localConsumer(endpoint)
                 .handler(new ConvertHandler() {
-                    @Override public void handle(MultiMap headers, JsonObject evt) {
+                    @Override public void handle(JsonObject msg) {
                         // Process
+                        JsonObject evt = event(msg);
                         String field = evt.getString(match);
                         if (field != null) {
                             DateTime time = formatter.parseDateTime(field);
@@ -85,7 +85,7 @@ public class DateTransform extends ComponentVerticle {
                         }
 
                         // Send to the next endpoint
-                        forward(headers, evt);
+                        forward(msg);
                     }
                 });
     }

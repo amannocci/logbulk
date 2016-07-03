@@ -28,7 +28,6 @@ import com.google.common.collect.Sets;
 import io.techcode.logbulk.component.ComponentVerticle;
 import io.techcode.logbulk.util.ConvertHandler;
 import io.vertx.core.Handler;
-import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
@@ -63,12 +62,12 @@ public class ElasticOutput extends ComponentVerticle {
         // Register endpoint
         vertx.eventBus().<JsonObject>localConsumer(endpoint)
                 .handler(new ConvertHandler() {
-                    @Override public void handle(MultiMap headers, JsonObject evt) {
+                    @Override public void handle(JsonObject msg) {
                         // Process
-                        bulk.add(headers, evt);
+                        bulk.add(msg);
 
                         // Send to the next endpoint
-                        forward(headers, evt);
+                        forward(msg);
                     }
                 });
     }
@@ -146,16 +145,16 @@ public class ElasticOutput extends ComponentVerticle {
         /**
          * Add a document to the next flush
          *
-         * @param headers headers of the event
-         * @param evt     event to add.
+         * @param msg     message to process.
          */
-        public void add(MultiMap headers, JsonObject evt) {
+        public void add(JsonObject msg) {
             String idx = index;
+            JsonObject evt = event(msg);
             if (evt.containsKey("_index")) {
                 idx += evt.getString("_index");
                 evt.remove("_index");
             }
-            if (paused) notifyPressure(previousPressure, headers);
+            if (paused) notifyPressure(previousPressure, headers(msg));
             builder.append(new JsonObject().put("index", new JsonObject()
                     .put("_type", type)
                     .put("_index", idx)).encode()).append("\n");

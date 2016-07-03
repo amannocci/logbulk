@@ -25,7 +25,6 @@ package io.techcode.logbulk.pipeline.transform;
 
 import io.techcode.logbulk.component.ComponentVerticle;
 import io.techcode.logbulk.util.ConvertHandler;
-import io.vertx.core.MultiMap;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import oi.thekraken.grok.api.Grok;
@@ -66,8 +65,9 @@ public class GrokTransform extends ComponentVerticle {
         // Register endpoint
         vertx.eventBus().<JsonObject>localConsumer(endpoint)
                 .handler(new ConvertHandler() {
-                    @Override public void handle(MultiMap headers, JsonObject evt) {
+                    @Override public void handle(JsonObject msg) {
                         // Process
+                        JsonObject evt = event(msg);
                         String field = evt.getString(config.getString("match"));
                         if (field == null) return;
 
@@ -78,7 +78,7 @@ public class GrokTransform extends ComponentVerticle {
                             evt.mergeIn(new JsonObject(matcher.toMap()));
 
                             // Send to the next endpoint
-                            forward(headers, evt);
+                            forward(msg);
                         }
                     }
                 });
