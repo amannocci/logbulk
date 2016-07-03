@@ -188,8 +188,9 @@ public class ComponentVerticle extends AbstractVerticle {
      * @param config source configuration.
      */
     public void handlePressure(ReadStream stream, JsonObject config) {
-        eventBus.<String>consumer(config.getString("endpoint") + ".pressure")
-                .handler(new PressureHandler(stream));
+        String endpoint = config.getString("endpoint");
+        eventBus.<String>consumer(endpoint + ".pressure")
+                .handler(new PressureHandler(stream, endpoint));
     }
 
     /**

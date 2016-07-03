@@ -27,6 +27,7 @@ import com.google.common.collect.Sets;
 import io.vertx.core.Handler;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.streams.ReadStream;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Set;
 
@@ -35,6 +36,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Pressure handler implementation.
  */
+@Slf4j
 public class PressureHandler implements Handler<Message<String>> {
 
     // Back pressure
@@ -46,17 +48,29 @@ public class PressureHandler implements Handler<Message<String>> {
     // State of the stream
     private boolean paused = false;
 
+
+    private boolean ended = false;
+
     /**
      * Create a new back pressure handler.
      *
-     * @param stream stream to handle.
+     * @param stream   stream to handle.
+     * @param endpoint endpoint name.
      */
-    public PressureHandler(ReadStream stream) {
-        checkNotNull(stream, "The stream can't be null");
-        this.stream = stream;
+    public PressureHandler(ReadStream stream, String endpoint) {
+        this.stream = checkNotNull(stream, "The stream can't be null");
+        stream.endHandler(h -> {
+            nextPressure.clear();
+            ended = true;
+            log.info("Finish to read stream: " + endpoint);
+        });
     }
 
     @Override public void handle(Message<String> e) {
+        // Handle correctly ended stream
+        if (ended) return;
+
+        // Process stream pressure
         String evt = e.body();
         if (nextPressure.contains(evt)) {
             nextPressure.remove(evt);

@@ -65,7 +65,6 @@ public class FileInput extends ComponentVerticle {
             log.error("Error during file read:", h.getCause());
             vertx.close();
         });
-        file.endHandler(e -> log.info("Finish to read file: " + path));
     }
 
     @Override public void stop() {
