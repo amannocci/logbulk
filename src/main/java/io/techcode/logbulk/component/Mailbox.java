@@ -24,20 +24,15 @@
 package io.techcode.logbulk.component;
 
 import com.google.common.base.Strings;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import io.techcode.logbulk.util.ConvertHandler;
 import io.vertx.core.Handler;
-import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Map;
-import java.util.Optional;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Mailbox implementation.
@@ -56,7 +51,7 @@ public class Mailbox extends ComponentVerticle implements Handler<JsonObject> {
     private Queue<JsonObject> buffer = Lists.newLinkedList();
 
     // Workers
-    private Set<String> workers = Sets.newTreeSet();
+    private NavigableSet<String> workers = Sets.newTreeSet();
     private Map<String, Integer> workersJob = Maps.newHashMap();
 
     // Back pressure
@@ -134,7 +129,7 @@ public class Mailbox extends ComponentVerticle implements Handler<JsonObject> {
      */
     private void process(JsonObject msg, Optional<String> workerOpt) {
         // Retrieve a worker
-        String worker = workerOpt.orElseGet(() -> workers.isEmpty() ? null : Iterables.getLast(workers));
+        String worker = workerOpt.orElseGet(() -> workers.isEmpty() ? null : workers.first());
         if (Strings.isNullOrEmpty(worker)) return;
 
         // Increase job
