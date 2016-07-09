@@ -25,6 +25,8 @@ package io.techcode.logbulk.pipeline.input;
 
 import com.google.common.collect.Lists;
 import io.techcode.logbulk.component.ComponentVerticle;
+import io.vertx.core.Handler;
+import io.vertx.core.VoidHandler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetServer;
 import io.vertx.core.net.NetSocket;
@@ -58,8 +60,7 @@ public class TcpInput extends ComponentVerticle {
         server.connectHandler(c -> {
             connections.add(c);
             c.handler(inputParser(config));
-            handlePressure(c, config);
-            c.closeHandler(h -> connections.remove(c));
+            handlePressure(c, config, h -> connections.remove(c));
         });
 
         // Listen incoming connections

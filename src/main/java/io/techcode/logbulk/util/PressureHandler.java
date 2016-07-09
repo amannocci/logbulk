@@ -58,8 +58,20 @@ public class PressureHandler implements Handler<Message<String>> {
      * @param endpoint endpoint name.
      */
     public PressureHandler(ReadStream stream, String endpoint) {
+        this(stream, endpoint, null);
+    }
+
+    /**
+     * Create a new back pressure handler.
+     *
+     * @param stream     stream to handle.
+     * @param endpoint   endpoint name.
+     * @param endHandler end handler to call.
+     */
+    public PressureHandler(ReadStream stream, String endpoint, Handler<Void> endHandler) {
         this.stream = checkNotNull(stream, "The stream can't be null");
         stream.endHandler(h -> {
+            if (endHandler != null) endHandler.handle(null);
             nextPressure.clear();
             ended = true;
             log.info("Finish to read stream: " + endpoint);

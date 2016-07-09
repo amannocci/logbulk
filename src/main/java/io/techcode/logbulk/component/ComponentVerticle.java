@@ -26,6 +26,7 @@ package io.techcode.logbulk.component;
 import com.google.common.collect.ArrayListMultimap;
 import io.techcode.logbulk.util.PressureHandler;
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Handler;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.json.JsonObject;
@@ -191,9 +192,20 @@ public class ComponentVerticle extends AbstractVerticle {
      * @param config source configuration.
      */
     public void handlePressure(ReadStream stream, JsonObject config) {
+        handlePressure(stream, config, null);
+    }
+
+    /**
+     * Handle back-pressure on component.
+     *
+     * @param stream     stream in read.
+     * @param config     source configuration.
+     * @param endHandler end handler to call.
+     */
+    public void handlePressure(ReadStream stream, JsonObject config, Handler<Void> endHandler) {
         String endpoint = config.getString("endpoint");
         eventBus.<String>consumer(endpoint + ".pressure")
-                .handler(new PressureHandler(stream, endpoint));
+                .handler(new PressureHandler(stream, endpoint, endHandler));
     }
 
     /**
