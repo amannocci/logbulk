@@ -75,22 +75,20 @@ public class FileOutput extends ComponentVerticle {
 
         // Register endpoint
         getEventBus().<JsonObject>localConsumer(endpoint)
-                .handler(new ConvertHandler() {
-                    @Override public void handle(JsonObject msg) {
-                        // Process the event
-                        buf.appendString(event(msg).encode()).appendString(delimiter);
-                        if (buf.length() > chunkPartition) {
-                            file.write(buf);
-                            buf = Buffer.buffer(chunkPartition);
-                            if (file.writeQueueFull()) {
-                                notifyPressure(previousPressure, headers(msg));
-                                file.drainHandler(HANDLE_PRESSURE);
-                            }
+                .handler((ConvertHandler) msg -> {
+                    // Process the event
+                    buf.appendString(event(msg).encode()).appendString(delimiter);
+                    if (buf.length() > chunkPartition) {
+                        file.write(buf);
+                        buf = Buffer.buffer(chunkPartition);
+                        if (file.writeQueueFull()) {
+                            notifyPressure(previousPressure, headers(msg));
+                            file.drainHandler(HANDLE_PRESSURE);
                         }
-
-                        // Send to the next endpoint
-                        forward(msg);
                     }
+
+                    // Send to the next endpoint
+                    forward(msg);
                 });
     }
 

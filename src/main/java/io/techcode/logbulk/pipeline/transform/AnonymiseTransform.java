@@ -62,17 +62,15 @@ public class AnonymiseTransform extends ComponentVerticle {
 
         // Register endpoint
         getEventBus().<JsonObject>localConsumer(endpoint)
-                .handler(msg -> new ConvertHandler() {
-                    @Override public void handle(JsonObject msg) {
-                        // Process
-                        JsonObject evt = event(msg);
-                        fields.stream().filter(evt::containsKey).forEach(field -> {
-                            evt.put(field, hash.hashString(evt.getString(field), StandardCharsets.UTF_8).toString());
-                        });
+                .handler((ConvertHandler) msg -> {
+                    // Process
+                    JsonObject evt = event(msg);
+                    fields.stream().filter(evt::containsKey).forEach(field -> {
+                        evt.put(field, hash.hashString(evt.getString(field), StandardCharsets.UTF_8).toString());
+                    });
 
-                        // Send to the next endpoint
-                        forward(msg);
-                    }
+                    // Send to the next endpoint
+                    forward(msg);
                 });
     }
 

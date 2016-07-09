@@ -30,12 +30,12 @@ import io.vertx.core.json.JsonObject;
 /**
  * Convert a message to a pair of headers and event.
  */
-public abstract class ConvertHandler implements Handler<Message<JsonObject>> {
+public interface ConvertHandler extends Handler<Message<JsonObject>> {
 
-    @Override public void handle(Message<JsonObject> event) {
+    @Override default void handle(Message<JsonObject> event) {
         handle(event.body());
     }
 
-    public abstract void handle(JsonObject message);
+    void handle(JsonObject message);
 
 }

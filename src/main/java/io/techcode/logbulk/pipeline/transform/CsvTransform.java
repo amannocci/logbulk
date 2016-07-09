@@ -65,23 +65,21 @@ public class CsvTransform extends ComponentVerticle {
 
         // Register endpoint
         getEventBus().<JsonObject>localConsumer(endpoint)
-                .handler(new ConvertHandler() {
-                    @Override public void handle(JsonObject msg) {
-                        // Process
-                        JsonObject evt = event(msg);
-                        String field = evt.getString(source);
-                        if (field != null) {
-                            String[] cols = parser.parseLine(field);
-                            if (cols.length >= columns.size()) {
-                                for (int key : columns.keySet()) {
-                                    evt.put(columns.get(key), cols[key]);
-                                }
+                .handler((ConvertHandler) msg -> {
+                    // Process
+                    JsonObject evt = event(msg);
+                    String field = evt.getString(source);
+                    if (field != null) {
+                        String[] cols = parser.parseLine(field);
+                        if (cols.length >= columns.size()) {
+                            for (int key : columns.keySet()) {
+                                evt.put(columns.get(key), cols[key]);
                             }
                         }
-
-                        // Send to the next endpoint
-                        forward(msg);
                     }
+
+                    // Send to the next endpoint
+                    forward(msg);
                 });
     }
 

@@ -76,15 +76,13 @@ public class MutateTransform extends ComponentVerticle {
 
         // Register endpoint
         getEventBus().<JsonObject>localConsumer(endpoint)
-                .handler(new ConvertHandler() {
-                    @Override public void handle(JsonObject msg) {
-                        // Process
-                        JsonObject evt = event(msg);
-                        pipeline.forEach(t -> t.accept(evt));
+                .handler((ConvertHandler) msg -> {
+                    // Process
+                    JsonObject evt = event(msg);
+                    pipeline.forEach(t -> t.accept(evt));
 
-                        // Send to the next endpoint
-                        forward(msg);
-                    }
+                    // Send to the next endpoint
+                    forward(msg);
                 });
     }
 

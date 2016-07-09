@@ -61,14 +61,12 @@ public class ElasticOutput extends ComponentVerticle {
 
         // Register endpoint
         getEventBus().<JsonObject>localConsumer(endpoint)
-                .handler(new ConvertHandler() {
-                    @Override public void handle(JsonObject msg) {
-                        // Process
-                        bulk.add(msg);
+                .handler((ConvertHandler) msg -> {
+                    // Process
+                    bulk.add(msg);
 
-                        // Send to the next endpoint
-                        forward(msg);
-                    }
+                    // Send to the next endpoint
+                    forward(msg);
                 });
     }
 
@@ -145,7 +143,7 @@ public class ElasticOutput extends ComponentVerticle {
         /**
          * Add a document to the next flush
          *
-         * @param msg     message to process.
+         * @param msg message to process.
          */
         public void add(JsonObject msg) {
             String idx = index;

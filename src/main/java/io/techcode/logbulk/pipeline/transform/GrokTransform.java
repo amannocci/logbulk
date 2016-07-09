@@ -64,22 +64,20 @@ public class GrokTransform extends ComponentVerticle {
 
         // Register endpoint
         getEventBus().<JsonObject>localConsumer(endpoint)
-                .handler(new ConvertHandler() {
-                    @Override public void handle(JsonObject msg) {
-                        // Process
-                        JsonObject evt = event(msg);
-                        String field = evt.getString(config.getString("match"));
-                        if (field == null) return;
+                .handler((ConvertHandler) msg -> {
+                    // Process
+                    JsonObject evt = event(msg);
+                    String field = evt.getString(config.getString("match"));
+                    if (field == null) return;
 
-                        Match matcher = grok.match(field);
-                        matcher.captures();
-                        if (!matcher.isNull()) {
-                            // Compose
-                            evt.mergeIn(new JsonObject(matcher.toMap()));
+                    Match matcher = grok.match(field);
+                    matcher.captures();
+                    if (!matcher.isNull()) {
+                        // Compose
+                        evt.mergeIn(new JsonObject(matcher.toMap()));
 
-                            // Send to the next endpoint
-                            forward(msg);
-                        }
+                        // Send to the next endpoint
+                        forward(msg);
                     }
                 });
     }
