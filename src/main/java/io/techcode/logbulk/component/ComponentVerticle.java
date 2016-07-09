@@ -48,6 +48,9 @@ import static com.google.common.base.Preconditions.checkState;
 @Slf4j
 public class ComponentVerticle extends AbstractVerticle {
 
+    // Delivery options
+    protected static final DeliveryOptions DELIVERY_OPTIONS = new DeliveryOptions().setCodecName("fastjsonobject");
+
     // UUID of the component
     protected final String uuid = UUID.randomUUID().toString();
 
@@ -176,7 +179,7 @@ public class ComponentVerticle extends AbstractVerticle {
         Optional<String> nextOpt = next(headers, current);
         if (nextOpt.isPresent()) {
             headers.put("_current", current + 1);
-            eventBus.send(nextOpt.get(), msg, new DeliveryOptions().setCodecName("fastjsonobject"));
+            eventBus.send(nextOpt.get(), msg, DELIVERY_OPTIONS);
         }
         if (hasMailbox) eventBus.send(parentEndpoint + ".worker", endpoint);
     }

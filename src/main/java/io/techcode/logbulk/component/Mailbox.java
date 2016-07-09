@@ -143,7 +143,7 @@ public class Mailbox extends ComponentVerticle implements Handler<JsonObject> {
 
         // Evict if busy & send job
         if (job >= threehold) workers.remove(worker);
-        getEventBus().send(worker, msg, new DeliveryOptions().setCodecName("fastjsonobject"));
+        getEventBus().send(worker, msg, DELIVERY_OPTIONS);
     }
 
     /**
