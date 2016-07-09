@@ -75,7 +75,7 @@ public class MutateTransform extends ComponentVerticle {
         ((ArrayList) pipeline).trimToSize();
 
         // Register endpoint
-        vertx.eventBus().<JsonObject>localConsumer(endpoint)
+        getEventBus().<JsonObject>localConsumer(endpoint)
                 .handler(new ConvertHandler() {
                     @Override public void handle(JsonObject msg) {
                         // Process

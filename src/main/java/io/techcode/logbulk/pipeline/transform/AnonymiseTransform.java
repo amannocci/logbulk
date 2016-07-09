@@ -61,7 +61,7 @@ public class AnonymiseTransform extends ComponentVerticle {
         HashFunction hash = HASHING.getOrDefault("hashing", Hashing.md5());
 
         // Register endpoint
-        vertx.eventBus().<JsonObject>localConsumer(endpoint)
+        getEventBus().<JsonObject>localConsumer(endpoint)
                 .handler(msg -> new ConvertHandler() {
                     @Override public void handle(JsonObject msg) {
                         // Process

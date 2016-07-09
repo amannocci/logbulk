@@ -74,8 +74,7 @@ public class FileOutput extends ComponentVerticle {
         buf = Buffer.buffer(chunkPartition);
 
         // Register endpoint
-        EventBus bus = vertx.eventBus();
-        bus.<JsonObject>localConsumer(endpoint)
+        getEventBus().<JsonObject>localConsumer(endpoint)
                 .handler(new ConvertHandler() {
                     @Override public void handle(JsonObject msg) {
                         // Process the event

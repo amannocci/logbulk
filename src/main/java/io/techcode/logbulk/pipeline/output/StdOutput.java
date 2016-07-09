@@ -38,7 +38,7 @@ public class StdOutput extends ComponentVerticle {
         super.start();
 
         // Register endpoint
-        vertx.eventBus().<JsonObject>localConsumer(endpoint)
+        getEventBus().<JsonObject>localConsumer(endpoint)
                 .handler(new ConvertHandler() {
                     @Override public void handle(JsonObject msg) {
                         // Process the event
