@@ -48,7 +48,7 @@ public class PressureHandler implements Handler<Message<String>> {
     // State of the stream
     private boolean paused = false;
 
-
+    // Ended state
     private boolean ended = false;
 
     /**
