@@ -4,7 +4,7 @@ It is fully free and fully open source. The license is MIT, meaning you are pret
 * [Source](https://github.com/amannocci/logbulk)
 * [Issues](https://github.com/amannocci/logbulk/issues)
 * [Documentation](https://github.com/amannocci/logbulk/wiki)
-* [Contact](adrien.mannocci@gmail.com)
+* [Contact](mailto:adrien.mannocci@gmail.com)
 
 ## Prerequisites
 * [Java 8](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
