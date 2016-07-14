@@ -109,7 +109,14 @@ public class Logbulk extends AbstractVerticle {
                 deployment.setConfig(conf);
                 int idx = el.getKey().indexOf('/');
                 String type = (idx != -1) ? el.getKey().substring(0, idx) : el.getKey();
-                vertx.deployVerticle(registry.getComponent(section + '.' + type), deployment, h -> completion.complete());
+                vertx.deployVerticle(registry.getComponent(section + '.' + type), deployment, h -> {
+                    if (h.failed()) {
+                        log.error("Error during component setup:", h.cause());
+                        vertx.close();
+                    } else {
+                        completion.complete();
+                    }
+                });
             };
 
             // Deploy mailbox first
