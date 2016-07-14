@@ -50,13 +50,15 @@ public class ExecInput extends ComponentVerticle {
 
         // Setup processing task
         String command = config.getString("command");
+        String interpreter = config.getString("interpreter", "/bin/bash");
+        String arguments = config.getString("arguments", "-c");
         int interval = config.getInteger("interval", 1);
         ctx = vertx.getOrCreateContext();
 
         // Setup periodic task
         TimeoutStream stream = vertx.periodicStream(interval * 1000)
                 .handler(h -> {
-                    NuProcessBuilder builder = new NuProcessBuilder(command);
+                    NuProcessBuilder builder = new NuProcessBuilder(interpreter, arguments, command);
                     builder.setProcessListener(new ProcessHandler());
                     builder.start();
                 });
