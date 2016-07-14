@@ -46,7 +46,7 @@ public class HeartbeatInput extends ComponentVerticle {
         // Setup periodic task
         TimeoutStream stream = vertx.periodicStream(interval * 1000)
                 .handler(h -> createEvent(message));
-        handlePressure(stream, config);
+        handlePressure(stream);
     }
 
     @Override public JsonObject config() {

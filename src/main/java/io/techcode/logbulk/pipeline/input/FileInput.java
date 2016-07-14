@@ -57,7 +57,7 @@ public class FileInput extends ComponentVerticle {
         file.setReadBufferSize(chunk);
 
         // Handle back-pressure
-        handlePressure(file, config);
+        handlePressure(file);
 
         // Begin to read
         file.handler(buf -> parser.handle(buf));

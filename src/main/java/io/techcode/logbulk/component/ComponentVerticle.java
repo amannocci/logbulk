@@ -189,20 +189,18 @@ public class ComponentVerticle extends AbstractVerticle {
      * Handle back-pressure on component.
      *
      * @param stream stream in read.
-     * @param config source configuration.
      */
-    public void handlePressure(ReadStream stream, JsonObject config) {
-        handlePressure(stream, config, null);
+    public void handlePressure(ReadStream stream) {
+        handlePressure(stream, null);
     }
 
     /**
      * Handle back-pressure on component.
      *
      * @param stream     stream in read.
-     * @param config     source configuration.
      * @param endHandler end handler to call.
      */
-    public void handlePressure(ReadStream stream, JsonObject config, Handler<Void> endHandler) {
+    public void handlePressure(ReadStream stream, Handler<Void> endHandler) {
         String endpoint = config.getString("endpoint");
         eventBus.<String>consumer(endpoint + ".pressure")
                 .handler(new PressureHandler(stream, endpoint, endHandler));

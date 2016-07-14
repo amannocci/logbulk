@@ -60,7 +60,7 @@ public class TcpInput extends ComponentVerticle {
         server.connectHandler(c -> {
             connections.add(c);
             c.handler(inputParser(config));
-            handlePressure(c, config, h -> connections.remove(c));
+            handlePressure(c, h -> connections.remove(c));
         });
 
         // Listen incoming connections

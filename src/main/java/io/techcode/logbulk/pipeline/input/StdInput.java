@@ -53,7 +53,7 @@ public class StdInput extends ComponentVerticle {
         stream = new AsyncInputStream(vertx, Executors.newSingleThreadExecutor(), System.in);
 
         // Handle back-pressure
-        handlePressure(stream, config);
+        handlePressure(stream);
 
         // Begin to read
         stream.handler(buf -> parser.handle(buf));

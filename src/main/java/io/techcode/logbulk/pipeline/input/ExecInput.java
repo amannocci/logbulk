@@ -62,7 +62,7 @@ public class ExecInput extends ComponentVerticle {
                     builder.setProcessListener(new ProcessHandler());
                     builder.start();
                 });
-        handlePressure(stream, config);
+        handlePressure(stream);
     }
 
     @Override public JsonObject config() {
