@@ -23,6 +23,7 @@
  */
 package io.techcode.logbulk.pipeline.transform;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Floats;
@@ -57,6 +58,9 @@ public class MutateTransform extends ComponentVerticle {
         }
         if (config.containsKey("strip")) {
             pipeline.add(new StripTask(config));
+        }
+        if (config.containsKey("join")) {
+            pipeline.add(new JoinTask(config));
         }
         if (config.containsKey("uppercase")) {
             pipeline.add(new UppercaseTask(config));
@@ -225,6 +229,40 @@ public class MutateTransform extends ComponentVerticle {
         @Override public void accept(JsonObject evt) {
             toUpdate.keySet().stream().filter(evt::containsKey).forEach(key -> {
                 evt.put(key, toUpdate.get(key));
+            });
+        }
+
+    }
+
+    /**
+     * Join task implementation.
+     */
+    private class JoinTask implements Consumer<JsonObject> {
+
+        // Element to join
+        private Map<String, String> toJoin;
+
+        /**
+         * Create a new join task.
+         *
+         * @param config configuration of the task.
+         */
+        private JoinTask(JsonObject config) {
+            checkNotNull(config, "The configuration can't be null");
+            toJoin = Maps.newTreeMap();
+            for (Map.Entry<String, Object> entry : config.getJsonObject("join")) {
+                toJoin.put(entry.getKey(), String.valueOf(entry.getValue()));
+            }
+        }
+
+        @Override public void accept(JsonObject evt) {
+            toJoin.keySet().stream().filter(evt::containsKey).forEach(key -> {
+                Object raw = evt.getMap().get(key);
+                if (raw instanceof List) {
+                    List list = (List) raw;
+                    String joined = Joiner.on(toJoin.get(key)).join(list);
+                    evt.put(key, joined);
+                }
             });
         }
 
