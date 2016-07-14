@@ -215,21 +215,28 @@ public class ComponentVerticle extends AbstractVerticle {
      * @return new input parser.
      */
     public RecordParser inputParser(JsonObject config) {
-        return RecordParser.newDelimited(config.getString("delimiter", "\n"), buf -> {
-            // Create a new event
-            JsonObject headers = new JsonObject();
-            JsonObject evt = new JsonObject().put("message", buf.toString());
+        return RecordParser.newDelimited(config.getString("delimiter", "\n"), buf -> createEvent(buf.toString()));
+    }
 
-            // Options
-            headers.put("_route", config.getString("dispatch"));
-            headers.put("_current", 0);
+    /**
+     * Create a new event and forward to next endpoint.
+     *
+     * @param message message data.
+     */
+    protected final void createEvent(String message) {
+        // Create a new event
+        JsonObject headers = new JsonObject();
+        JsonObject evt = new JsonObject().put("message", message);
 
-            // Send to the next endpoint
-            forward(new JsonObject()
-                    .put("headers", headers)
-                    .put("event", evt)
-            );
-        });
+        // Options
+        headers.put("_route", config.getString("dispatch"));
+        headers.put("_current", 0);
+
+        // Send to the next endpoint
+        forward(new JsonObject()
+                .put("headers", headers)
+                .put("event", evt)
+        );
     }
 
     /**
