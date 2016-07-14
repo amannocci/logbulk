@@ -23,19 +23,18 @@
  */
 package io.techcode.logbulk;
 
+import com.google.common.collect.Lists;
 import com.typesafe.config.ConfigRenderOptions;
 import com.typesafe.config.ConfigValue;
 import io.techcode.logbulk.component.ComponentRegistry;
 import io.techcode.logbulk.component.Mailbox;
 import io.techcode.logbulk.io.AppConfig;
 import io.techcode.logbulk.io.FastJsonObjectMessageCodec;
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.DeploymentOptions;
-import io.vertx.core.Handler;
+import io.vertx.core.*;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -62,14 +61,14 @@ public class Logbulk extends AbstractVerticle {
         // Register custom codecs
         vertx.eventBus().registerCodec(new FastJsonObjectMessageCodec());
 
-        // Deploy all outputs components
-        setups("output", config.outputs());
-
-        // Deploy all transforms components
-        setups("transform", config.transforms());
-
-        // Deploy all inputs components
-        setups("input", config.inputs());
+        // Deploy all outputs & transforms components
+        CompositeFuture.all(
+                setups("output", config.outputs()),
+                setups("transform", config.transforms())
+        ).setHandler(h -> {
+            // Deploy all inputs components
+            setups("input", config.inputs());
+        });
     }
 
     @Override public void stop() {
@@ -82,7 +81,11 @@ public class Logbulk extends AbstractVerticle {
      * @param section section to analyze.
      * @param entries details of setup.
      */
-    private void setups(String section, Set<Map.Entry<String, ConfigValue>> entries) {
+    private Future<CompositeFuture> setups(String section, Set<Map.Entry<String, ConfigValue>> entries) {
+        // Wait for completion
+        List<Future> completions = Lists.newArrayListWithCapacity(entries.size());
+
+        // Iterate over each component
         for (Map.Entry<String, ConfigValue> el : entries) {
             // Extract json configuration
             DeploymentOptions deployment = new DeploymentOptions();
@@ -100,11 +103,13 @@ public class Logbulk extends AbstractVerticle {
             if (conf.getBoolean("worker", false)) deployment.setWorker(true);
 
             // Map configuration & deploy
+            Future completion = Future.future();
+            completions.add(completion);
             Handler<AsyncResult<String>> deploy = event -> {
                 deployment.setConfig(conf);
                 int idx = el.getKey().indexOf('/');
                 String type = (idx != -1) ? el.getKey().substring(0, idx) : el.getKey();
-                vertx.deployVerticle(registry.getComponent(section + '.' + type), deployment);
+                vertx.deployVerticle(registry.getComponent(section + '.' + type), deployment, h -> completion.complete());
             };
 
             // Deploy mailbox first
@@ -120,6 +125,9 @@ public class Logbulk extends AbstractVerticle {
                 vertx.deployVerticle(Mailbox.class.getName(), new DeploymentOptions().setConfig(mailboxConf), deploy);
             }
         }
+
+        // Compose all futures
+        return CompositeFuture.all(completions);
     }
 
 }
