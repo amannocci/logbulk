@@ -55,7 +55,7 @@ public class GrokTransform extends ComponentVerticle {
             }
 
             // Compile an expression
-            grok.compile(config.getString("format"));
+            grok.compile(config.getString("format"), true);
         } catch (GrokException ex) {
             log.error("Can't instanciate grok:", ex);
             vertx.close();
