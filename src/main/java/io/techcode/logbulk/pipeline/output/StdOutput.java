@@ -37,15 +37,28 @@ public class StdOutput extends ComponentVerticle {
     @Override public void start() {
         super.start();
 
-        // Register endpoint
-        getEventBus().<JsonObject>localConsumer(endpoint)
-                .handler((ConvertHandler) msg -> {
-                    // Process the event
-                    log.info(event(msg).encode());
+        // Setup
+        ConvertHandler handler;
+        if (config.getBoolean("pretty", false)) {
+            handler = (msg) -> {
+                // Process the event
+                log.info(event(msg).encodePrettily());
 
-                    // Send to the next endpoint
-                    forward(msg);
-                });
+                // Send to the next endpoint
+                forward(msg);
+            };
+        } else {
+            handler = (msg) -> {
+                // Process the event
+                log.info(event(msg).encode());
+
+                // Send to the next endpoint
+                forward(msg);
+            };
+        }
+
+        // Register endpoint
+        getEventBus().<JsonObject>localConsumer(endpoint).handler(handler);
     }
 
 }
