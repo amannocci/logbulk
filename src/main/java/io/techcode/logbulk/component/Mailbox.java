@@ -28,7 +28,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import io.techcode.logbulk.util.ConvertHandler;
-import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 
@@ -38,7 +37,7 @@ import java.util.*;
  * Mailbox implementation.
  */
 @Slf4j
-public class Mailbox extends ComponentVerticle implements Handler<JsonObject> {
+public class Mailbox extends ComponentVerticle implements ConvertHandler {
 
     // Default threehold
     public final static int DEFAULT_THREEHOLD = 1000;
@@ -68,7 +67,7 @@ public class Mailbox extends ComponentVerticle implements Handler<JsonObject> {
         threehold *= componentCount;
 
         // Setup
-        getEventBus().<JsonObject>localConsumer(endpoint).handler((ConvertHandler) Mailbox.this::handle);
+        getEventBus().<JsonObject>localConsumer(endpoint).handler(this);
         getEventBus().<String>localConsumer(endpoint + ".worker").handler(event -> {
             // Decrease job
             String worker = event.body();
