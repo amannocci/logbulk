@@ -68,11 +68,7 @@ public class Mailbox extends ComponentVerticle implements Handler<JsonObject> {
         threehold *= componentCount;
 
         // Setup
-        getEventBus().<JsonObject>localConsumer(endpoint).handler(new ConvertHandler() {
-            @Override public void handle(JsonObject message) {
-                Mailbox.this.handle(message);
-            }
-        });
+        getEventBus().<JsonObject>localConsumer(endpoint).handler((ConvertHandler) Mailbox.this::handle);
         getEventBus().<String>localConsumer(endpoint + ".worker").handler(event -> {
             // Decrease job
             String worker = event.body();
