@@ -96,7 +96,7 @@ public class Logbulk extends AbstractVerticle {
             // Handle special case
             conf.put("endpoint", endpoint);
             if ("transform".equals(section)) deployment.setInstances(instance);
-            if ("input".equals(section)) conf.put("origin", true);
+            conf.put("hasMailbox", !"input".equals(section) && conf.getInteger("mailbox", Mailbox.DEFAULT_THREEHOLD) > 0);
             conf.put("route", config.routes());
 
             // Handle generic case
@@ -107,8 +107,7 @@ public class Logbulk extends AbstractVerticle {
             completions.add(completion);
             Handler<AsyncResult<String>> deploy = event -> {
                 deployment.setConfig(conf);
-                int idx = el.getKey().indexOf('/');
-                String type = (idx != -1) ? el.getKey().substring(0, idx) : el.getKey();
+                String type = type(endpoint);
                 vertx.deployVerticle(registry.getComponent(section + '.' + type), deployment, h -> {
                     if (h.failed()) {
                         log.error("Error during component setup:", h.cause());
@@ -120,21 +119,32 @@ public class Logbulk extends AbstractVerticle {
             };
 
             // Deploy mailbox first
-            if ("input".equals(section)) {
-                deploy.handle(null);
-            } else {
+            if (conf.getBoolean("hasMailbox")) {
                 JsonObject mailboxConf = new JsonObject();
                 mailboxConf.put("route", conf.getJsonObject("route"));
                 mailboxConf.put("instance", instance);
                 mailboxConf.put("endpoint", endpoint);
-                mailboxConf.put("origin", true);
+                mailboxConf.put("hasMailbox", false);
                 mailboxConf.put("mailbox", conf.getInteger("mailbox", Mailbox.DEFAULT_THREEHOLD));
                 vertx.deployVerticle(Mailbox.class.getName(), new DeploymentOptions().setConfig(mailboxConf), deploy);
+            } else {
+                deploy.handle(null);
             }
         }
 
         // Compose all futures
         return CompositeFuture.all(completions);
+    }
+
+    /**
+     * Gets the type of the component.
+     *
+     * @param component component id.
+     * @return type of the component.
+     */
+    private String type(String component) {
+        int idx = component.indexOf('/');
+        return (idx != -1) ? component.substring(0, idx) : component;
     }
 
 }

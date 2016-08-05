@@ -277,12 +277,12 @@ public class ComponentVerticle extends AbstractVerticle {
         checkNotNull(config, "The configuration can't be null");
         parentEndpoint = config.getString("endpoint");
 
-        if (config.getBoolean("origin", false)) {
-            endpoint = parentEndpoint;
-            hasMailbox = false;
-        } else {
+        if (config.getBoolean("hasMailbox", true)) {
             endpoint = parentEndpoint + ".worker." + uuid;
             eventBus.send(parentEndpoint + ".worker", endpoint);
+        } else {
+            endpoint = parentEndpoint;
+            hasMailbox = false;
         }
         log.info("Endpoint: " + endpoint);
     }
