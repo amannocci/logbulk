@@ -50,7 +50,7 @@ public class Logbulk extends AbstractVerticle {
     // Component registry
     private ComponentRegistry registry;
 
-    @Override public void start() {
+    @Override public void start(Future<Void> startFuture) {
         // Load configuration
         config = new AppConfig();
 
@@ -65,10 +65,9 @@ public class Logbulk extends AbstractVerticle {
         CompositeFuture.all(
                 setups("output", config.outputs()),
                 setups("transform", config.transforms())
-        ).setHandler(h -> {
-            // Deploy all inputs components
-            setups("input", config.inputs());
-        });
+        ).map(
+                setups("input", config.inputs())
+        ).setHandler(h -> startFuture.complete());
     }
 
     @Override public void stop() {
