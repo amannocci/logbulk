@@ -61,13 +61,13 @@ public class Logbulk extends AbstractVerticle {
         // Register custom codecs
         vertx.eventBus().registerCodec(new FastJsonObjectMessageCodec());
 
-        // Deploy all outputs & transforms components
+        // Deploy all outputs & transforms components and input
         CompositeFuture.all(
                 setups("output", config.outputs()),
                 setups("transform", config.transforms())
-        ).map(
-                setups("input", config.inputs())
-        ).setHandler(h -> startFuture.complete());
+        ).setHandler(h ->
+                setups("input", config.inputs()).setHandler(e -> startFuture.complete())
+        );
     }
 
     @Override public void stop() {
