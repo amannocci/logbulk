@@ -186,6 +186,20 @@ public class ComponentVerticle extends AbstractVerticle {
     }
 
     /**
+     * Update route of message.
+     *
+     * @param msg   message to update.
+     * @param route route to use.
+     * @return same object for chaining.
+     */
+    public JsonObject updateRoute(JsonObject msg, String route) {
+        JsonObject headers = headers(msg);
+        headers.put("_route", route);
+        headers.put("_current", 0);
+        return msg;
+    }
+
+    /**
      * Handle back-pressure on component.
      *
      * @param stream stream in read.

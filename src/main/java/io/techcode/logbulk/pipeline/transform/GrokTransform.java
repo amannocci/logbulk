@@ -23,6 +23,7 @@
  */
 package io.techcode.logbulk.pipeline.transform;
 
+import com.google.common.base.Strings;
 import io.techcode.logbulk.component.ComponentVerticle;
 import io.techcode.logbulk.util.ConvertHandler;
 import io.vertx.core.json.JsonObject;
@@ -30,6 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 import oi.thekraken.grok.api.Grok;
 import oi.thekraken.grok.api.Match;
 import oi.thekraken.grok.api.exception.GrokException;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 
@@ -62,6 +64,14 @@ public class GrokTransform extends ComponentVerticle {
             return;
         }
 
+        // Config setup
+        String fallback = config.getString("fallback", StringUtils.EMPTY);
+        if (!Strings.isNullOrEmpty(fallback) && routing.get(fallback).isEmpty()) {
+            log.error("Fallback route isn't defined:" + fallback);
+            vertx.close();
+            return;
+        }
+
         // Register endpoint
         getEventBus().<JsonObject>localConsumer(endpoint)
                 .handler((ConvertHandler) msg -> {
@@ -72,7 +82,11 @@ public class GrokTransform extends ComponentVerticle {
 
                     Match matcher = grok.match(field);
                     matcher.captures();
-                    if (!matcher.isNull()) {
+                    if (matcher.isNull()) {
+                        if (!Strings.isNullOrEmpty(fallback)) {
+                            forward(updateRoute(msg, fallback));
+                        }
+                    } else {
                         // Compose
                         evt.mergeIn(new JsonObject(matcher.toMap()));
 

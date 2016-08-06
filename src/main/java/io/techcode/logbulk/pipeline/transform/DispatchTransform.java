@@ -107,11 +107,7 @@ public class DispatchTransform extends ComponentVerticle {
          * @param msg message involved.
          */
         public void dispatch(JsonObject msg) {
-            JsonObject copy = msg.copy();
-            JsonObject headers = headers(copy);
-            headers.put("_current", 0);
-            headers.put("_route", route);
-            forward(msg);
+            forward(updateRoute(msg.copy(), route));
         }
 
     }
