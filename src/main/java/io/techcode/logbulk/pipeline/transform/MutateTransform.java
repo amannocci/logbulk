@@ -30,7 +30,10 @@ import com.google.common.primitives.Floats;
 import com.google.common.primitives.Ints;
 import io.techcode.logbulk.component.ComponentVerticle;
 import io.techcode.logbulk.util.ConvertHandler;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,6 +46,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Mutate transformer pipeline component.
  */
+@Slf4j
 public class MutateTransform extends ComponentVerticle {
 
     @Override public void start() {
@@ -73,6 +77,9 @@ public class MutateTransform extends ComponentVerticle {
         }
         if (config.containsKey("convert")) {
             pipeline.add(new ConvertTask(config));
+        }
+        if (config.containsKey("gsub")) {
+            pipeline.add(new GsubTask(config));
         }
 
         // Optimize space consumption
@@ -229,6 +236,44 @@ public class MutateTransform extends ComponentVerticle {
         @Override public void accept(JsonObject evt) {
             toUpdate.keySet().stream().filter(evt::containsKey).forEach(key -> {
                 evt.put(key, toUpdate.get(key));
+            });
+        }
+
+    }
+
+    /**
+     * Gsub task implementation.
+     */
+    private class GsubTask implements Consumer<JsonObject> {
+
+        // Element to gsub
+        private Map<String, Pair<String, String>> toGsub = Maps.newTreeMap();
+
+        /**
+         * Create a new gsub task.
+         *
+         * @param config configuration of the task.
+         */
+        private GsubTask(JsonObject config) {
+            checkNotNull(config, "The configuration can't be null");
+            for (Map.Entry<String, Object> entry : config.getJsonObject("gsub")) {
+                if (entry.getValue() instanceof JsonArray) {
+                    JsonArray list = (JsonArray) entry.getValue();
+                    if (list.size() == 2) {
+                        toGsub.put(entry.getKey(), Pair.of(list.getString(0), list.getString(1)));
+                    } else {
+                        log.error("GSub incorrect values: " + entry.getValue());
+                    }
+                }
+            }
+        }
+
+        @Override public void accept(JsonObject evt) {
+            toGsub.keySet().stream().filter(evt::containsKey).forEach(key -> {
+                if (evt.getValue(key) instanceof String) {
+                    Pair<String, String> pair = toGsub.get(key);
+                    evt.put(key, evt.getString(key).replaceAll(pair.getKey(), pair.getValue()));
+                }
             });
         }
 
