@@ -1,4 +1,4 @@
-/**
+/*
  * The MIT License (MIT)
  * <p/>
  * Copyright (c) 2016
@@ -47,7 +47,7 @@ public class PressureHandlerTest {
         // Prepare read stream
         ReadStream mockedStream = mock(ReadStream.class);
 
-        // Handler
+        // Test
         new PressureHandler(mockedStream, "test-endpoint");
         verify(mockedStream).endHandler(any());
     }
@@ -58,7 +58,7 @@ public class PressureHandlerTest {
         Message<String> mockedMessage = mock(Message.class);
         when(mockedMessage.body()).thenReturn("next-endpoint");
 
-        // Handler
+        // Test
         PressureHandler handler = new PressureHandler(mockedStream, "test-endpoint");
         handler.handle(mockedMessage);
         verify(mockedStream).pause();
@@ -70,7 +70,7 @@ public class PressureHandlerTest {
         Message<String> mockedMessage = mock(Message.class);
         when(mockedMessage.body()).thenReturn("next-endpoint");
 
-        // Handler
+        // Test
         PressureHandler handler = new PressureHandler(mockedStream, "test-endpoint");
         handler.handle(mockedMessage);
         handler.handle(mockedMessage);
@@ -83,7 +83,7 @@ public class PressureHandlerTest {
         EndedReadStream mockedStream = new EndedReadStream();
         Message<String> mockedMessage = mock(Message.class);
 
-        // Handler
+        // Test
         PressureHandler handler = new PressureHandler(mockedStream, "test-endpoint");
         mockedStream.fireEnd();
         handler.handle(mockedMessage);
@@ -93,7 +93,7 @@ public class PressureHandlerTest {
         // Prepare mocks
         EndedReadStream mockedStream = new EndedReadStream();
 
-        // Handler
+        // Test
         AtomicBoolean called = new AtomicBoolean();
         new PressureHandler(mockedStream, "test-endpoint", event -> called.set(true));
         mockedStream.fireEnd();

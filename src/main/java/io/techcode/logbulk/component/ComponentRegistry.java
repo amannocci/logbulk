@@ -23,12 +23,12 @@
  */
 package io.techcode.logbulk.component;
 
+import com.google.common.collect.Maps;
 import com.typesafe.config.ConfigValue;
 import io.techcode.logbulk.io.AppConfig;
 import io.vertx.core.Verticle;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -44,14 +44,13 @@ public class ComponentRegistry {
     private Verticle verticle;
 
     // Registry
-    private Map<String, String> registry = new HashMap<>();
+    private Map<String, String> registry = Maps.newHashMap();
 
     /**
      * Create a new component registry.
      */
     public ComponentRegistry(Verticle verticle) {
-        checkNotNull(verticle, "The verticle can't be null");
-        this.verticle = verticle;
+        this.verticle = checkNotNull(verticle, "The verticle can't be null");
     }
 
     /**
