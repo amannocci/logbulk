@@ -70,13 +70,11 @@ public class ElasticOutput extends ComponentVerticle {
                 });
     }
 
-    @Override public JsonObject config() {
-        JsonObject config = super.config();
+    @Override protected void checkConfig(JsonObject config) {
         checkState(config.getString("index") != null, "The index is required");
         checkState(config.getString("type") != null, "The type is required");
         checkState(config.getJsonArray("hosts") != null
                 && config.getJsonArray("hosts").size() > 0, "The hosts is required");
-        return config;
     }
 
     /**

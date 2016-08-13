@@ -98,10 +98,8 @@ public class FileOutput extends ComponentVerticle {
         file.close();
     }
 
-    @Override public JsonObject config() {
-        JsonObject config = super.config();
+    @Override protected void checkConfig(JsonObject config) {
         checkState(config.getString("path") != null, "The path is required");
-        return config;
     }
 
 }

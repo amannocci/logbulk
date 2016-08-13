@@ -59,10 +59,8 @@ public class StdInput extends ComponentVerticle {
         stream.handler(buf -> parser.handle(buf));
     }
 
-    @Override public JsonObject config() {
-        JsonObject config = super.config();
+    @Override protected void checkConfig(JsonObject config) {
         checkState(config.getString("dispatch") != null, "The dispatch is required");
-        return config;
     }
 
 }

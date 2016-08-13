@@ -54,10 +54,8 @@ public class JsonTransform extends ComponentVerticle {
                 });
     }
 
-    @Override public JsonObject config() {
-        JsonObject config = super.config();
+    @Override protected void checkConfig(JsonObject config) {
         checkState(config.getString("source") != null, "The source is required");
-        return config;
     }
 
 }

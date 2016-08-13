@@ -29,6 +29,7 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Handler;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
+import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.parsetools.RecordParser;
 import io.vertx.core.streams.ReadStream;
@@ -81,6 +82,24 @@ public class ComponentVerticle extends AbstractVerticle {
         for (String route : routes.fieldNames()) {
             routing.putAll(route, routes.getJsonArray(route).getList());
         }
+    }
+
+    /**
+     * Check configuration arguments.
+     * This method must be override to check configuration validity.
+     *
+     * @param config configuration to check.
+     */
+    protected void checkConfig(JsonObject config) {
+        log.warn("Configuration not checked: " + getClass().getSimpleName());
+    }
+
+    @Override public JsonObject config() {
+        if (config == null) {
+            config = super.config();
+            checkConfig(config);
+        }
+        return config;
     }
 
     /**

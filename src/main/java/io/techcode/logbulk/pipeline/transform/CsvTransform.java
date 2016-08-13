@@ -83,13 +83,11 @@ public class CsvTransform extends ComponentVerticle {
                 });
     }
 
-    @Override public JsonObject config() {
-        JsonObject config = super.config();
+    @Override protected void checkConfig(JsonObject config) {
         checkState(config.getString("field") != null, "The field is required");
         checkState(config.getString("separator") != null, "The separator is required");
         checkState(config.getString("delimiter") != null, "The delimiter is required");
         checkState(config.getJsonObject("columns") != null, "The columns is required");
-        return config;
     }
 
 }

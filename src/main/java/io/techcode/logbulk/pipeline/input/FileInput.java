@@ -71,11 +71,9 @@ public class FileInput extends ComponentVerticle {
         file.close();
     }
 
-    @Override public JsonObject config() {
-        JsonObject config = super.config();
+    @Override protected void checkConfig(JsonObject config) {
         checkState(config.getString("path") != null, "The path is required");
         checkState(config.getString("dispatch") != null, "The dispatch is required");
-        return config;
     }
 
 }

@@ -65,10 +65,8 @@ public class ExecInput extends ComponentVerticle {
         handlePressure(stream);
     }
 
-    @Override public JsonObject config() {
-        JsonObject config = super.config();
+    @Override protected void checkConfig(JsonObject config) {
         checkState(config.getString("command") != null, "The command is required");
-        return config;
     }
 
     /**

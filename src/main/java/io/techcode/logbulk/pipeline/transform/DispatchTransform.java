@@ -77,10 +77,8 @@ public class DispatchTransform extends ComponentVerticle {
                 });
     }
 
-    @Override public JsonObject config() {
-        JsonObject config = super.config();
+    @Override public void checkConfig(JsonObject config) {
         checkState(config.getJsonObject("dispatch") != null, "The routes is required");
-        return config;
     }
 
     /**

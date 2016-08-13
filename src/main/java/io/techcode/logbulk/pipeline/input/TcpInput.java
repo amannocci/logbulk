@@ -25,8 +25,6 @@ package io.techcode.logbulk.pipeline.input;
 
 import com.google.common.collect.Lists;
 import io.techcode.logbulk.component.ComponentVerticle;
-import io.vertx.core.Handler;
-import io.vertx.core.VoidHandler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetServer;
 import io.vertx.core.net.NetSocket;
@@ -81,11 +79,9 @@ public class TcpInput extends ComponentVerticle {
         });
     }
 
-    @Override public JsonObject config() {
-        JsonObject config = super.config();
+    @Override protected void checkConfig(JsonObject config) {
         checkState(config.getString("dispatch") != null, "The dispatch is required");
         checkState(config.getInteger("port") != null, "The port is required");
-        return config;
     }
 
 }

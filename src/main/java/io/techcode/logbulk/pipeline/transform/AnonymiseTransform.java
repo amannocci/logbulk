@@ -74,12 +74,10 @@ public class AnonymiseTransform extends ComponentVerticle {
                 });
     }
 
-    @Override public JsonObject config() {
-        JsonObject config = super.config();
+    @Override protected void checkConfig(JsonObject config) {
         checkState(config.getString("hashing") != null, "The hashing is required");
         checkState(config.getJsonArray("fields") != null
                 && config.getJsonArray("fields").size() > 0, "The fields is required");
-        return config;
     }
 
 }

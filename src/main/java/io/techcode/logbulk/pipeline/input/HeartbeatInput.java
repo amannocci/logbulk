@@ -49,10 +49,8 @@ public class HeartbeatInput extends ComponentVerticle {
         handlePressure(stream);
     }
 
-    @Override public JsonObject config() {
-        JsonObject config = super.config();
+    @Override protected void checkConfig(JsonObject config) {
         checkState(config.getString("message") != null, "The message is required");
-        return config;
     }
 
 }

@@ -88,11 +88,9 @@ public class DateTransform extends ComponentVerticle {
                 });
     }
 
-    @Override public JsonObject config() {
-        JsonObject config = super.config();
+    @Override protected void checkConfig(JsonObject config) {
         checkState(config.getString("match") != null, "The match is required");
         checkState(config.getString("format") != null, "The format is required");
-        return config;
     }
 
 }
