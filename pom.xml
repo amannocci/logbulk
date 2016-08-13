@@ -152,6 +152,14 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
+                            <filters>
+                                <filter>
+                                    <artifact>io.vertx:vertx-core</artifact>
+                                    <includes>
+                                        <include>**</include>
+                                    </includes>
+                                </filter>
+                            </filters>
                             <minimizeJar>true</minimizeJar>
                             <transformers>
                                 <transformer
