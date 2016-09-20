@@ -33,6 +33,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 
+import static com.google.common.base.Preconditions.checkState;
+
 /**
  * Mailbox implementation.
  */
@@ -89,6 +91,12 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
                 nextPressure.add(component);
             }
         });
+    }
+
+    @Override protected void checkConfig(JsonObject config) {
+        checkState(config.getInteger("mailbox") != null, "The mailbox is required");
+        checkState(config.getInteger("instance") != null &&
+                config.getInteger("instance") > 0, "The instance is required");
     }
 
     @Override public void handle(JsonObject msg) {

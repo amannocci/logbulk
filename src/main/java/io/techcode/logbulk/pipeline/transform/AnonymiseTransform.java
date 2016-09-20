@@ -27,7 +27,6 @@ import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import io.techcode.logbulk.component.ComponentVerticle;
 import io.techcode.logbulk.util.ConvertHandler;
-import io.vertx.core.MultiMap;
 import io.vertx.core.json.JsonObject;
 
 import java.nio.charset.StandardCharsets;
