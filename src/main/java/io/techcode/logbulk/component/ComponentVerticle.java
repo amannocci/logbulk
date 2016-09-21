@@ -188,17 +188,6 @@ public class ComponentVerticle extends AbstractVerticle {
      * @param msg message to forward.
      */
     public void forward(JsonObject msg) {
-        forwardAndKeep(msg);
-        release();
-    }
-
-
-    /**
-     * Forward the event to the next stage.
-     *
-     * @param msg message to forward.
-     */
-    public void forwardAndKeep(JsonObject msg) {
         checkNotNull(msg, "The message to forward can't be null");
 
         // Gets some stuff
@@ -211,12 +200,6 @@ public class ComponentVerticle extends AbstractVerticle {
             headers.put("_current", current + 1);
             eventBus.send(nextOpt.get(), msg, DELIVERY_OPTIONS);
         }
-    }
-
-    /**
-     * Release worker if mailbox available.
-     */
-    public void release() {
         if (hasMailbox) eventBus.send(parentEndpoint + ".worker", endpoint);
     }
 

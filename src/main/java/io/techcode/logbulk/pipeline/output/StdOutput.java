@@ -43,17 +43,11 @@ public class StdOutput extends ComponentVerticle {
             handler = (msg) -> {
                 // Process the event
                 log.info(event(msg).encodePrettily());
-
-                // Send to the next endpoint
-                forward(msg);
             };
         } else {
             handler = (msg) -> {
                 // Process the event
                 log.info(event(msg).encode());
-
-                // Send to the next endpoint
-                forward(msg);
             };
         }
 

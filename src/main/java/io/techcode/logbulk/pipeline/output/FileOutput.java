@@ -85,9 +85,6 @@ public class FileOutput extends ComponentVerticle {
                             file.drainHandler(HANDLE_PRESSURE);
                         }
                     }
-
-                    // Send to the next endpoint
-                    forward(msg);
                 });
     }
 

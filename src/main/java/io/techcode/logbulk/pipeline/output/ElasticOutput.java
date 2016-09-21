@@ -26,7 +26,6 @@ package io.techcode.logbulk.pipeline.output;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Sets;
 import io.techcode.logbulk.component.ComponentVerticle;
-import io.techcode.logbulk.component.Mailbox;
 import io.techcode.logbulk.util.ConvertHandler;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -60,14 +59,9 @@ public class ElasticOutput extends ComponentVerticle {
         BulkRequestBuilder bulk = new BulkRequestBuilder(vertx, config);
 
         // Register endpoint
+        // Process
         getEventBus().<JsonObject>localConsumer(endpoint)
-                .handler((ConvertHandler) msg -> {
-                    // Process
-                    bulk.add(msg);
-
-                    // Send to the next endpoint
-                    forward(msg);
-                });
+                .handler((ConvertHandler) bulk::add);
     }
 
     @Override protected void checkConfig(JsonObject config) {
@@ -128,7 +122,7 @@ public class ElasticOutput extends ComponentVerticle {
             this.flush = config.getInteger("flush", 1);
             this.index = config.getString("index");
             this.type = config.getString("type");
-            this.threehold = config.getInteger("queue", Mailbox.DEFAULT_THREEHOLD);
+            this.threehold = config.getInteger("queue", 100);
             this.idle = threehold / 2;
             HttpClientOptions options = new HttpClientOptions();
             options.setTryUseCompression(true);
@@ -180,23 +174,31 @@ public class ElasticOutput extends ComponentVerticle {
                 } else {
                     log.error("Failed to index document: statusCode=" + res.statusCode());
                 }
-                if (paused && --job < idle) {
-                    previousPressure.forEach(ElasticOutput.this::tooglePressure);
-                    previousPressure.clear();
-                    paused = false;
-                }
+                release();
             });
             req.setChunked(false);
             req.exceptionHandler(err -> {
                 builder.append(payload);
                 docs += documents;
+                release();
             });
             req.end(payload);
-            if (!paused && ++job >= threehold) paused = true;
+            if (++job >= threehold && !paused) paused = true;
 
             // Reset size
             docs = 0;
             builder.setLength(0);
+        }
+
+        /**
+         * Handle back pressure release.
+         */
+        private void release() {
+            if (--job < idle && paused) {
+                previousPressure.forEach(ElasticOutput.this::tooglePressure);
+                previousPressure.clear();
+                paused = false;
+            }
         }
 
     }
