@@ -67,6 +67,7 @@ public class ExecInput extends ComponentVerticle {
 
     @Override protected void checkConfig(JsonObject config) {
         checkState(config.getString("command") != null, "The command is required");
+        checkState(config.getString("dispatch") != null, "The dispatch is required");
     }
 
     /**

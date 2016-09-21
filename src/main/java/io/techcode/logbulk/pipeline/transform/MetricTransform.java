@@ -57,4 +57,8 @@ public class MetricTransform extends ComponentVerticle {
         });
     }
 
+    @Override protected void checkConfig(JsonObject config) {
+        // Nothing to check
+    }
+
 }

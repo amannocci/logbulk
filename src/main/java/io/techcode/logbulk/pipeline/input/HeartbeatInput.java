@@ -51,6 +51,7 @@ public class HeartbeatInput extends ComponentVerticle {
 
     @Override protected void checkConfig(JsonObject config) {
         checkState(config.getString("message") != null, "The message is required");
+        checkState(config.getString("dispatch") != null, "The dispatch is required");
     }
 
 }

@@ -61,4 +61,8 @@ public class StdOutput extends ComponentVerticle {
         getEventBus().<JsonObject>localConsumer(endpoint).handler(handler);
     }
 
+    @Override protected void checkConfig(JsonObject config) {
+        // Nothing to check
+    }
+
 }
