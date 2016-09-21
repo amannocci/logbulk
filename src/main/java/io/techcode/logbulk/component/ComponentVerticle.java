@@ -175,7 +175,7 @@ public class ComponentVerticle extends AbstractVerticle {
         List<String> endpoints = this.routing.get(route);
 
         // Possible next component
-        if (next < endpoints.size()) {
+        if (endpoints != null && next < endpoints.size()) {
             return Optional.of(endpoints.get(next));
         } else {
             return Optional.empty();

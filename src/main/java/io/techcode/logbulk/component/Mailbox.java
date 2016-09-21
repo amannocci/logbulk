@@ -86,7 +86,9 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
             String component = event.body();
             if (nextPressure.contains(component)) {
                 nextPressure.remove(component);
-                processBuffer(Optional.empty());
+                if (nextPressure.isEmpty()) {
+                    processBuffer(Optional.empty());
+                }
             } else {
                 nextPressure.add(component);
             }

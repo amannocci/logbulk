@@ -83,9 +83,12 @@ public class GrokTransform extends ComponentVerticle {
                     Match matcher = grok.match(field);
                     matcher.captures();
                     if (matcher.isNull()) {
-                        if (!Strings.isNullOrEmpty(fallback)) {
-                            forward(updateRoute(msg, fallback));
+                        if (Strings.isNullOrEmpty(fallback)) {
+                            updateRoute(msg, StringUtils.EMPTY);
+                        } else {
+                            updateRoute(msg, fallback);
                         }
+                        forward(msg);
                     } else {
                         // Compose
                         evt.mergeIn(new JsonObject(matcher.toMap()));
