@@ -26,6 +26,7 @@ package io.techcode.logbulk.pipeline.output;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Sets;
 import io.techcode.logbulk.component.ComponentVerticle;
+import io.techcode.logbulk.component.Mailbox;
 import io.techcode.logbulk.util.ConvertHandler;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -41,7 +42,6 @@ import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static io.vertx.core.http.HttpClientOptions.DEFAULT_MAX_POOL_SIZE;
 
 /**
  * File input pipeline component.
@@ -98,13 +98,12 @@ public class ElasticOutput extends ComponentVerticle {
         private String index;
         private String type;
 
-        // Pipeline
-        private int parallel;
-        private int pipeline = 0;
-        private boolean paused = false;
-
         // Back pressure
         private Set<String> previousPressure = Sets.newHashSet();
+        private int threehold;
+        private int idle;
+        private int job = 0;
+        private boolean paused;
 
         // Flusher logic
         private Handler<Long> flusher = new Handler<Long>() {
@@ -125,16 +124,18 @@ public class ElasticOutput extends ComponentVerticle {
         public BulkRequestBuilder(Vertx vertx, JsonObject config) {
             checkNotNull(vertx, "The vertx can't be null");
             checkNotNull(config, "The config can't be null");
-            HttpClientOptions options = new HttpClientOptions();
-            options.setTryUseCompression(true);
-            options.setKeepAlive(true);
-            options.setPipelining(true);
-            this.http = vertx.createHttpClient(options);
             this.bulk = config.getInteger("bulk", 1000);
             this.flush = config.getInteger("flush", 1);
             this.index = config.getString("index");
             this.type = config.getString("type");
-            this.parallel = config.getInteger("parallel", DEFAULT_MAX_POOL_SIZE);
+            this.threehold = config.getInteger("queue", Mailbox.DEFAULT_THREEHOLD);
+            this.idle = threehold / 2;
+            HttpClientOptions options = new HttpClientOptions();
+            options.setTryUseCompression(true);
+            options.setKeepAlive(true);
+            options.setPipelining(true);
+            options.setMaxPoolSize(config.getInteger("pool", HttpClientOptions.DEFAULT_MAX_POOL_SIZE));
+            this.http = vertx.createHttpClient(options);
             vertx.setTimer(flush, flusher);
         }
 
@@ -165,7 +166,7 @@ public class ElasticOutput extends ComponentVerticle {
          */
         private void send() {
             lastSend = System.currentTimeMillis();
-            if (docs == 0) return;
+            if (docs == 0 || paused) return;
 
             int documents = docs;
             String payload = builder.toString();
@@ -173,24 +174,25 @@ public class ElasticOutput extends ComponentVerticle {
                 if (res.statusCode() == 200) {
                     log.info("Bulk request: " + documents + " documents");
                 } else if (res.statusCode() == 429) {
-                    log.error("Too many requests: statusCode=" + res.statusCode());
+                    log.error("Too many requests: statusCode=429");
                 } else if (res.statusCode() == 503) {
-                    log.error("Service unavailable: statusCode=" + res.statusCode());
+                    log.error("Service unavailable: statusCode=503");
                 } else {
                     log.error("Failed to index document: statusCode=" + res.statusCode());
                 }
-                if (paused && --pipeline < parallel) {
+                if (paused && --job < idle) {
                     previousPressure.forEach(ElasticOutput.this::tooglePressure);
                     previousPressure.clear();
                     paused = false;
                 }
             });
+            req.setChunked(false);
             req.exceptionHandler(err -> {
                 builder.append(payload);
                 docs += documents;
             });
             req.end(payload);
-            if (!paused && ++pipeline >= parallel) paused = true;
+            if (!paused && ++job >= threehold) paused = true;
 
             // Reset size
             docs = 0;
