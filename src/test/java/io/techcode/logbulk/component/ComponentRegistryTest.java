@@ -72,6 +72,7 @@ public class ComponentRegistryTest {
             "input.file",
             "input.tcp",
             "input.exec",
+            "input.mysql",
             "input.heartbeat",
             "transform.dispatch",
             "transform.grok",
