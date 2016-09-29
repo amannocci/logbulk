@@ -98,6 +98,7 @@ public class MysqlInput extends ComponentVerticle {
         // Paused & Running state
         private boolean paused = false;
         private boolean running = false;
+        private boolean ended = false;
 
         // Handlers
         private Handler<String> handler;
@@ -161,7 +162,10 @@ public class MysqlInput extends ComponentVerticle {
                                 });
 
                                 // Handle end of stream
-                                if (rows.isEmpty() && endHandler != null) endHandler.handle(null);
+                                if (rows.isEmpty()) {
+                                    ended = true;
+                                    if (endHandler != null) endHandler.handle(null);
+                                }
 
                                 // Ensure to limit new values
                                 parameters.put("offset", offset + rows.size());
@@ -175,7 +179,7 @@ public class MysqlInput extends ComponentVerticle {
 
                             // Flag running and execute if possible
                             running = false;
-                            if (!paused) read();
+                            if (!paused && !ended) read();
                         }
                     });
                 } else {
