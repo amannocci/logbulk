@@ -24,6 +24,7 @@
 package io.techcode.logbulk.pipeline.input;
 
 import io.techcode.logbulk.VertxTestBase;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.runner.RunWith;
@@ -41,8 +42,9 @@ public class MysqlInputTest extends VertxTestBase {
     @Override protected JsonObject conf() {
         JsonObject conf = super.conf();
         conf.put("dispatch", "foobar");
-        conf.put("limit", 1000);
         conf.put("statement", "foobar limit");
+        conf.put("parameters", new JsonObject());
+        conf.put("order", new JsonArray());
         return conf;
     }
 

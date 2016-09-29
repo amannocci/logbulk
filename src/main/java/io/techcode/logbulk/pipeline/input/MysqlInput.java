@@ -57,11 +57,10 @@ public class MysqlInput extends ComponentVerticle {
 
         // Setup processing task
         String statement = config.getString("statement");
-        int limit = config.getInteger("limit");
-        int offset = config.getInteger("offset", 0);
-        JsonArray parameters = config.getJsonArray("parameters", new JsonArray());
+        JsonObject parameters = config.getJsonObject("parameters");
+        JsonArray order = config.getJsonArray("order");
         client = MySQLClient.createShared(vertx, config);
-        stream = new DBReadStream(client, limit, offset, statement, parameters);
+        stream = new DBReadStream(client, statement, parameters, order, config.getString("track"));
 
         // Setup periodic task
         handlePressure(stream);
@@ -79,12 +78,7 @@ public class MysqlInput extends ComponentVerticle {
 
     @Override protected void checkConfig(JsonObject config) {
         checkState(config.getString("dispatch") != null, "The dispatch is required");
-        checkState(config.getInteger("limit") != null && config.getInteger("limit") > 0, "The limit is required");
-        if (config.getInteger("offset") != null) {
-            checkState(config.getInteger("offset") >= 0, "The offset must be superior or equal to zero");
-        }
-        checkState(config.getString("statement") != null &&
-                config.getString("statement").toLowerCase().contains("limit"), "The statement is required and must have a limit option");
+        checkState(config.getString("statement") != null, "The statement is required");
     }
 
     private class DBReadStream implements ReadStream<String> {
@@ -95,16 +89,15 @@ public class MysqlInput extends ComponentVerticle {
         // Statement
         private String statement;
 
-        // Parameters
-        private JsonArray parameters;
+        // Parameters & Order
+        private JsonObject parameters;
+        private JsonArray queryParams = new JsonArray();
+        private String track;
+        private int trackPos = 0;
 
         // Paused & Running state
         private boolean paused = false;
         private boolean running = false;
-
-        // Limit & Offset
-        private int limit;
-        private int offset;
 
         // Handlers
         private Handler<String> handler;
@@ -115,17 +108,27 @@ public class MysqlInput extends ComponentVerticle {
          * Create a new db read stream.
          *
          * @param client     async sql stream.
-         * @param limit      limit size.
          * @param statement  statement to use.
          * @param parameters parameters to use.
+         * @param order      parameters order.
+         * @param track      column to track.
          */
-        public DBReadStream(AsyncSQLClient client, int limit, int offset, String statement, JsonArray parameters) {
+        public DBReadStream(AsyncSQLClient client, String statement, JsonObject parameters, JsonArray order, String track) {
             checkArgument(!Strings.isNullOrEmpty(statement), "The statement can't be null or empty");
+            checkNotNull(order, "The order can't be null");
             this.client = checkNotNull(client, "The client can't be null");
-            this.limit = limit;
-            this.offset = offset;
+            this.parameters = checkNotNull(parameters, "The parameters can't be null");
             this.statement = statement;
-            this.parameters = parameters.add(limit).add(offset);
+            this.track = track;
+
+            // Add offset and compute queryParams
+            if (!parameters.containsKey("offset")) parameters.put("offset", 0);
+            this.track = (Strings.isNullOrEmpty(track)) ? null : track;
+            List<String> orderList = order.getList();
+            for (int i = 0; i < orderList.size(); i++) {
+                if (track != null && track.equalsIgnoreCase(orderList.get(i))) trackPos = i;
+                queryParams.add(parameters.getValue(orderList.get(i)));
+            }
         }
 
         /**
@@ -139,11 +142,10 @@ public class MysqlInput extends ComponentVerticle {
                     SQLConnection connection = res.result();
 
                     // Prepare parameters
-                    parameters.remove(parameters.size() - 1);
-                    parameters.add(offset);
+                    if (track != null) queryParams.getList().set(trackPos, parameters.getValue(track));
 
                     // Got a connection
-                    connection.queryWithParams(statement, parameters, (AsyncResultHandler<ResultSet>) event -> {
+                    connection.queryWithParams(statement, queryParams, (AsyncResultHandler<ResultSet>) event -> {
                         try {
                             // Check if success
                             if (event.succeeded()) {
@@ -151,14 +153,18 @@ public class MysqlInput extends ComponentVerticle {
                                 List<JsonObject> rows = event.result().getRows();
 
                                 // For each create a message
+                                int offset = parameters.getInteger("offset");
                                 log.info("Fetch new entries (" + rows.size() + '/' + offset + ')');
-                                if (handler != null) rows.forEach(e -> handler.handle(e.encode()));
+                                if (handler != null) rows.forEach(e -> {
+                                    if (track != null) parameters.put(track, e.getValue(track));
+                                    handler.handle(e.encode());
+                                });
 
                                 // Handle end of stream
                                 if (rows.isEmpty() && endHandler != null) endHandler.handle(null);
 
                                 // Ensure to limit new values
-                                offset += limit;
+                                parameters.put("offset", offset + rows.size());
                             } else {
                                 // Catch errors
                                 if (exceptionHandler != null) exceptionHandler.handle(event.cause());
