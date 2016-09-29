@@ -84,7 +84,8 @@ public class ComponentRegistryTest {
             "transform.csv",
             "output.file",
             "output.stdout",
-            "output.elasticsearch"
+            "output.elasticsearch",
+            "output.mongo"
     })
     @Test public void testGetComponent1(String component) {
         testGetComponent(component);

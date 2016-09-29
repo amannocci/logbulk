@@ -54,12 +54,11 @@ public class ElasticOutput extends ComponentVerticle {
     @Override public void start() {
         super.start();
 
-        // Setup
+        // Setup processing task
         hosts = Iterators.cycle(config.getJsonArray("hosts").<String>getList());
         BulkRequestBuilder bulk = new BulkRequestBuilder(vertx, config);
 
         // Register endpoint
-        // Process
         getEventBus().<JsonObject>localConsumer(endpoint)
                 .handler((ConvertHandler) bulk::add);
     }
@@ -119,7 +118,7 @@ public class ElasticOutput extends ComponentVerticle {
             checkNotNull(vertx, "The vertx can't be null");
             checkNotNull(config, "The config can't be null");
             this.bulk = config.getInteger("bulk", 1000);
-            this.flush = config.getInteger("flush", 1);
+            this.flush = config.getInteger("flush", 10);
             this.index = config.getString("index");
             this.type = config.getString("type");
             this.threehold = config.getInteger("queue", 100);
