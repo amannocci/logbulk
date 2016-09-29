@@ -43,14 +43,4 @@ public class MailboxTest extends VertxTestBase {
         return Mailbox.class;
     }
 
-    @Override protected JsonObject conf() {
-        JsonObject conf = new JsonObject();
-        conf.put("route", new JsonObject().put("test", new JsonArray().add("test")));
-        conf.put("instance", 1);
-        conf.put("endpoint", "test");
-        conf.put("hasMailbox", false);
-        conf.put("mailbox", Mailbox.DEFAULT_THREEHOLD);
-        return conf;
-    }
-
 }
