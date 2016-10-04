@@ -27,7 +27,7 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.Sets;
 import io.techcode.logbulk.component.ComponentVerticle;
 import io.techcode.logbulk.util.ConvertHandler;
-import io.vertx.core.Handler;
+import io.techcode.logbulk.util.Flusher;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
@@ -37,7 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.Iterator;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -55,12 +55,14 @@ public class ElasticOutput extends ComponentVerticle {
         super.start();
 
         // Setup processing task
-        hosts = Iterators.cycle(config.getJsonArray("hosts").<String>getList());
+        hosts = Iterators.cycle(config.getJsonArray("hosts").stream()
+                .filter(s -> s instanceof String)
+                .map(d -> (String) d)
+                .collect(Collectors.toList()));
         BulkRequestBuilder bulk = new BulkRequestBuilder(vertx, config);
 
         // Register endpoint
-        getEventBus().<JsonObject>localConsumer(endpoint)
-                .handler((ConvertHandler) bulk::add);
+        getEventBus().<JsonObject>localConsumer(endpoint).handler((ConvertHandler) bulk::add);
     }
 
     @Override protected void checkConfig(JsonObject config) {
@@ -83,8 +85,7 @@ public class ElasticOutput extends ComponentVerticle {
 
         // Some settings
         private int bulk;
-        private long flush;
-        private long lastSend = 0;
+        private Flusher flusher;
 
         // Stuff to build meta and request
         private StringBuilder builder = new StringBuilder();
@@ -98,16 +99,6 @@ public class ElasticOutput extends ComponentVerticle {
         private int job = 0;
         private boolean paused;
 
-        // Flusher logic
-        private Handler<Long> flusher = new Handler<Long>() {
-            @Override public void handle(Long event) {
-                if ((System.currentTimeMillis() - lastSend) > TimeUnit.SECONDS.toMillis(flush)) {
-                    send();
-                }
-                vertx.setTimer(flush, this);
-            }
-        };
-
         /**
          * Create a new bulk request builder.
          *
@@ -118,7 +109,6 @@ public class ElasticOutput extends ComponentVerticle {
             checkNotNull(vertx, "The vertx can't be null");
             checkNotNull(config, "The config can't be null");
             this.bulk = config.getInteger("bulk", 1000);
-            this.flush = config.getInteger("flush", 10);
             this.index = config.getString("index");
             this.type = config.getString("type");
             this.threehold = config.getInteger("queue", 100);
@@ -129,7 +119,9 @@ public class ElasticOutput extends ComponentVerticle {
             options.setPipelining(true);
             options.setMaxPoolSize(config.getInteger("pool", HttpClientOptions.DEFAULT_MAX_POOL_SIZE));
             this.http = vertx.createHttpClient(options);
-            vertx.setTimer(flush, flusher);
+            flusher = new Flusher(vertx, config.getInteger("flush", 10));
+            flusher.handler(h -> send());
+            flusher.start();
         }
 
         /**
@@ -158,7 +150,7 @@ public class ElasticOutput extends ComponentVerticle {
          * Send a request.
          */
         private void send() {
-            lastSend = System.currentTimeMillis();
+            flusher.flushed();
             if (docs == 0 || paused) return;
 
             int documents = docs;

@@ -23,7 +23,7 @@
  */
 package io.techcode.logbulk.pipeline.input;
 
-import io.techcode.logbulk.VertxTestBase;
+import io.techcode.logbulk.VerticleTestBase;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.runner.RunWith;
@@ -32,7 +32,7 @@ import org.junit.runner.RunWith;
  * Test for HearbeatInput.
  */
 @RunWith(VertxUnitRunner.class)
-public class HearbeatInputTest extends VertxTestBase {
+public class HearbeatInputTest extends VerticleTestBase {
 
     @Override protected Class getVerticle() {
         return HeartbeatInput.class;

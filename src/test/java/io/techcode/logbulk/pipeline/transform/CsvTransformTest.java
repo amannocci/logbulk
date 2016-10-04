@@ -23,8 +23,7 @@
  */
 package io.techcode.logbulk.pipeline.transform;
 
-import io.techcode.logbulk.VertxTestBase;
-import io.techcode.logbulk.pipeline.output.StdOutput;
+import io.techcode.logbulk.VerticleTestBase;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.runner.RunWith;
@@ -33,7 +32,7 @@ import org.junit.runner.RunWith;
  * Test for CsvTransform.
  */
 @RunWith(VertxUnitRunner.class)
-public class CsvTransformTest extends VertxTestBase {
+public class CsvTransformTest extends VerticleTestBase {
 
     @Override protected Class getVerticle() {
         return CsvTransform.class;

@@ -23,9 +23,7 @@
  */
 package io.techcode.logbulk.pipeline.output;
 
-import io.techcode.logbulk.VertxTestBase;
-import io.techcode.logbulk.component.Mailbox;
-import io.vertx.core.json.JsonArray;
+import io.techcode.logbulk.VerticleTestBase;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.runner.RunWith;
@@ -34,7 +32,7 @@ import org.junit.runner.RunWith;
  * Test for MongoOutput.
  */
 @RunWith(VertxUnitRunner.class)
-public class MongoOutputTest extends VertxTestBase {
+public class MongoOutputTest extends VerticleTestBase {
 
     @Override protected Class getVerticle() {
         return MongoOutput.class;

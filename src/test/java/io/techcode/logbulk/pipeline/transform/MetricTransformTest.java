@@ -23,8 +23,7 @@
  */
 package io.techcode.logbulk.pipeline.transform;
 
-import io.techcode.logbulk.VertxTestBase;
-import io.vertx.core.json.JsonObject;
+import io.techcode.logbulk.VerticleTestBase;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.runner.RunWith;
 
@@ -32,7 +31,7 @@ import org.junit.runner.RunWith;
  * Test for MetricTransform.
  */
 @RunWith(VertxUnitRunner.class)
-public class MetricTransformTest extends VertxTestBase {
+public class MetricTransformTest extends VerticleTestBase {
 
     @Override protected Class getVerticle() {
         return MetricTransform.class;

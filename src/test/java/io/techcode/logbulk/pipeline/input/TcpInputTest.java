@@ -23,7 +23,7 @@
  */
 package io.techcode.logbulk.pipeline.input;
 
-import io.techcode.logbulk.VertxTestBase;
+import io.techcode.logbulk.VerticleTestBase;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.runner.RunWith;
@@ -32,7 +32,7 @@ import org.junit.runner.RunWith;
  * Test for TcpInput.
  */
 @RunWith(VertxUnitRunner.class)
-public class TcpInputTest extends VertxTestBase {
+public class TcpInputTest extends VerticleTestBase {
 
     @Override protected Class getVerticle() {
         return TcpInput.class;

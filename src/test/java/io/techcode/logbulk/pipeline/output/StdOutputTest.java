@@ -23,9 +23,7 @@
  */
 package io.techcode.logbulk.pipeline.output;
 
-import io.techcode.logbulk.VertxTestBase;
-import io.techcode.logbulk.pipeline.input.StdInput;
-import io.vertx.core.json.JsonObject;
+import io.techcode.logbulk.VerticleTestBase;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.runner.RunWith;
 
@@ -33,7 +31,7 @@ import org.junit.runner.RunWith;
  * Test for StdOutput.
  */
 @RunWith(VertxUnitRunner.class)
-public class StdOutputTest extends VertxTestBase {
+public class StdOutputTest extends VerticleTestBase {
 
     @Override protected Class getVerticle() {
         return StdOutput.class;

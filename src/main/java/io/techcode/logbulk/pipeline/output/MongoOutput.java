@@ -26,14 +26,13 @@ package io.techcode.logbulk.pipeline.output;
 import com.google.common.collect.Sets;
 import io.techcode.logbulk.component.ComponentVerticle;
 import io.techcode.logbulk.util.ConvertHandler;
-import io.vertx.core.Handler;
+import io.techcode.logbulk.util.Flusher;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.mongo.MongoClient;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -51,8 +50,7 @@ public class MongoOutput extends ComponentVerticle {
 
     // Some settings
     private int bulk;
-    private long flush;
-    private long lastSend = 0;
+    private Flusher flusher;
 
     // Back pressure
     private Set<String> previousPressure = Sets.newHashSet();
@@ -62,22 +60,11 @@ public class MongoOutput extends ComponentVerticle {
     private boolean paused;
     private String collection;
 
-    // Flusher logic
-    private Handler<Long> flusher = new Handler<Long>() {
-        @Override public void handle(Long event) {
-            if ((System.currentTimeMillis() - lastSend) > TimeUnit.SECONDS.toMillis(flush)) {
-                send();
-            }
-            vertx.setTimer(flush, this);
-        }
-    };
-
     @Override public void start() {
         super.start();
 
         // Setup processing task
         this.bulk = config.getInteger("bulk", 1000);
-        this.flush = config.getInteger("flush", 10);
         this.threehold = config.getInteger("queue", 100);
         this.idle = threehold / 2;
         this.collection = config.getString("collection");
@@ -88,7 +75,9 @@ public class MongoOutput extends ComponentVerticle {
         mongoConf.put("db_name", config.getString("database"));
         mongoConf.put("connection_string", config.getString("uri"));
         client = MongoClient.createShared(vertx, mongoConf);
-        vertx.setTimer(flush, flusher);
+        flusher = new Flusher(vertx, config.getInteger("flush", 10));
+        flusher.handler(h -> send());
+        flusher.start();
 
         // Register endpoint
         getEventBus().<JsonObject>localConsumer(endpoint).handler((ConvertHandler) msg -> {
@@ -115,7 +104,7 @@ public class MongoOutput extends ComponentVerticle {
      * Send a request.
      */
     private void send() {
-        lastSend = System.currentTimeMillis();
+        flusher.flushed();
         if (pending.size() == 0 || paused) return;
 
         JsonObject command = new JsonObject();

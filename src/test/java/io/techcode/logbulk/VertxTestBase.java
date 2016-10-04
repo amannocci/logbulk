@@ -23,15 +23,10 @@
  */
 package io.techcode.logbulk;
 
-import io.techcode.logbulk.component.Mailbox;
-import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.TestContext;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Test;
 
 /**
  * Vertx test base.
@@ -51,36 +46,6 @@ public abstract class VertxTestBase {
 
     @After public void after(TestContext ctx) {
         vertx.close(ctx.asyncAssertSuccess());
-    }
-
-    @Test public void testDeployWithoutConf(TestContext ctx) {
-        vertx.deployVerticle(getVerticle().getName(), ctx.asyncAssertFailure());
-    }
-
-    @Test public void testDeploy(TestContext ctx) {
-        vertx.deployVerticle(getVerticle().getName(), new DeploymentOptions().setConfig(conf()), ctx.asyncAssertSuccess());
-    }
-
-    /**
-     * Returns verticle class to deploy.
-     *
-     * @return verticle class to deploy.
-     */
-    protected abstract Class getVerticle();
-
-    /**
-     * Returns a valid configuration used during deploy.
-     *
-     * @return a valid configuration used during deploy.
-     */
-    protected JsonObject conf() {
-        JsonObject conf = new JsonObject();
-        conf.put("route", new JsonObject().put("test", new JsonArray().add("test")));
-        conf.put("instance", 1);
-        conf.put("endpoint", "test");
-        conf.put("hasMailbox", false);
-        conf.put("mailbox", Mailbox.DEFAULT_THREEHOLD);
-        return conf;
     }
 
 }

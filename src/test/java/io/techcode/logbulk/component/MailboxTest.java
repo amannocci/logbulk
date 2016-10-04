@@ -23,21 +23,15 @@
  */
 package io.techcode.logbulk.component;
 
-import io.techcode.logbulk.VertxTestBase;
-import io.vertx.core.DeploymentOptions;
-import io.vertx.core.Verticle;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.unit.TestContext;
+import io.techcode.logbulk.VerticleTestBase;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
  * Test for Mailbox.
  */
 @RunWith(VertxUnitRunner.class)
-public class MailboxTest extends VertxTestBase {
+public class MailboxTest extends VerticleTestBase {
 
     @Override protected Class getVerticle() {
         return Mailbox.class;

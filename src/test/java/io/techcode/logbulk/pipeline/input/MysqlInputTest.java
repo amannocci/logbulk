@@ -23,7 +23,7 @@
  */
 package io.techcode.logbulk.pipeline.input;
 
-import io.techcode.logbulk.VertxTestBase;
+import io.techcode.logbulk.VerticleTestBase;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -33,7 +33,7 @@ import org.junit.runner.RunWith;
  * Test for MysqlInput.
  */
 @RunWith(VertxUnitRunner.class)
-public class MysqlInputTest extends VertxTestBase {
+public class MysqlInputTest extends VerticleTestBase {
 
     @Override protected Class getVerticle() {
         return MysqlInput.class;

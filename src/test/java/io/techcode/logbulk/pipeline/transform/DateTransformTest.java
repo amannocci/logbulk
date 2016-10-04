@@ -23,7 +23,7 @@
  */
 package io.techcode.logbulk.pipeline.transform;
 
-import io.techcode.logbulk.VertxTestBase;
+import io.techcode.logbulk.VerticleTestBase;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.runner.RunWith;
@@ -32,7 +32,7 @@ import org.junit.runner.RunWith;
  * Test for DateTransform.
  */
 @RunWith(VertxUnitRunner.class)
-public class DateTransformTest extends VertxTestBase {
+public class DateTransformTest extends VerticleTestBase {
 
     @Override protected Class getVerticle() {
         return DateTransform.class;
