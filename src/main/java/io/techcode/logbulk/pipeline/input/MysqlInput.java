@@ -36,7 +36,9 @@ import io.vertx.ext.sql.ResultSet;
 import io.vertx.ext.sql.SQLConnection;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import static com.google.common.base.Preconditions.*;
 
@@ -60,7 +62,7 @@ public class MysqlInput extends ComponentVerticle {
         JsonObject parameters = config.getJsonObject("parameters");
         JsonArray order = config.getJsonArray("order");
         client = MySQLClient.createShared(vertx, config);
-        stream = new DBReadStream(client, statement, parameters, order, config.getString("track"));
+        stream = new DBReadStream(client, statement, parameters, order, config.getString("track"), config.getBoolean("nonEmpty", false));
 
         // Setup periodic task
         handlePressure(stream);
@@ -92,6 +94,7 @@ public class MysqlInput extends ComponentVerticle {
         // Parameters & Order
         private JsonObject parameters;
         private JsonArray queryParams = new JsonArray();
+        private boolean nonEmpty;
         private String track;
         private int trackPos = 0;
 
@@ -113,14 +116,16 @@ public class MysqlInput extends ComponentVerticle {
          * @param parameters parameters to use.
          * @param order      parameters order.
          * @param track      column to track.
+         * @param nonEmpty   not empty.
          */
-        public DBReadStream(AsyncSQLClient client, String statement, JsonObject parameters, JsonArray order, String track) {
+        public DBReadStream(AsyncSQLClient client, String statement, JsonObject parameters, JsonArray order, String track, boolean nonEmpty) {
             checkArgument(!Strings.isNullOrEmpty(statement), "The statement can't be null or empty");
             checkNotNull(order, "The order can't be null");
             this.client = checkNotNull(client, "The client can't be null");
             this.parameters = checkNotNull(parameters, "The parameters can't be null");
             this.statement = statement;
             this.track = track;
+            this.nonEmpty = nonEmpty;
 
             // Add offset and compute queryParams
             if (!parameters.containsKey("offset")) parameters.put("offset", 0);
@@ -158,6 +163,16 @@ public class MysqlInput extends ComponentVerticle {
                                 log.info("Fetch new entries (" + rows.size() + '/' + offset + ')');
                                 if (handler != null) rows.forEach(e -> {
                                     if (track != null) parameters.put(track, e.getValue(track));
+                                    if (nonEmpty) {
+                                        for (Iterator<Map.Entry<String, Object>> it = e.iterator(); it.hasNext(); ) {
+                                            Map.Entry<String, Object> entry = it.next();
+                                            if (entry.getValue() == null) {
+                                                it.remove();
+                                            } else if (entry.getValue() instanceof String && "".equals(entry.getValue())) {
+                                                it.remove();
+                                            }
+                                        }
+                                    }
                                     handler.handle(e.encode());
                                 });
 
