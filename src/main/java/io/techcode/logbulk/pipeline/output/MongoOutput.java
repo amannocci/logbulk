@@ -81,6 +81,7 @@ public class MongoOutput extends ComponentVerticle {
         this.threehold = config.getInteger("queue", 100);
         this.idle = threehold / 2;
         this.collection = config.getString("collection");
+        JsonArray dates = config.getJsonArray("date", new JsonArray());
 
         // Remap configuration
         JsonObject mongoConf = new JsonObject();
@@ -91,7 +92,15 @@ public class MongoOutput extends ComponentVerticle {
 
         // Register endpoint
         getEventBus().<JsonObject>localConsumer(endpoint).handler((ConvertHandler) msg -> {
-            pending.add(event(msg));
+            JsonObject evt = event(msg);
+            if (!dates.isEmpty()) {
+                dates.stream()
+                        .filter(d -> d instanceof String)
+                        .map(d -> (String) d)
+                        .filter(evt::containsKey)
+                        .forEach(d -> evt.put(d, new JsonObject().put("$date", evt.getString(d))));
+            }
+            pending.add(evt);
             if (pending.size() >= bulk) {
                 send();
             }
