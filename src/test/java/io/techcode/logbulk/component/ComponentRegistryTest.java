@@ -80,6 +80,7 @@ public class ComponentRegistryTest {
             "transform.json",
             "transform.mutate",
             "transform.metric",
+            "transform.limiter",
             "transform.anonymise",
             "transform.csv",
             "output.file",
