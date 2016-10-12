@@ -68,12 +68,14 @@ public class DispatchTransform extends ComponentVerticle {
 
         // Register endpoint
         getEventBus().<JsonObject>localConsumer(endpoint)
-                .handler((ConvertHandler) msg -> {
-                    // Process
-                    dispatch.forEach(d -> d.dispatch(msg));
+                .handler(new TolerantHandler() {
+                    @Override public void handle(JsonObject msg) {
+                        // Process
+                        dispatch.forEach(d -> d.dispatch(msg));
 
-                    // Send to the next endpoint
-                    forward(msg);
+                        // Send to the next endpoint
+                        forward(msg);
+                    }
                 });
     }
 

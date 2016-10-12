@@ -44,13 +44,15 @@ public class JsonTransform extends ComponentVerticle {
 
         // Register endpoint
         getEventBus().<JsonObject>localConsumer(endpoint)
-                .handler((ConvertHandler) msg -> {
-                    // Process
-                    JsonObject evt = event(msg);
-                    evt.mergeIn(new JsonObject(evt.getString(source)));
+                .handler(new TolerantHandler() {
+                    @Override public void handle(JsonObject msg) {
+                        // Process
+                        JsonObject evt = event(msg);
+                        evt.mergeIn(new JsonObject(evt.getString(source)));
 
-                    // Send to the next endpoint
-                    forward(msg);
+                        // Send to the next endpoint
+                        forward(msg);
+                    }
                 });
     }
 

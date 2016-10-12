@@ -37,22 +37,16 @@ public class StdOutput extends ComponentVerticle {
     @Override public void start() {
         super.start();
 
-        // Setup
-        ConvertHandler handler;
-        if (config.getBoolean("pretty", false)) {
-            handler = (msg) -> {
-                // Process the event
-                log.info(event(msg).encodePrettily());
-            };
-        } else {
-            handler = (msg) -> {
-                // Process the event
-                log.info(event(msg).encode());
-            };
-        }
-
         // Register endpoint
-        getEventBus().<JsonObject>localConsumer(endpoint).handler(handler);
+        getEventBus().<JsonObject>localConsumer(endpoint).handler(new TolerantHandler() {
+            @Override public void handle(JsonObject msg) {
+                if (config.getBoolean("pretty", false)) {
+                    log.info(event(msg).encodePrettily());
+                } else {
+                    log.info(event(msg).encode());
+                }
+            }
+        });
     }
 
     @Override protected void checkConfig(JsonObject config) {

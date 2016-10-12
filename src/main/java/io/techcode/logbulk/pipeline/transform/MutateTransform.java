@@ -29,7 +29,6 @@ import com.google.common.collect.Maps;
 import com.google.common.primitives.Floats;
 import com.google.common.primitives.Ints;
 import io.techcode.logbulk.component.ComponentVerticle;
-import io.techcode.logbulk.util.ConvertHandler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
@@ -87,13 +86,15 @@ public class MutateTransform extends ComponentVerticle {
 
         // Register endpoint
         getEventBus().<JsonObject>localConsumer(endpoint)
-                .handler((ConvertHandler) msg -> {
-                    // Process
-                    JsonObject evt = event(msg);
-                    pipeline.forEach(t -> t.accept(evt));
+                .handler(new TolerantHandler() {
+                    @Override public void handle(JsonObject msg) {
+                        // Process
+                        JsonObject evt = event(msg);
+                        pipeline.forEach(t -> t.accept(evt));
 
-                    // Send to the next endpoint
-                    forward(msg);
+                        // Send to the next endpoint
+                        forward(msg);
+                    }
                 });
     }
 

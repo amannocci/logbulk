@@ -25,7 +25,6 @@ package io.techcode.logbulk.pipeline.output;
 
 import com.google.common.collect.Sets;
 import io.techcode.logbulk.component.ComponentVerticle;
-import io.techcode.logbulk.util.ConvertHandler;
 import io.vertx.core.VoidHandler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.file.AsyncFile;
@@ -74,15 +73,17 @@ public class FileOutput extends ComponentVerticle {
 
         // Register endpoint
         getEventBus().<JsonObject>localConsumer(endpoint)
-                .handler((ConvertHandler) msg -> {
-                    // Process the event
-                    buf.appendString(event(msg).encode()).appendString(delimiter);
-                    if (buf.length() > chunkPartition) {
-                        file.write(buf);
-                        buf = Buffer.buffer(chunkPartition);
-                        if (file.writeQueueFull()) {
-                            notifyPressure(previousPressure, headers(msg));
-                            file.drainHandler(HANDLE_PRESSURE);
+                .handler(new TolerantHandler() {
+                    @Override public void handle(JsonObject msg) {
+                        // Process the event
+                        buf.appendString(event(msg).encode()).appendString(delimiter);
+                        if (buf.length() > chunkPartition) {
+                            file.write(buf);
+                            buf = Buffer.buffer(chunkPartition);
+                            if (file.writeQueueFull()) {
+                                notifyPressure(previousPressure, headers(msg));
+                                file.drainHandler(HANDLE_PRESSURE);
+                            }
                         }
                     }
                 });

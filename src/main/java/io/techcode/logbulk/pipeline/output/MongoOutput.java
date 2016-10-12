@@ -80,18 +80,20 @@ public class MongoOutput extends ComponentVerticle {
         flusher.start();
 
         // Register endpoint
-        getEventBus().<JsonObject>localConsumer(endpoint).handler((ConvertHandler) msg -> {
-            JsonObject evt = event(msg);
-            if (!dates.isEmpty()) {
-                dates.stream()
-                        .filter(d -> d instanceof String)
-                        .map(d -> (String) d)
-                        .filter(evt::containsKey)
-                        .forEach(d -> evt.put(d, new JsonObject().put("$date", evt.getString(d))));
-            }
-            pending.add(evt);
-            if (pending.size() >= bulk) {
-                send();
+        getEventBus().<JsonObject>localConsumer(endpoint).handler(new TolerantHandler() {
+            @Override public void handle(JsonObject msg) {
+                JsonObject evt = event(msg);
+                if (!dates.isEmpty()) {
+                    dates.stream()
+                            .filter(d -> d instanceof String)
+                            .map(d -> (String) d)
+                            .filter(evt::containsKey)
+                            .forEach(d -> evt.put(d, new JsonObject().put("$date", evt.getString(d))));
+                }
+                pending.add(evt);
+                if (pending.size() >= bulk) {
+                    send();
+                }
             }
         });
     }

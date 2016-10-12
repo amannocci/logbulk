@@ -24,6 +24,7 @@
 package io.techcode.logbulk.component;
 
 import com.google.common.collect.ArrayListMultimap;
+import io.techcode.logbulk.util.ConvertHandler;
 import io.techcode.logbulk.util.PressureHandler;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Handler;
@@ -34,6 +35,7 @@ import io.vertx.core.parsetools.RecordParser;
 import io.vertx.core.streams.ReadStream;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -317,6 +319,15 @@ public class ComponentVerticle extends AbstractVerticle {
             hasMailbox = false;
         }
         log.info("Endpoint: " + endpoint);
+    }
+
+    /**
+     * Simple implementation of convert handler that redirect to fallback route in case of failure.
+     */
+    public abstract class TolerantHandler implements ConvertHandler {
+        @Override public void handleFailure(JsonObject msg, Throwable th) {
+            forward(updateRoute(msg, config.getString("fallback", StringUtils.EMPTY)));
+        }
     }
 
 }

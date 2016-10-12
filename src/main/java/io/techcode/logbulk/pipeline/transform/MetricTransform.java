@@ -42,12 +42,14 @@ public class MetricTransform extends ComponentVerticle {
 
         // Register endpoint
         getEventBus().<JsonObject>localConsumer(endpoint)
-                .handler((ConvertHandler) msg -> {
-                    // Process
-                    request += 1;
+                .handler(new TolerantHandler() {
+                    @Override public void handle(JsonObject msg) {
+                        // Process
+                        request += 1;
 
-                    // Send to the next endpoint
-                    forward(msg);
+                        // Send to the next endpoint
+                        forward(msg);
+                    }
                 });
 
         // Flush everysecond

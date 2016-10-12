@@ -74,27 +74,29 @@ public class GrokTransform extends ComponentVerticle {
 
         // Register endpoint
         getEventBus().<JsonObject>localConsumer(endpoint)
-                .handler((ConvertHandler) msg -> {
-                    // Process
-                    JsonObject evt = event(msg);
-                    String field = evt.getString(config.getString("match"));
-                    if (field == null) return;
+                .handler(new TolerantHandler() {
+                    @Override public void handle(JsonObject msg) {
+                        // Process
+                        JsonObject evt = event(msg);
+                        String field = evt.getString(config.getString("match"));
+                        if (field == null) return;
 
-                    Match matcher = grok.match(field);
-                    matcher.captures();
-                    if (matcher.isNull()) {
-                        if (Strings.isNullOrEmpty(fallback)) {
-                            updateRoute(msg, StringUtils.EMPTY);
+                        Match matcher = grok.match(field);
+                        matcher.captures();
+                        if (matcher.isNull()) {
+                            if (Strings.isNullOrEmpty(fallback)) {
+                                updateRoute(msg, StringUtils.EMPTY);
+                            } else {
+                                updateRoute(msg, fallback);
+                            }
+                            forward(msg);
                         } else {
-                            updateRoute(msg, fallback);
-                        }
-                        forward(msg);
-                    } else {
-                        // Compose
-                        evt.mergeIn(new JsonObject(matcher.toMap()));
+                            // Compose
+                            evt.mergeIn(new JsonObject(matcher.toMap()));
 
-                        // Send to the next endpoint
-                        forward(msg);
+                            // Send to the next endpoint
+                            forward(msg);
+                        }
                     }
                 });
     }

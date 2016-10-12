@@ -33,9 +33,28 @@ import io.vertx.core.json.JsonObject;
 public interface ConvertHandler extends Handler<Message<JsonObject>> {
 
     @Override default void handle(Message<JsonObject> event) {
-        handle(event.body());
+        JsonObject message = event.body();
+        try {
+            handle(message);
+        } catch (Throwable th) {
+            handleFailure(message, th);
+        }
     }
 
+    /**
+     * Handle message.
+     *
+     * @param message message involved.
+     */
     void handle(JsonObject message);
+
+    /**
+     * Handle failure during processing.
+     *
+     * @param message message involved.
+     * @param th      error throw.
+     */
+    default void handleFailure(JsonObject message, Throwable th) {
+    }
 
 }

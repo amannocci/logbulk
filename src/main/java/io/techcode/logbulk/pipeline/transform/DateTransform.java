@@ -71,20 +71,22 @@ public class DateTransform extends ComponentVerticle {
 
         // Register endpoint
         getEventBus().<JsonObject>localConsumer(endpoint)
-                .handler((ConvertHandler) msg -> {
-                    // Process
-                    JsonObject evt = event(msg);
-                    String field = evt.getString(match);
-                    if (field != null) {
-                        DateTime time = formatter.parseDateTime(field);
-                        evt.put(target, ISO_FORMATTER.print(time));
-                        if (metaFormatter != null) {
-                            evt.put("_index", metaFormatter.print(time));
+                .handler(new TolerantHandler() {
+                    @Override public void handle(JsonObject msg) {
+                        // Process
+                        JsonObject evt = event(msg);
+                        String field = evt.getString(match);
+                        if (field != null) {
+                            DateTime time = formatter.parseDateTime(field);
+                            evt.put(target, ISO_FORMATTER.print(time));
+                            if (metaFormatter != null) {
+                                evt.put("_index", metaFormatter.print(time));
+                            }
                         }
-                    }
 
-                    // Send to the next endpoint
-                    forward(msg);
+                        // Send to the next endpoint
+                        forward(msg);
+                    }
                 });
     }
 

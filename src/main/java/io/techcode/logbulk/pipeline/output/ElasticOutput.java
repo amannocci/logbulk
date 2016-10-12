@@ -62,7 +62,11 @@ public class ElasticOutput extends ComponentVerticle {
         BulkRequestBuilder bulk = new BulkRequestBuilder(vertx, config);
 
         // Register endpoint
-        getEventBus().<JsonObject>localConsumer(endpoint).handler((ConvertHandler) bulk::add);
+        getEventBus().<JsonObject>localConsumer(endpoint).handler(new TolerantHandler() {
+            @Override public void handle(JsonObject msg) {
+                bulk.add(msg);
+            }
+        });
     }
 
     @Override protected void checkConfig(JsonObject config) {
