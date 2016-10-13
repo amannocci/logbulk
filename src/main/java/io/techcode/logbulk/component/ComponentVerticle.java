@@ -203,9 +203,9 @@ public class ComponentVerticle extends AbstractVerticle {
         // Determine next stage
         Optional<String> nextOpt = next(headers, current);
         if (nextOpt.isPresent()) {
-            headers.put("_previous", current);
-            headers.put("_current", current + 1);
+            if (current > -1) headers.put("_previous", current);
             if (current == 0) headers.remove("_route_old");
+            headers.put("_current", current + 1);
             eventBus.send(nextOpt.get(), msg, DELIVERY_OPTIONS);
         }
         if (hasMailbox) eventBus.send(parentEndpoint + ".worker", endpoint);
@@ -222,7 +222,8 @@ public class ComponentVerticle extends AbstractVerticle {
         JsonObject headers = headers(msg);
         headers.put("_route_old", headers.getString("_route"));
         headers.put("_route", route);
-        headers.put("_current", 0);
+        headers.put("_previous", headers.getInteger("_current"));
+        headers.put("_current", -1);
         return msg;
     }
 
