@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -81,7 +82,10 @@ public class ComponentVerticle extends AbstractVerticle {
         // Generate routing
         JsonObject routes = config.getJsonObject("route");
         for (String route : routes.fieldNames()) {
-            routing.putAll(route, routes.getJsonArray(route).getList());
+            routing.putAll(route, routes.getJsonArray(route).stream()
+                    .filter(s -> s instanceof String)
+                    .map(s -> (String) s)
+                    .collect(Collectors.toList()));
         }
     }
 
