@@ -137,12 +137,12 @@ public class ComponentVerticle extends AbstractVerticle {
         checkNotNull(headers, "Headers can't be null");
 
         // Gets some stuff
-        int current = headers.getInteger("_current", 0);
-        int previous = current - 1;
+        int previous = headers.getInteger("_previous", -1);
 
         // Possible previous component
         if (previous >= 0) {
-            String route = headers.getString("_route");
+            String route = headers.getString("_route_old");
+            if (route == null) route = headers.getString("_route");
             List<String> endpoints = this.routing.get(route);
             return Optional.of(endpoints.get(previous));
         } else {
@@ -203,7 +203,9 @@ public class ComponentVerticle extends AbstractVerticle {
         // Determine next stage
         Optional<String> nextOpt = next(headers, current);
         if (nextOpt.isPresent()) {
+            headers.put("_previous", current);
             headers.put("_current", current + 1);
+            if (current == 0) headers.remove("_route_old");
             eventBus.send(nextOpt.get(), msg, DELIVERY_OPTIONS);
         }
         if (hasMailbox) eventBus.send(parentEndpoint + ".worker", endpoint);
@@ -218,6 +220,7 @@ public class ComponentVerticle extends AbstractVerticle {
      */
     public JsonObject updateRoute(JsonObject msg, String route) {
         JsonObject headers = headers(msg);
+        headers.put("_route_old", headers.getString("_route"));
         headers.put("_route", route);
         headers.put("_current", 0);
         return msg;
