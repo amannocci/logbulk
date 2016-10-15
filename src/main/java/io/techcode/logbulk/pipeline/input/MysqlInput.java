@@ -25,6 +25,7 @@ package io.techcode.logbulk.pipeline.input;
 
 import com.google.common.base.Strings;
 import io.techcode.logbulk.component.ComponentVerticle;
+import io.techcode.logbulk.util.Streams;
 import io.vertx.core.AsyncResultHandler;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
@@ -39,6 +40,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.*;
 
@@ -130,7 +132,7 @@ public class MysqlInput extends ComponentVerticle {
             // Add offset and compute queryParams
             if (!parameters.containsKey("offset")) parameters.put("offset", 0);
             this.track = (Strings.isNullOrEmpty(track)) ? null : track;
-            List<String> orderList = order.getList();
+            List<String> orderList = Streams.to(order.stream(), String.class).collect(Collectors.toList());
             for (int i = 0; i < orderList.size(); i++) {
                 if (track != null && track.equalsIgnoreCase(orderList.get(i))) trackPos = i;
                 queryParams.add(parameters.getValue(orderList.get(i)));

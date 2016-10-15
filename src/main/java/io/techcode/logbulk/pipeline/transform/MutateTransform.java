@@ -29,6 +29,7 @@ import com.google.common.collect.Maps;
 import com.google.common.primitives.Floats;
 import com.google.common.primitives.Ints;
 import io.techcode.logbulk.component.ComponentVerticle;
+import io.techcode.logbulk.util.Streams;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +40,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -113,7 +116,7 @@ public class MutateTransform extends ComponentVerticle {
          */
         private RemoveTask(JsonObject config) {
             checkNotNull(config, "The configuration can't be null");
-            toRemove = config.getJsonArray("remove").<String>getList();
+            toRemove = Streams.to(config.getJsonArray("remove").stream(), String.class).collect(Collectors.toList());
             ((ArrayList) toRemove).trimToSize();
         }
 
@@ -141,7 +144,7 @@ public class MutateTransform extends ComponentVerticle {
          */
         public StripTask(JsonObject config) {
             checkNotNull(config, "The configuration can't be null");
-            toStrip = config.getJsonArray("strip").<String>getList();
+            toStrip = Streams.to(config.getJsonArray("strip").stream(), String.class).collect(Collectors.toList());
             ((ArrayList) toStrip).trimToSize();
         }
 
@@ -170,7 +173,7 @@ public class MutateTransform extends ComponentVerticle {
          */
         public LowercaseTask(JsonObject config) {
             checkNotNull(config, "The configuration can't be null");
-            toLowercase = config.getJsonArray("lowercase").<String>getList();
+            toLowercase = Streams.to(config.getJsonArray("lowercase").stream(), String.class).collect(Collectors.toList());
             ((ArrayList) toLowercase).trimToSize();
         }
 
@@ -199,7 +202,7 @@ public class MutateTransform extends ComponentVerticle {
          */
         public UppercaseTask(JsonObject config) {
             checkNotNull(config, "The configuration can't be null");
-            toUppercase = config.getJsonArray("uppercase").<String>getList();
+            toUppercase = Streams.to(config.getJsonArray("uppercase").stream(), String.class).collect(Collectors.toList());
             ((ArrayList) toUppercase).trimToSize();
         }
 

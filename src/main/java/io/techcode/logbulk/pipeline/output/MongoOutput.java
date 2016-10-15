@@ -27,12 +27,15 @@ import com.google.common.collect.Sets;
 import io.techcode.logbulk.component.ComponentVerticle;
 import io.techcode.logbulk.util.ConvertHandler;
 import io.techcode.logbulk.util.Flusher;
+import io.techcode.logbulk.util.Streams;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.mongo.MongoClient;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -68,7 +71,7 @@ public class MongoOutput extends ComponentVerticle {
         this.threehold = config.getInteger("queue", 100);
         this.idle = threehold / 2;
         this.collection = config.getString("collection");
-        JsonArray dates = config.getJsonArray("date", new JsonArray());
+        List<String> dates = Streams.to(config.getJsonArray("date", new JsonArray()).stream(), String.class).collect(Collectors.toList());
 
         // Remap configuration
         JsonObject mongoConf = new JsonObject();
@@ -80,20 +83,16 @@ public class MongoOutput extends ComponentVerticle {
         flusher.start();
 
         // Register endpoint
-        getEventBus().<JsonObject>localConsumer(endpoint).handler(new TolerantHandler() {
-            @Override public void handle(JsonObject msg) {
-                JsonObject evt = event(msg);
-                if (!dates.isEmpty()) {
-                    dates.stream()
-                            .filter(d -> d instanceof String)
-                            .map(d -> (String) d)
-                            .filter(evt::containsKey)
-                            .forEach(d -> evt.put(d, new JsonObject().put("$date", evt.getString(d))));
-                }
-                pending.add(evt);
-                if (pending.size() >= bulk) {
-                    send();
-                }
+        getEventBus().<JsonObject>localConsumer(endpoint).handler((ConvertHandler) msg -> {
+            JsonObject evt = event(msg);
+            if (dates.size() > 0) {
+                dates.stream()
+                        .filter(evt::containsKey)
+                        .forEach(d -> evt.put(d, new JsonObject().put("$date", evt.getString(d))));
+            }
+            pending.add(evt);
+            if (pending.size() >= bulk) {
+                send();
             }
         });
     }

@@ -27,12 +27,14 @@ import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import io.techcode.logbulk.component.ComponentVerticle;
 import io.techcode.logbulk.util.ConvertHandler;
+import io.techcode.logbulk.util.Streams;
 import io.vertx.core.json.JsonObject;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -56,7 +58,7 @@ public class AnonymiseTransform extends ComponentVerticle {
         super.start();
 
         // Setup
-        List<String> fields = config.getJsonArray("fields").getList();
+        List<String> fields = Streams.to(config.getJsonArray("fields").stream(), String.class).collect(Collectors.toList());
         HashFunction hash = HASHING.getOrDefault("hashing", Hashing.md5());
 
         // Register endpoint
