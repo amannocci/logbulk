@@ -24,7 +24,6 @@
 package io.techcode.logbulk.pipeline.transform;
 
 import io.techcode.logbulk.component.ComponentVerticle;
-import io.techcode.logbulk.util.ConvertHandler;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 
@@ -47,8 +46,8 @@ public class JsonTransform extends ComponentVerticle {
                 .handler(new TolerantHandler() {
                     @Override public void handle(JsonObject msg) {
                         // Process
-                        JsonObject evt = event(msg);
-                        evt.mergeIn(new JsonObject(evt.getString(source)));
+                        JsonObject body = body(msg);
+                        body.mergeIn(new JsonObject(body.getString(source)));
 
                         // Send to the next endpoint
                         forward(msg);

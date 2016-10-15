@@ -118,20 +118,20 @@ public class ComponentVerticle extends AbstractVerticle {
     }
 
     /**
-     * Extract event part of the message.
+     * Extract body part of the message.
      *
      * @param message message to process.
-     * @return event part.
+     * @return body part.
      */
-    public JsonObject event(JsonObject message) {
-        return message.getJsonObject("event");
+    public JsonObject body(JsonObject message) {
+        return message.getJsonObject("body");
     }
 
     /**
-     * Returns the previous component processor for this event.
+     * Returns the previous component processor for this body.
      *
-     * @param headers headers of the event.
-     * @return previous component processor for this event.
+     * @param headers headers of the body.
+     * @return previous component processor for this body.
      */
     public Optional<String> previous(JsonObject headers) {
         checkNotNull(headers, "Headers can't be null");
@@ -151,10 +151,10 @@ public class ComponentVerticle extends AbstractVerticle {
     }
 
     /**
-     * Returns the next component processor for this event.
+     * Returns the next component processor for this body.
      *
-     * @param headers headers of the event.
-     * @return next component processor for this event.
+     * @param headers headers of the body.
+     * @return next component processor for this body.
      */
     public Optional<String> next(JsonObject headers) {
         checkNotNull(headers, "Headers can't be null");
@@ -165,10 +165,10 @@ public class ComponentVerticle extends AbstractVerticle {
     }
 
     /**
-     * Returns the next component processor for this event.
+     * Returns the next component processor for this body.
      *
-     * @param headers headers of the event.
-     * @return next component processor for this event.
+     * @param headers headers of the body.
+     * @return next component processor for this body.
      */
     private Optional<String> next(JsonObject headers, int current) {
         checkNotNull(headers, "Headers can't be null");
@@ -189,7 +189,7 @@ public class ComponentVerticle extends AbstractVerticle {
     }
 
     /**
-     * Forward the event to the next stage and release worker if mailbox.
+     * Forward the body to the next stage and release worker if mailbox.
      *
      * @param msg message to forward.
      */
@@ -259,14 +259,14 @@ public class ComponentVerticle extends AbstractVerticle {
     }
 
     /**
-     * Create a new event and forward to next endpoint.
+     * Create a new body and forward to next endpoint.
      *
      * @param message message data.
      */
     protected final void createEvent(String message) {
-        // Create a new event
+        // Create a new body
         JsonObject headers = new JsonObject();
-        JsonObject evt = new JsonObject().put("message", message);
+        JsonObject body = new JsonObject().put("message", message);
 
         // Options
         headers.put("_route", config.getString("dispatch"));
@@ -275,7 +275,7 @@ public class ComponentVerticle extends AbstractVerticle {
         // Send to the next endpoint
         forward(new JsonObject()
                 .put("headers", headers)
-                .put("event", evt)
+                .put("body", body)
         );
     }
 
@@ -283,7 +283,7 @@ public class ComponentVerticle extends AbstractVerticle {
      * Notify pressure to another component.
      *
      * @param previousPressure already notified component.
-     * @param headers          headers event involved.
+     * @param headers          headers body involved.
      */
     public void notifyPressure(Set<String> previousPressure, JsonObject headers) {
         // Always return a previous in mailbox context

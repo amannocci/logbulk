@@ -41,7 +41,6 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -92,8 +91,8 @@ public class MutateTransform extends ComponentVerticle {
                 .handler(new TolerantHandler() {
                     @Override public void handle(JsonObject msg) {
                         // Process
-                        JsonObject evt = event(msg);
-                        pipeline.forEach(t -> t.accept(evt));
+                        JsonObject body = body(msg);
+                        pipeline.forEach(t -> t.accept(body));
 
                         // Send to the next endpoint
                         forward(msg);
@@ -120,8 +119,8 @@ public class MutateTransform extends ComponentVerticle {
             ((ArrayList) toRemove).trimToSize();
         }
 
-        @Override public void accept(JsonObject evt) {
-            toRemove.forEach(evt::remove);
+        @Override public void accept(JsonObject body) {
+            toRemove.forEach(body::remove);
         }
 
     }
@@ -148,10 +147,10 @@ public class MutateTransform extends ComponentVerticle {
             ((ArrayList) toStrip).trimToSize();
         }
 
-        @Override public void accept(JsonObject evt) {
+        @Override public void accept(JsonObject body) {
             toStrip.forEach(key -> {
-                if (evt.containsKey(key)) {
-                    evt.put(key, pattern.matcher(evt.getString(key)).replaceAll(" "));
+                if (body.containsKey(key)) {
+                    body.put(key, pattern.matcher(body.getString(key)).replaceAll(" "));
                 }
             });
         }
@@ -177,10 +176,10 @@ public class MutateTransform extends ComponentVerticle {
             ((ArrayList) toLowercase).trimToSize();
         }
 
-        @Override public void accept(JsonObject evt) {
+        @Override public void accept(JsonObject body) {
             toLowercase.forEach(key -> {
-                if (evt.containsKey(key)) {
-                    evt.put(key, evt.getString(key).toLowerCase());
+                if (body.containsKey(key)) {
+                    body.put(key, body.getString(key).toLowerCase());
                 }
             });
         }
@@ -206,10 +205,10 @@ public class MutateTransform extends ComponentVerticle {
             ((ArrayList) toUppercase).trimToSize();
         }
 
-        @Override public void accept(JsonObject evt) {
+        @Override public void accept(JsonObject body) {
             toUppercase.forEach(key -> {
-                if (evt.containsKey(key)) {
-                    evt.put(key, evt.getString(key).toUpperCase());
+                if (body.containsKey(key)) {
+                    body.put(key, body.getString(key).toUpperCase());
                 }
             });
         }
@@ -237,9 +236,9 @@ public class MutateTransform extends ComponentVerticle {
             }
         }
 
-        @Override public void accept(JsonObject evt) {
-            toUpdate.keySet().stream().filter(evt::containsKey).forEach(key -> {
-                evt.put(key, toUpdate.get(key));
+        @Override public void accept(JsonObject body) {
+            toUpdate.keySet().stream().filter(body::containsKey).forEach(key -> {
+                body.put(key, toUpdate.get(key));
             });
         }
 
@@ -272,11 +271,11 @@ public class MutateTransform extends ComponentVerticle {
             }
         }
 
-        @Override public void accept(JsonObject evt) {
-            toGsub.keySet().stream().filter(evt::containsKey).forEach(key -> {
-                if (evt.getValue(key) instanceof String) {
+        @Override public void accept(JsonObject body) {
+            toGsub.keySet().stream().filter(body::containsKey).forEach(key -> {
+                if (body.getValue(key) instanceof String) {
                     Pair<String, String> pair = toGsub.get(key);
-                    evt.put(key, evt.getString(key).replaceAll(pair.getKey(), pair.getValue()));
+                    body.put(key, body.getString(key).replaceAll(pair.getKey(), pair.getValue()));
                 }
             });
         }
@@ -304,13 +303,13 @@ public class MutateTransform extends ComponentVerticle {
             }
         }
 
-        @Override public void accept(JsonObject evt) {
-            toJoin.keySet().stream().filter(evt::containsKey).forEach(key -> {
-                Object raw = evt.getMap().get(key);
+        @Override public void accept(JsonObject body) {
+            toJoin.keySet().stream().filter(body::containsKey).forEach(key -> {
+                Object raw = body.getMap().get(key);
                 if (raw instanceof List) {
                     List list = (List) raw;
                     String joined = Joiner.on(toJoin.get(key)).join(list);
-                    evt.put(key, joined);
+                    body.put(key, joined);
                 }
             });
         }
@@ -338,10 +337,10 @@ public class MutateTransform extends ComponentVerticle {
             }
         }
 
-        @Override public void accept(JsonObject evt) {
-            toRename.keySet().stream().filter(evt::containsKey).forEach(key -> {
-                evt.getMap().put(toRename.get(key), evt.getMap().get(key));
-                evt.remove(key);
+        @Override public void accept(JsonObject body) {
+            toRename.keySet().stream().filter(body::containsKey).forEach(key -> {
+                body.getMap().put(toRename.get(key), body.getMap().get(key));
+                body.remove(key);
             });
         }
 
@@ -378,19 +377,19 @@ public class MutateTransform extends ComponentVerticle {
             }
         }
 
-        @Override public void accept(JsonObject evt) {
-            toConvert.keySet().stream().filter(evt::containsKey).forEach(key -> {
+        @Override public void accept(JsonObject body) {
+            toConvert.keySet().stream().filter(body::containsKey).forEach(key -> {
                 switch (toConvert.get(key)) {
                     case 0:
-                        Integer intVal = Ints.tryParse(String.valueOf(evt.getMap().get(key)));
-                        evt.put(key, intVal == null ? 0 : intVal);
+                        Integer intVal = Ints.tryParse(String.valueOf(body.getMap().get(key)));
+                        body.put(key, intVal == null ? 0 : intVal);
                         break;
                     case 1:
-                        evt.put(key, String.valueOf(evt.getMap().get(key)));
+                        body.put(key, String.valueOf(body.getMap().get(key)));
                         break;
                     case 2:
-                        Float floatVal = Floats.tryParse(String.valueOf(evt.getMap().get(key)));
-                        evt.put(key, floatVal == null ? Float.NaN : floatVal);
+                        Float floatVal = Floats.tryParse(String.valueOf(body.getMap().get(key)));
+                        body.put(key, floatVal == null ? Float.NaN : floatVal);
                         break;
                 }
             });

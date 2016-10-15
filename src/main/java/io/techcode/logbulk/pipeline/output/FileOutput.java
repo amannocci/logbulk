@@ -75,8 +75,8 @@ public class FileOutput extends ComponentVerticle {
         getEventBus().<JsonObject>localConsumer(endpoint)
                 .handler(new TolerantHandler() {
                     @Override public void handle(JsonObject msg) {
-                        // Process the event
-                        buf.appendString(event(msg).encode()).appendString(delimiter);
+                        // Process the body
+                        buf.appendString(body(msg).encode()).appendString(delimiter);
                         if (buf.length() > chunkPartition) {
                             file.write(buf);
                             buf = Buffer.buffer(chunkPartition);

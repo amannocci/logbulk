@@ -26,8 +26,8 @@ package io.techcode.logbulk.pipeline.output;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Sets;
 import io.techcode.logbulk.component.ComponentVerticle;
-import io.techcode.logbulk.util.ConvertHandler;
 import io.techcode.logbulk.util.Flusher;
+import io.techcode.logbulk.util.Streams;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
@@ -55,9 +55,7 @@ public class ElasticOutput extends ComponentVerticle {
         super.start();
 
         // Setup processing task
-        hosts = Iterators.cycle(config.getJsonArray("hosts").stream()
-                .filter(s -> s instanceof String)
-                .map(d -> (String) d)
+        hosts = Iterators.cycle(Streams.to(config.getJsonArray("hosts").stream(), String.class)
                 .collect(Collectors.toList()));
         BulkRequestBuilder bulk = new BulkRequestBuilder(vertx, config);
 
@@ -135,16 +133,16 @@ public class ElasticOutput extends ComponentVerticle {
          */
         public void add(JsonObject msg) {
             String idx = index;
-            JsonObject evt = event(msg);
-            if (evt.containsKey("_index")) {
-                idx += evt.getString("_index");
-                evt.remove("_index");
+            JsonObject body = body(msg);
+            if (body.containsKey("_index")) {
+                idx += body.getString("_index");
+                body.remove("_index");
             }
             if (paused) notifyPressure(previousPressure, headers(msg));
             builder.append(new JsonObject().put("index", new JsonObject()
                     .put("_type", type)
                     .put("_index", idx)).encode()).append("\n");
-            builder.append(evt.encode()).append("\n");
+            builder.append(body.encode()).append("\n");
             if (++docs >= bulk) {
                 send();
             }

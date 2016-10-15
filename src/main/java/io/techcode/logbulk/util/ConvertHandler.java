@@ -28,7 +28,7 @@ import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonObject;
 
 /**
- * Convert a message to a pair of headers and event.
+ * Convert a message to a pair of headers and body.
  */
 public interface ConvertHandler extends Handler<Message<JsonObject>> {
 

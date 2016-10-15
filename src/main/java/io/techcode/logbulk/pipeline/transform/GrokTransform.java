@@ -25,7 +25,6 @@ package io.techcode.logbulk.pipeline.transform;
 
 import com.google.common.base.Strings;
 import io.techcode.logbulk.component.ComponentVerticle;
-import io.techcode.logbulk.util.ConvertHandler;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import oi.thekraken.grok.api.Grok;
@@ -77,8 +76,8 @@ public class GrokTransform extends ComponentVerticle {
                 .handler(new TolerantHandler() {
                     @Override public void handle(JsonObject msg) {
                         // Process
-                        JsonObject evt = event(msg);
-                        String field = evt.getString(config.getString("match"));
+                        JsonObject body = body(msg);
+                        String field = body.getString(config.getString("match"));
                         if (field == null) return;
 
                         Match matcher = grok.match(field);
@@ -92,7 +91,7 @@ public class GrokTransform extends ComponentVerticle {
                             forward(msg);
                         } else {
                             // Compose
-                            evt.mergeIn(new JsonObject(matcher.toMap()));
+                            body.mergeIn(new JsonObject(matcher.toMap()));
 
                             // Send to the next endpoint
                             forward(msg);

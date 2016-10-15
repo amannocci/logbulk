@@ -84,13 +84,13 @@ public class MongoOutput extends ComponentVerticle {
 
         // Register endpoint
         getEventBus().<JsonObject>localConsumer(endpoint).handler((ConvertHandler) msg -> {
-            JsonObject evt = event(msg);
+            JsonObject body = body(msg);
             if (dates.size() > 0) {
                 dates.stream()
-                        .filter(evt::containsKey)
-                        .forEach(d -> evt.put(d, new JsonObject().put("$date", evt.getString(d))));
+                        .filter(body::containsKey)
+                        .forEach(d -> body.put(d, new JsonObject().put("$date", body.getString(d))));
             }
-            pending.add(evt);
+            pending.add(body);
             if (pending.size() >= bulk) {
                 send();
             }

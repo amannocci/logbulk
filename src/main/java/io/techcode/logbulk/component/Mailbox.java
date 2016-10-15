@@ -115,7 +115,7 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
     }
 
     /**
-     * Add event in buffer and handle back pressure.
+     * Add body in buffer and handle back pressure.
      *
      * @param msg message to add in buffer.
      */
@@ -127,7 +127,7 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
     }
 
     /**
-     * Send event to an available worker.
+     * Send body to an available worker.
      *
      * @param msg       message to process.
      * @param workerOpt optional worker.
@@ -147,7 +147,7 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
     }
 
     /**
-     * Attempt to process an event in the buffer.
+     * Attempt to process an body in the buffer.
      *
      * @param workerOpt optional worker.
      */

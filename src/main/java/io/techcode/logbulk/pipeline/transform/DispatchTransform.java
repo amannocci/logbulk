@@ -26,7 +26,6 @@ package io.techcode.logbulk.pipeline.transform;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import io.techcode.logbulk.component.ComponentVerticle;
-import io.techcode.logbulk.util.ConvertHandler;
 import io.vertx.core.json.JsonObject;
 
 import java.util.List;
@@ -102,7 +101,7 @@ public class DispatchTransform extends ComponentVerticle {
         }
 
         /**
-         * Dispatch the event.
+         * Dispatch the body.
          *
          * @param msg message involved.
          */
@@ -137,7 +136,7 @@ public class DispatchTransform extends ComponentVerticle {
         }
 
         @Override public void dispatch(JsonObject msg) {
-            String value = event(msg).getString(field);
+            String value = body(msg).getString(field);
             if (value.startsWith(match)) {
                 super.dispatch(msg);
             }
@@ -169,7 +168,7 @@ public class DispatchTransform extends ComponentVerticle {
         }
 
         @Override public void dispatch(JsonObject msg) {
-            String value = event(msg).getString(field);
+            String value = body(msg).getString(field);
             if (value.contains(match)) {
                 super.dispatch(msg);
             }

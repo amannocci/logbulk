@@ -73,12 +73,12 @@ public class DateTransform extends ComponentVerticle {
                 .handler(new TolerantHandler() {
                     @Override public void handle(JsonObject msg) {
                         // Process
-                        JsonObject evt = event(msg);
+                        JsonObject body = body(msg);
                         DateTime time = null;
                         if (match == null) {
                             time = new DateTime(System.currentTimeMillis());
                         } else {
-                            String field = evt.getString(match);
+                            String field = body.getString(match);
                             if (field != null) {
                                 time = formatter.parseDateTime(field);
                             }
@@ -86,9 +86,9 @@ public class DateTransform extends ComponentVerticle {
 
                         // We have a date
                         if (time != null) {
-                            evt.put(target, ISO_FORMATTER.print(time));
+                            body.put(target, ISO_FORMATTER.print(time));
                             if (metaFormatter != null) {
-                                evt.put("_index", metaFormatter.print(time));
+                                body.put("_index", metaFormatter.print(time));
                             }
                         }
 

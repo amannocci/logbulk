@@ -24,7 +24,6 @@
 package io.techcode.logbulk.pipeline.output;
 
 import io.techcode.logbulk.component.ComponentVerticle;
-import io.techcode.logbulk.util.ConvertHandler;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 
@@ -41,9 +40,9 @@ public class StdOutput extends ComponentVerticle {
         getEventBus().<JsonObject>localConsumer(endpoint).handler(new TolerantHandler() {
             @Override public void handle(JsonObject msg) {
                 if (config.getBoolean("pretty", false)) {
-                    log.info(event(msg).encodePrettily());
+                    log.info(body(msg).encodePrettily());
                 } else {
-                    log.info(event(msg).encode());
+                    log.info(body(msg).encode());
                 }
             }
         });

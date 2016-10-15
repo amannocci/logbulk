@@ -28,7 +28,6 @@ import com.google.common.primitives.Ints;
 import com.univocity.parsers.csv.CsvParser;
 import com.univocity.parsers.csv.CsvParserSettings;
 import io.techcode.logbulk.component.ComponentVerticle;
-import io.techcode.logbulk.util.ConvertHandler;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 
@@ -68,13 +67,13 @@ public class CsvTransform extends ComponentVerticle {
                 .handler(new TolerantHandler() {
                     @Override public void handle(JsonObject msg) {
                         // Process
-                        JsonObject evt = event(msg);
-                        String field = evt.getString(source);
+                        JsonObject body = body(msg);
+                        String field = body.getString(source);
                         if (field != null) {
                             String[] cols = parser.parseLine(field);
                             if (cols.length >= columns.size()) {
                                 for (int key : columns.keySet()) {
-                                    evt.put(columns.get(key), cols[key]);
+                                    body.put(columns.get(key), cols[key]);
                                 }
                             }
                         }

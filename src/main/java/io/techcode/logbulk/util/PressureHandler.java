@@ -83,11 +83,11 @@ public class PressureHandler implements Handler<Message<String>> {
         if (ended) return;
 
         // Process stream pressure
-        String evt = e.body();
-        if (nextPressure.contains(evt)) {
-            nextPressure.remove(evt);
+        String body = e.body();
+        if (nextPressure.contains(body)) {
+            nextPressure.remove(body);
         } else {
-            nextPressure.add(evt);
+            nextPressure.add(body);
         }
         if (paused && nextPressure.isEmpty()) {
             stream.resume();
