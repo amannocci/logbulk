@@ -28,7 +28,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Floats;
 import com.google.common.primitives.Ints;
-import io.techcode.logbulk.component.ComponentVerticle;
+import io.techcode.logbulk.component.TransformComponentVerticle;
 import io.techcode.logbulk.util.Streams;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -48,13 +48,16 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Mutate transformer pipeline component.
  */
 @Slf4j
-public class MutateTransform extends ComponentVerticle {
+public class MutateTransform extends TransformComponentVerticle {
+
+    // Pipeline
+    private List<Consumer<JsonObject>> pipeline;
 
     @Override public void start() {
         super.start();
 
         // Aggregate all operations perform
-        List<Consumer<JsonObject>> pipeline = Lists.newArrayList();
+        pipeline = Lists.newArrayList();
         if (config.containsKey("remove")) {
             pipeline.add(new RemoveTask(config));
         }
@@ -85,19 +88,15 @@ public class MutateTransform extends ComponentVerticle {
 
         // Optimize space consumption
         ((ArrayList) pipeline).trimToSize();
+    }
 
-        // Register endpoint
-        getEventBus().<JsonObject>localConsumer(endpoint)
-                .handler(new TolerantHandler() {
-                    @Override public void handle(JsonObject msg) {
-                        // Process
-                        JsonObject body = body(msg);
-                        pipeline.forEach(t -> t.accept(body));
+    @Override public void handle(JsonObject msg) {
+        // Process
+        JsonObject body = body(msg);
+        pipeline.forEach(t -> t.accept(body));
 
-                        // Send to the next endpoint
-                        forward(msg);
-                    }
-                });
+        // Send to the next endpoint
+        forward(msg);
     }
 
     /**

@@ -23,7 +23,7 @@
  */
 package io.techcode.logbulk.pipeline.output;
 
-import io.techcode.logbulk.component.ComponentVerticle;
+import io.techcode.logbulk.component.TransformComponentVerticle;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 
@@ -31,21 +31,24 @@ import lombok.extern.slf4j.Slf4j;
  * Standard output pipeline component.
  */
 @Slf4j
-public class StdOutput extends ComponentVerticle {
+public class StdOutput extends TransformComponentVerticle {
+
+    // Settings
+    private boolean pretty;
 
     @Override public void start() {
         super.start();
 
-        // Register endpoint
-        getEventBus().<JsonObject>localConsumer(endpoint).handler(new TolerantHandler() {
-            @Override public void handle(JsonObject msg) {
-                if (config.getBoolean("pretty", false)) {
-                    log.info(body(msg).encodePrettily());
-                } else {
-                    log.info(body(msg).encode());
-                }
-            }
-        });
+        // Setup
+        pretty = config.getBoolean("pretty", false);
+    }
+
+    @Override public void handle(JsonObject msg) {
+        if (pretty) {
+            log.info(body(msg).encodePrettily());
+        } else {
+            log.info(body(msg).encode());
+        }
     }
 
     @Override protected void checkConfig(JsonObject config) {

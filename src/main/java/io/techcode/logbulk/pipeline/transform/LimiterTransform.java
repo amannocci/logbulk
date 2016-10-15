@@ -24,7 +24,7 @@
 package io.techcode.logbulk.pipeline.transform;
 
 import com.google.common.collect.Sets;
-import io.techcode.logbulk.component.ComponentVerticle;
+import io.techcode.logbulk.component.TransformComponentVerticle;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 
@@ -36,7 +36,7 @@ import static com.google.common.base.Preconditions.checkState;
  * Limiter transformer pipeline component.
  */
 @Slf4j
-public class LimiterTransform extends ComponentVerticle {
+public class LimiterTransform extends TransformComponentVerticle {
 
     // Request per second
     private long request = 0;
@@ -47,29 +47,14 @@ public class LimiterTransform extends ComponentVerticle {
     // Paused
     private boolean paused = false;
 
+    // Limit
+    private int limit;
+
     @Override public void start() {
         super.start();
 
         // Setup
-        int limit = config.getInteger("limit");
-
-        // Register endpoint
-        getEventBus().<JsonObject>localConsumer(endpoint)
-                .handler(new TolerantHandler() {
-                    @Override public void handle(JsonObject msg) {
-                        // Process
-                        request += 1;
-
-                        // Limit reached ?
-                        if (request > limit && !paused) paused = true;
-
-                        // Paused
-                        if (paused) notifyPressure(previousPressure, headers(msg));
-
-                        // Send to the next endpoint
-                        forward(msg);
-                    }
-                });
+        limit = config.getInteger("limit");
 
         // Flush everysecond
         vertx.setPeriodic(1000, h -> {
@@ -80,6 +65,20 @@ public class LimiterTransform extends ComponentVerticle {
                 previousPressure.clear();
             }
         });
+    }
+
+    @Override public void handle(JsonObject msg) {
+        // Process
+        request += 1;
+
+        // Limit reached ?
+        if (request > limit && !paused) paused = true;
+
+        // Paused
+        if (paused) notifyPressure(previousPressure, headers(msg));
+
+        // Send to the next endpoint
+        forward(msg);
     }
 
     @Override protected void checkConfig(JsonObject config) {

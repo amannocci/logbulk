@@ -24,7 +24,7 @@
 package io.techcode.logbulk.pipeline.transform;
 
 import com.google.common.base.Strings;
-import io.techcode.logbulk.component.ComponentVerticle;
+import io.techcode.logbulk.component.TransformComponentVerticle;
 import io.vertx.core.json.JsonObject;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
@@ -38,27 +38,30 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * Date transformer pipeline component.
  */
-public class DateTransform extends ComponentVerticle {
+public class DateTransform extends TransformComponentVerticle {
 
     // ISO formatter
     private static final DateTimeFormatter ISO_FORMATTER = ISODateTimeFormat.dateTime().withLocale(Locale.ENGLISH);
 
-    // Meta formatter
+    // Settings
+    private String target;
+    private String match;
+    private DateTimeFormatter formatter;
     private DateTimeFormatter metaFormatter;
 
     @Override public void start() {
         super.start();
 
         // Setup
-        String target = config.getString("target", "@timestamp");
-        String match = config.getString("match");
+        target = config.getString("target", "@timestamp");
+        match = config.getString("match");
         String meta = config.getString("meta");
 
         // Formatter
-        DateTimeFormatter formatter =  DateTimeFormat
-                    .forPattern(config.getString("format", "dd/MM/YYYY"))
-                    .withLocale(Locale.ENGLISH)
-                    .withDefaultYear(2016);
+        formatter = DateTimeFormat
+                .forPattern(config.getString("format", "dd/MM/YYYY"))
+                .withLocale(Locale.ENGLISH)
+                .withDefaultYear(2016);
 
         // Meta formatter
         if (!Strings.isNullOrEmpty(meta)) {
@@ -67,35 +70,31 @@ public class DateTransform extends ComponentVerticle {
                     .withLocale(Locale.ENGLISH)
                     .withDefaultYear(2016);
         }
+    }
 
-        // Register endpoint
-        getEventBus().<JsonObject>localConsumer(endpoint)
-                .handler(new TolerantHandler() {
-                    @Override public void handle(JsonObject msg) {
-                        // Process
-                        JsonObject body = body(msg);
-                        DateTime time = null;
-                        if (match == null) {
-                            time = new DateTime(System.currentTimeMillis());
-                        } else {
-                            String field = body.getString(match);
-                            if (field != null) {
-                                time = formatter.parseDateTime(field);
-                            }
-                        }
+    @Override public void handle(JsonObject msg) {
+        // Process
+        JsonObject body = body(msg);
+        DateTime time = null;
+        if (match == null) {
+            time = new DateTime(System.currentTimeMillis());
+        } else {
+            String field = body.getString(match);
+            if (field != null) {
+                time = formatter.parseDateTime(field);
+            }
+        }
 
-                        // We have a date
-                        if (time != null) {
-                            body.put(target, ISO_FORMATTER.print(time));
-                            if (metaFormatter != null) {
-                                body.put("_index", metaFormatter.print(time));
-                            }
-                        }
+        // We have a date
+        if (time != null) {
+            body.put(target, ISO_FORMATTER.print(time));
+            if (metaFormatter != null) {
+                body.put("_index", metaFormatter.print(time));
+            }
+        }
 
-                        // Send to the next endpoint
-                        forward(msg);
-                    }
-                });
+        // Send to the next endpoint
+        forward(msg);
     }
 
     @Override protected void checkConfig(JsonObject config) {

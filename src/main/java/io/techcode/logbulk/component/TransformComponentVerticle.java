@@ -21,41 +21,26 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.logbulk.pipeline.transform;
+package io.techcode.logbulk.component;
 
-import io.techcode.logbulk.component.TransformComponentVerticle;
+import io.techcode.logbulk.util.ConvertHandler;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 /**
- * Metric transformer pipeline component.
+ * Message component verticle helper.
  */
 @Slf4j
-public class MetricTransform extends TransformComponentVerticle {
-
-    // Request per second
-    private long request = 0;
+public abstract class TransformComponentVerticle extends ComponentVerticle implements ConvertHandler {
 
     @Override public void start() {
         super.start();
-
-        // Flush everysecond
-        vertx.setPeriodic(1000, h -> {
-            log.info(endpoint + " req/s: " + request);
-            request = 0;
-        });
+        getEventBus().<JsonObject>localConsumer(endpoint).handler(this);
     }
 
-    @Override public void handle(JsonObject msg) {
-        // Process
-        request += 1;
-
-        // Send to the next endpoint
-        forward(msg);
-    }
-
-    @Override protected void checkConfig(JsonObject config) {
-        // Nothing to check
+    @Override public void handleFailure(JsonObject msg, Throwable th) {
+        forward(updateRoute(msg, fallback));
     }
 
 }

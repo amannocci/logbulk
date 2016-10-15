@@ -25,7 +25,7 @@ package io.techcode.logbulk.pipeline.transform;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import io.techcode.logbulk.component.ComponentVerticle;
+import io.techcode.logbulk.component.TransformComponentVerticle;
 import io.vertx.core.json.JsonObject;
 
 import java.util.List;
@@ -37,7 +37,7 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * Dispatch transformer pipeline component.
  */
-public class DispatchTransform extends ComponentVerticle {
+public class DispatchTransform extends TransformComponentVerticle {
 
     // Dispatch routes
     private List<SimpleDispatch> dispatch = Lists.newArrayList();
@@ -64,18 +64,14 @@ public class DispatchTransform extends ComponentVerticle {
                 dispatch.add(new SimpleDispatch(d));
             }
         }
+    }
 
-        // Register endpoint
-        getEventBus().<JsonObject>localConsumer(endpoint)
-                .handler(new TolerantHandler() {
-                    @Override public void handle(JsonObject msg) {
-                        // Process
-                        dispatch.forEach(d -> d.dispatch(msg));
+    @Override public void handle(JsonObject msg) {
+        // Process
+        dispatch.forEach(d -> d.dispatch(msg));
 
-                        // Send to the next endpoint
-                        forward(msg);
-                    }
-                });
+        // Send to the next endpoint
+        forward(msg);
     }
 
     @Override public void checkConfig(JsonObject config) {

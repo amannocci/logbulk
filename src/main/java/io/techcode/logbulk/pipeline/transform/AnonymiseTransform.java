@@ -25,7 +25,7 @@ package io.techcode.logbulk.pipeline.transform;
 
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
-import io.techcode.logbulk.component.ComponentVerticle;
+import io.techcode.logbulk.component.TransformComponentVerticle;
 import io.techcode.logbulk.util.Streams;
 import io.vertx.core.json.JsonObject;
 
@@ -40,7 +40,7 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * Anonymise transformer pipeline component.
  */
-public class AnonymiseTransform extends ComponentVerticle {
+public class AnonymiseTransform extends TransformComponentVerticle {
 
     // Hashing constant
     private static final Map<String, HashFunction> HASHING = new HashMap<String, HashFunction>() {{
@@ -53,27 +53,27 @@ public class AnonymiseTransform extends ComponentVerticle {
         put("crc32c", Hashing.crc32c());
     }};
 
+    // Settings
+    private List<String> fields;
+    private HashFunction hash;
+
     @Override public void start() {
         super.start();
 
         // Setup
-        List<String> fields = Streams.to(config.getJsonArray("fields").stream(), String.class).collect(Collectors.toList());
-        HashFunction hash = HASHING.getOrDefault("hashing", Hashing.md5());
+        fields = Streams.to(config.getJsonArray("fields").stream(), String.class).collect(Collectors.toList());
+        hash = HASHING.getOrDefault("hashing", Hashing.md5());
+    }
 
-        // Register endpoint
-        getEventBus().<JsonObject>localConsumer(endpoint)
-                .handler(new TolerantHandler() {
-                    @Override public void handle(JsonObject msg) {
-                        // Process
-                        JsonObject body = body(msg);
-                        fields.stream().filter(body::containsKey).forEach(field -> {
-                            body.put(field, hash.hashString(body.getString(field), StandardCharsets.UTF_8).toString());
-                        });
+    @Override public void handle(JsonObject msg) {
+        // Process
+        JsonObject body = body(msg);
+        fields.stream().filter(body::containsKey).forEach(field -> {
+            body.put(field, hash.hashString(body.getString(field), StandardCharsets.UTF_8).toString());
+        });
 
-                        // Send to the next endpoint
-                        forward(msg);
-                    }
-                });
+        // Send to the next endpoint
+        forward(msg);
     }
 
     @Override protected void checkConfig(JsonObject config) {

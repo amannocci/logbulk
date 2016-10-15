@@ -23,7 +23,7 @@
  */
 package io.techcode.logbulk.pipeline.transform;
 
-import io.techcode.logbulk.component.ComponentVerticle;
+import io.techcode.logbulk.component.TransformComponentVerticle;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 
@@ -33,26 +33,25 @@ import static com.google.common.base.Preconditions.checkState;
  * Json transformer pipeline component.
  */
 @Slf4j
-public class JsonTransform extends ComponentVerticle {
+public class JsonTransform extends TransformComponentVerticle {
+
+    // Settings
+    private String source;
 
     @Override public void start() {
         super.start();
 
         // Setup
-        String source = config.getString("source");
+        source = config.getString("source");
+    }
 
-        // Register endpoint
-        getEventBus().<JsonObject>localConsumer(endpoint)
-                .handler(new TolerantHandler() {
-                    @Override public void handle(JsonObject msg) {
-                        // Process
-                        JsonObject body = body(msg);
-                        body.mergeIn(new JsonObject(body.getString(source)));
+    @Override public void handle(JsonObject msg) {
+        // Process
+        JsonObject body = body(msg);
+        body.mergeIn(new JsonObject(body.getString(source)));
 
-                        // Send to the next endpoint
-                        forward(msg);
-                    }
-                });
+        // Send to the next endpoint
+        forward(msg);
     }
 
     @Override protected void checkConfig(JsonObject config) {

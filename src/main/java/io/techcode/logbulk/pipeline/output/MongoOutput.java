@@ -24,8 +24,7 @@
 package io.techcode.logbulk.pipeline.output;
 
 import com.google.common.collect.Sets;
-import io.techcode.logbulk.component.ComponentVerticle;
-import io.techcode.logbulk.util.ConvertHandler;
+import io.techcode.logbulk.component.TransformComponentVerticle;
 import io.techcode.logbulk.util.Flusher;
 import io.techcode.logbulk.util.Streams;
 import io.vertx.core.json.JsonArray;
@@ -43,7 +42,7 @@ import static com.google.common.base.Preconditions.checkState;
  * Mongo output pipeline component.
  */
 @Slf4j
-public class MongoOutput extends ComponentVerticle {
+public class MongoOutput extends TransformComponentVerticle {
 
     // Mongo client
     private MongoClient client;
@@ -63,6 +62,9 @@ public class MongoOutput extends ComponentVerticle {
     private boolean paused;
     private String collection;
 
+    // Settings
+    private List<String> dates;
+
     @Override public void start() {
         super.start();
 
@@ -71,7 +73,7 @@ public class MongoOutput extends ComponentVerticle {
         this.threehold = config.getInteger("queue", 100);
         this.idle = threehold / 2;
         this.collection = config.getString("collection");
-        List<String> dates = Streams.to(config.getJsonArray("date", new JsonArray()).stream(), String.class).collect(Collectors.toList());
+        dates = Streams.to(config.getJsonArray("date", new JsonArray()).stream(), String.class).collect(Collectors.toList());
 
         // Remap configuration
         JsonObject mongoConf = new JsonObject();
@@ -81,20 +83,19 @@ public class MongoOutput extends ComponentVerticle {
         flusher = new Flusher(vertx, config.getInteger("flush", 10));
         flusher.handler(h -> send());
         flusher.start();
+    }
 
-        // Register endpoint
-        getEventBus().<JsonObject>localConsumer(endpoint).handler((ConvertHandler) msg -> {
-            JsonObject body = body(msg);
-            if (dates.size() > 0) {
-                dates.stream()
-                        .filter(body::containsKey)
-                        .forEach(d -> body.put(d, new JsonObject().put("$date", body.getString(d))));
-            }
-            pending.add(body);
-            if (pending.size() >= bulk) {
-                send();
-            }
-        });
+    @Override public void handle(JsonObject msg) {
+        JsonObject body = body(msg);
+        if (dates.size() > 0) {
+            dates.stream()
+                    .filter(body::containsKey)
+                    .forEach(d -> body.put(d, new JsonObject().put("$date", body.getString(d))));
+        }
+        pending.add(body);
+        if (pending.size() >= bulk) {
+            send();
+        }
     }
 
     @Override public void stop() {

@@ -24,8 +24,8 @@
 package io.techcode.logbulk.component;
 
 import com.google.common.collect.ArrayListMultimap;
-import io.techcode.logbulk.util.ConvertHandler;
 import io.techcode.logbulk.util.PressureHandler;
+import io.techcode.logbulk.util.Streams;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Handler;
 import io.vertx.core.eventbus.DeliveryOptions;
@@ -70,6 +70,7 @@ public class ComponentVerticle extends AbstractVerticle {
 
     // Configuration
     protected JsonObject config;
+    protected String fallback;
 
     // Mailbox
     private boolean hasMailbox = true;
@@ -77,14 +78,13 @@ public class ComponentVerticle extends AbstractVerticle {
     @Override public void start() {
         this.config = config();
         eventBus = vertx.eventBus();
+        fallback = config.getString("fallback", StringUtils.EMPTY);
         endpoint(config);
 
         // Generate routing
         JsonObject routes = config.getJsonObject("route");
         for (String route : routes.fieldNames()) {
-            routing.putAll(route, routes.getJsonArray(route).stream()
-                    .filter(s -> s instanceof String)
-                    .map(s -> (String) s)
+            routing.putAll(route, Streams.to(routes.getJsonArray(route).stream(), String.class)
                     .collect(Collectors.toList()));
         }
     }
@@ -327,15 +327,6 @@ public class ComponentVerticle extends AbstractVerticle {
             hasMailbox = false;
         }
         log.info("Endpoint: " + endpoint);
-    }
-
-    /**
-     * Simple implementation of convert handler that redirect to fallback route in case of failure.
-     */
-    public abstract class TolerantHandler implements ConvertHandler {
-        @Override public void handleFailure(JsonObject msg, Throwable th) {
-            forward(updateRoute(msg, config.getString("fallback", StringUtils.EMPTY)));
-        }
     }
 
 }

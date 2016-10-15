@@ -27,7 +27,7 @@ import com.google.common.collect.Maps;
 import com.google.common.primitives.Ints;
 import com.univocity.parsers.csv.CsvParser;
 import com.univocity.parsers.csv.CsvParserSettings;
-import io.techcode.logbulk.component.ComponentVerticle;
+import io.techcode.logbulk.component.TransformComponentVerticle;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 
@@ -39,17 +39,22 @@ import static com.google.common.base.Preconditions.checkState;
  * Csv transformer pipeline component.
  */
 @Slf4j
-public class CsvTransform extends ComponentVerticle {
+public class CsvTransform extends TransformComponentVerticle {
+
+    // Settings
+    private String source;
+    private CsvParser parser;
+    private Map<Integer, String> columns;
 
     @Override public void start() {
         super.start();
 
         // Setup
-        String source = config.getString("field");
+        source = config.getString("field");
         String separator = config.getString("separator");
         String delimiter = config.getString("delimiter");
         JsonObject rawColumns = config.getJsonObject("columns");
-        Map<Integer, String> columns = Maps.newTreeMap();
+        columns = Maps.newTreeMap();
         for (String key : rawColumns.fieldNames()) {
             Integer conv = Ints.tryParse(key);
             if (conv != null) columns.put(conv, rawColumns.getString(key));
@@ -60,28 +65,24 @@ public class CsvTransform extends ComponentVerticle {
         settings.getFormat().setLineSeparator(separator);
         settings.getFormat().setDelimiter(delimiter.charAt(0));
         settings.trimValues(true);
-        CsvParser parser = new CsvParser(settings);
+        parser = new CsvParser(settings);
+    }
 
-        // Register endpoint
-        getEventBus().<JsonObject>localConsumer(endpoint)
-                .handler(new TolerantHandler() {
-                    @Override public void handle(JsonObject msg) {
-                        // Process
-                        JsonObject body = body(msg);
-                        String field = body.getString(source);
-                        if (field != null) {
-                            String[] cols = parser.parseLine(field);
-                            if (cols.length >= columns.size()) {
-                                for (int key : columns.keySet()) {
-                                    body.put(columns.get(key), cols[key]);
-                                }
-                            }
-                        }
+    @Override public void handle(JsonObject msg) {
+        // Process
+        JsonObject body = body(msg);
+        String field = body.getString(source);
+        if (field != null) {
+            String[] cols = parser.parseLine(field);
+            if (cols.length >= columns.size()) {
+                for (int key : columns.keySet()) {
+                    body.put(columns.get(key), cols[key]);
+                }
+            }
+        }
 
-                        // Send to the next endpoint
-                        forward(msg);
-                    }
-                });
+        // Send to the next endpoint
+        forward(msg);
     }
 
     @Override protected void checkConfig(JsonObject config) {

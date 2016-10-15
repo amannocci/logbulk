@@ -25,7 +25,7 @@ package io.techcode.logbulk.pipeline.output;
 
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Sets;
-import io.techcode.logbulk.component.ComponentVerticle;
+import io.techcode.logbulk.component.TransformComponentVerticle;
 import io.techcode.logbulk.util.Flusher;
 import io.techcode.logbulk.util.Streams;
 import io.vertx.core.Vertx;
@@ -46,10 +46,13 @@ import static com.google.common.base.Preconditions.checkState;
  * File input pipeline component.
  */
 @Slf4j
-public class ElasticOutput extends ComponentVerticle {
+public class ElasticOutput extends TransformComponentVerticle {
 
     // Cyclable hosts
     private Iterator<String> hosts;
+
+    // Bulk request builder
+    private BulkRequestBuilder bulk;
 
     @Override public void start() {
         super.start();
@@ -57,14 +60,11 @@ public class ElasticOutput extends ComponentVerticle {
         // Setup processing task
         hosts = Iterators.cycle(Streams.to(config.getJsonArray("hosts").stream(), String.class)
                 .collect(Collectors.toList()));
-        BulkRequestBuilder bulk = new BulkRequestBuilder(vertx, config);
+        bulk = new BulkRequestBuilder(vertx, config);
+    }
 
-        // Register endpoint
-        getEventBus().<JsonObject>localConsumer(endpoint).handler(new TolerantHandler() {
-            @Override public void handle(JsonObject msg) {
-                bulk.add(msg);
-            }
-        });
+    @Override public void handle(JsonObject msg) {
+        bulk.add(msg);
     }
 
     @Override protected void checkConfig(JsonObject config) {

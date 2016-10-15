@@ -24,7 +24,7 @@
 package io.techcode.logbulk.pipeline.transform;
 
 import com.google.common.base.Strings;
-import io.techcode.logbulk.component.ComponentVerticle;
+import io.techcode.logbulk.component.TransformComponentVerticle;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import oi.thekraken.grok.api.Grok;
@@ -40,13 +40,16 @@ import static com.google.common.base.Preconditions.checkState;
  * Grok transformer pipeline component.
  */
 @Slf4j
-public class GrokTransform extends ComponentVerticle {
+public class GrokTransform extends TransformComponentVerticle {
+
+    // Settings
+    private Grok grok;
 
     @Override public void start() {
         super.start();
 
         // Grok parser
-        Grok grok = new Grok();
+        grok = new Grok();
         List<String> files = vertx.fileSystem().readDirBlocking(config.getString("path"));
 
         try {
@@ -60,44 +63,26 @@ public class GrokTransform extends ComponentVerticle {
         } catch (GrokException ex) {
             log.error("Can't instanciate grok:", ex);
             vertx.close();
-            return;
         }
+    }
 
-        // Config setup
-        String fallback = config.getString("fallback", StringUtils.EMPTY);
-        if (!Strings.isNullOrEmpty(fallback) && routing.get(fallback).isEmpty()) {
-            log.error("Fallback route isn't defined:" + fallback);
-            vertx.close();
-            return;
+    @Override public void handle(JsonObject msg) {
+        // Process
+        JsonObject body = body(msg);
+        String field = body.getString(config.getString("match"));
+        if (field == null) return;
+
+        Match matcher = grok.match(field);
+        matcher.captures();
+        if (matcher.isNull()) {
+            forward(updateRoute(msg, fallback));
+        } else {
+            // Compose
+            body.mergeIn(new JsonObject(matcher.toMap()));
+
+            // Send to the next endpoint
+            forward(msg);
         }
-
-        // Register endpoint
-        getEventBus().<JsonObject>localConsumer(endpoint)
-                .handler(new TolerantHandler() {
-                    @Override public void handle(JsonObject msg) {
-                        // Process
-                        JsonObject body = body(msg);
-                        String field = body.getString(config.getString("match"));
-                        if (field == null) return;
-
-                        Match matcher = grok.match(field);
-                        matcher.captures();
-                        if (matcher.isNull()) {
-                            if (Strings.isNullOrEmpty(fallback)) {
-                                updateRoute(msg, StringUtils.EMPTY);
-                            } else {
-                                updateRoute(msg, fallback);
-                            }
-                            forward(msg);
-                        } else {
-                            // Compose
-                            body.mergeIn(new JsonObject(matcher.toMap()));
-
-                            // Send to the next endpoint
-                            forward(msg);
-                        }
-                    }
-                });
     }
 
     @Override protected void checkConfig(JsonObject config) {

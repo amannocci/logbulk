@@ -24,7 +24,7 @@
 package io.techcode.logbulk.pipeline.output;
 
 import com.google.common.collect.Sets;
-import io.techcode.logbulk.component.ComponentVerticle;
+import io.techcode.logbulk.component.TransformComponentVerticle;
 import io.vertx.core.VoidHandler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.file.AsyncFile;
@@ -40,7 +40,7 @@ import static com.google.common.base.Preconditions.checkState;
  * File output pipeline component.
  */
 @Slf4j
-public class FileOutput extends ComponentVerticle {
+public class FileOutput extends TransformComponentVerticle {
 
     // Async file instance
     private AsyncFile file;
@@ -50,6 +50,10 @@ public class FileOutput extends ComponentVerticle {
 
     // Back pressure
     private Set<String> previousPressure = Sets.newHashSet();
+
+    // Settings
+    private String delimiter;
+    private int chunkPartition;
 
     // Handle pressure
     private final VoidHandler HANDLE_PRESSURE = new VoidHandler() {
@@ -64,29 +68,25 @@ public class FileOutput extends ComponentVerticle {
 
         // Setup processing task
         String path = config.getString("path");
-        String delimiter = config.getString("delimiter", "\n");
+        delimiter = config.getString("delimiter", "\n");
         int chunk = config.getInteger("chunk", 8192);
-        int chunkPartition = chunk / 4;
+        chunkPartition = chunk / 4;
         file = vertx.fileSystem().openBlocking(path, new OpenOptions().setWrite(true).setCreate(true));
         file.setWriteQueueMaxSize(chunk);
         buf = Buffer.buffer(chunkPartition);
+    }
 
-        // Register endpoint
-        getEventBus().<JsonObject>localConsumer(endpoint)
-                .handler(new TolerantHandler() {
-                    @Override public void handle(JsonObject msg) {
-                        // Process the body
-                        buf.appendString(body(msg).encode()).appendString(delimiter);
-                        if (buf.length() > chunkPartition) {
-                            file.write(buf);
-                            buf = Buffer.buffer(chunkPartition);
-                            if (file.writeQueueFull()) {
-                                notifyPressure(previousPressure, headers(msg));
-                                file.drainHandler(HANDLE_PRESSURE);
-                            }
-                        }
-                    }
-                });
+    @Override public void handle(JsonObject msg) {
+        // Process the body
+        buf.appendString(body(msg).encode()).appendString(delimiter);
+        if (buf.length() > chunkPartition) {
+            file.write(buf);
+            buf = Buffer.buffer(chunkPartition);
+            if (file.writeQueueFull()) {
+                notifyPressure(previousPressure, headers(msg));
+                file.drainHandler(HANDLE_PRESSURE);
+            }
+        }
     }
 
     @Override public void stop() {
