@@ -24,9 +24,12 @@
 package io.techcode.logbulk.component;
 
 import io.techcode.logbulk.util.ConvertHandler;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+
+import java.util.Arrays;
 
 /**
  * Message component verticle helper.
@@ -40,6 +43,12 @@ public abstract class TransformComponentVerticle extends ComponentVerticle imple
     }
 
     @Override public void handleFailure(JsonObject msg, Throwable th) {
+        if (th != null) {
+            String[] stackFrames = ExceptionUtils.getStackFrames(th);
+            JsonArray traces = new JsonArray();
+            Arrays.asList(stackFrames).forEach(traces::add);
+            body(msg).put("stacktrace", traces);
+        }
         forward(updateRoute(msg, fallback));
     }
 
