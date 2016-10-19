@@ -23,6 +23,7 @@
  */
 package io.techcode.logbulk.component;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ArrayListMultimap;
 import io.techcode.logbulk.util.PressureHandler;
 import io.techcode.logbulk.util.Streams;
@@ -30,17 +31,16 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Handler;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.parsetools.RecordParser;
 import io.vertx.core.streams.ReadStream;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -105,6 +105,22 @@ public class ComponentVerticle extends AbstractVerticle {
             checkConfig(config);
         }
         return config;
+    }
+
+    /**
+     * Handle failure during processing.
+     *
+     * @param msg message involved.
+     * @param th  error throw.
+     */
+    public void handleFailure(JsonObject msg, Throwable th) {
+        if (th != null) {
+            String[] stackFrames = ExceptionUtils.getStackFrames(th);
+            JsonArray traces = new JsonArray();
+            Arrays.asList(stackFrames).forEach(traces::add);
+            body(msg).put("stacktrace", traces);
+        }
+        forward(updateRoute(msg, fallback));
     }
 
     /**
@@ -258,25 +274,45 @@ public class ComponentVerticle extends AbstractVerticle {
         return RecordParser.newDelimited(config.getString("delimiter", "\n"), buf -> createEvent(buf.toString()));
     }
 
+
     /**
-     * Create a new body and forward to next endpoint.
+     * Create a new message.
+     */
+    protected final JsonObject generateEvent() {
+        return generateEvent(null);
+    }
+
+    /**
+     * Create a new message.
      *
      * @param message message data.
      */
-    protected final void createEvent(String message) {
+    protected final JsonObject generateEvent(String message) {
         // Create a new body
         JsonObject headers = new JsonObject();
-        JsonObject body = new JsonObject().put("message", message);
+        JsonObject body = new JsonObject();
+        if (!Strings.isNullOrEmpty(message)) {
+            body.put("message", message);
+        }
 
         // Options
         headers.put("_route", config.getString("dispatch"));
         headers.put("_current", 0);
 
         // Send to the next endpoint
-        forward(new JsonObject()
+        return new JsonObject()
                 .put("headers", headers)
-                .put("body", body)
-        );
+                .put("body", body);
+    }
+
+    /**
+     * Create a new body and forward to next endpoint.
+     *
+     * @param message message data.
+     */
+    protected final void createEvent(String message) {
+        // Send to the next endpoint
+        forward(generateEvent(message));
     }
 
     /**

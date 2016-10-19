@@ -45,7 +45,8 @@ public class HeartbeatInput extends ComponentVerticle {
 
         // Setup periodic task
         TimeoutStream stream = vertx.periodicStream(interval * 1000)
-                .handler(h -> createEvent(message));
+                .handler(h -> createEvent(message))
+                .exceptionHandler(th -> handleFailure(generateEvent(), th));
         handlePressure(stream);
     }
 

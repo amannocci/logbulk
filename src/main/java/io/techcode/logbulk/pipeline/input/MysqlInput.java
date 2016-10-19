@@ -69,10 +69,7 @@ public class MysqlInput extends ComponentVerticle {
         // Setup periodic task
         handlePressure(stream);
         stream.handler(this::createEvent);
-        stream.exceptionHandler(h -> {
-            log.error("Error during mysql read:", h.getCause());
-            vertx.close();
-        });
+        stream.exceptionHandler(th -> handleFailure(generateEvent(), th));
         stream.read();
     }
 

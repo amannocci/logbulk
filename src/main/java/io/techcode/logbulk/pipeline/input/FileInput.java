@@ -61,10 +61,7 @@ public class FileInput extends ComponentVerticle {
 
         // Begin to read
         file.handler(buf -> parser.handle(buf));
-        file.exceptionHandler(h -> {
-            log.error("Error during file read:", h.getCause());
-            vertx.close();
-        });
+        file.exceptionHandler(th -> handleFailure(generateEvent(), th));
     }
 
     @Override public void stop() {

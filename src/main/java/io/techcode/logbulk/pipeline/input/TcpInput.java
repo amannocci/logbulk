@@ -66,8 +66,8 @@ public class TcpInput extends ComponentVerticle {
             if (h.succeeded()) {
                 log.info("Listening on port => " + host + ':' + port);
             } else {
+                handleFailure(generateEvent("Can't listen on port => " + host + ':' + port), h.cause());
                 log.error("Can't listen on port => " + host + ':' + port);
-                vertx.close();
             }
         });
     }
