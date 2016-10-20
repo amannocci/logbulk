@@ -49,6 +49,7 @@ public class StdOutput extends TransformComponentVerticle {
         } else {
             log.info(body(msg).encode());
         }
+        forward(msg);
     }
 
     @Override protected void checkConfig(JsonObject config) {

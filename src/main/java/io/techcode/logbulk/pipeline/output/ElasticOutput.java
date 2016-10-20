@@ -65,6 +65,7 @@ public class ElasticOutput extends TransformComponentVerticle {
 
     @Override public void handle(JsonObject msg) {
         bulk.add(msg);
+        forward(msg);
     }
 
     @Override protected void checkConfig(JsonObject config) {

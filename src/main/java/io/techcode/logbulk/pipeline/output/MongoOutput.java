@@ -96,6 +96,7 @@ public class MongoOutput extends TransformComponentVerticle {
         if (pending.size() >= bulk) {
             send();
         }
+        forward(msg);
     }
 
     @Override public void stop() {

@@ -87,6 +87,7 @@ public class FileOutput extends TransformComponentVerticle {
                 file.drainHandler(HANDLE_PRESSURE);
             }
         }
+        forward(msg);
     }
 
     @Override public void stop() {
