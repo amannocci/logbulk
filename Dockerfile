@@ -11,6 +11,7 @@ ENV LOGBULK_FILE logbulk-$LOGBULK_VERSION-fat.jar
 ENV LOGBULK_HOME /usr/logbulk
 ENV LOGBULK_LIB $LOGBULK_HOME/lib
 ENV MEM 2G
+ENV CONF ""
 
 # Create directory
 RUN mkdir -p $LOGBULK_LIB
