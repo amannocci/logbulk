@@ -25,7 +25,7 @@ package io.techcode.logbulk.pipeline.transform;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import io.techcode.logbulk.component.TransformComponentVerticle;
+import io.techcode.logbulk.component.BaseComponentVerticle;
 import io.vertx.core.json.JsonObject;
 
 import java.util.List;
@@ -37,7 +37,7 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * Dispatch transformer pipeline component.
  */
-public class DispatchTransform extends TransformComponentVerticle {
+public class DispatchTransform extends BaseComponentVerticle {
 
     // Dispatch routes
     private List<SimpleDispatch> dispatch = Lists.newArrayList();

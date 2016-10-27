@@ -23,14 +23,12 @@
  */
 package io.techcode.logbulk.pipeline.transform;
 
-import com.google.common.base.Strings;
-import io.techcode.logbulk.component.TransformComponentVerticle;
+import io.techcode.logbulk.component.BaseComponentVerticle;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import oi.thekraken.grok.api.Grok;
 import oi.thekraken.grok.api.Match;
 import oi.thekraken.grok.api.exception.GrokException;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 
@@ -40,7 +38,7 @@ import static com.google.common.base.Preconditions.checkState;
  * Grok transformer pipeline component.
  */
 @Slf4j
-public class GrokTransform extends TransformComponentVerticle {
+public class GrokTransform extends BaseComponentVerticle {
 
     // Settings
     private Grok grok;

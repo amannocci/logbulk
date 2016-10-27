@@ -24,7 +24,7 @@
 package io.techcode.logbulk.pipeline.output;
 
 import com.google.common.collect.Sets;
-import io.techcode.logbulk.component.TransformComponentVerticle;
+import io.techcode.logbulk.component.BaseComponentVerticle;
 import io.vertx.core.VoidHandler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.file.AsyncFile;
@@ -40,7 +40,7 @@ import static com.google.common.base.Preconditions.checkState;
  * File output pipeline component.
  */
 @Slf4j
-public class FileOutput extends TransformComponentVerticle {
+public class FileOutput extends BaseComponentVerticle {
 
     // Async file instance
     private AsyncFile file;

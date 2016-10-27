@@ -86,6 +86,7 @@ public class ComponentRegistryTest {
             "output.file",
             "output.stdout",
             "output.elasticsearch",
+            "output.rabbitmq",
             "output.mongo"
     })
     @Test public void testGetComponent1(String component) {

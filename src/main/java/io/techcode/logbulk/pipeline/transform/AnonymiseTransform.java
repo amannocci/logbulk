@@ -25,7 +25,7 @@ package io.techcode.logbulk.pipeline.transform;
 
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
-import io.techcode.logbulk.component.TransformComponentVerticle;
+import io.techcode.logbulk.component.BaseComponentVerticle;
 import io.techcode.logbulk.util.Streams;
 import io.vertx.core.json.JsonObject;
 
@@ -40,7 +40,7 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * Anonymise transformer pipeline component.
  */
-public class AnonymiseTransform extends TransformComponentVerticle {
+public class AnonymiseTransform extends BaseComponentVerticle {
 
     // Hashing constant
     private static final Map<String, HashFunction> HASHING = new HashMap<String, HashFunction>() {{

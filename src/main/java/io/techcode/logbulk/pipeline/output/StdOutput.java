@@ -23,7 +23,7 @@
  */
 package io.techcode.logbulk.pipeline.output;
 
-import io.techcode.logbulk.component.TransformComponentVerticle;
+import io.techcode.logbulk.component.BaseComponentVerticle;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 
@@ -31,7 +31,7 @@ import lombok.extern.slf4j.Slf4j;
  * Standard output pipeline component.
  */
 @Slf4j
-public class StdOutput extends TransformComponentVerticle {
+public class StdOutput extends BaseComponentVerticle {
 
     // Settings
     private boolean pretty;

@@ -28,7 +28,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Floats;
 import com.google.common.primitives.Ints;
-import io.techcode.logbulk.component.TransformComponentVerticle;
+import io.techcode.logbulk.component.BaseComponentVerticle;
 import io.techcode.logbulk.util.Streams;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -48,7 +48,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Mutate transformer pipeline component.
  */
 @Slf4j
-public class MutateTransform extends TransformComponentVerticle {
+public class MutateTransform extends BaseComponentVerticle {
 
     // Pipeline
     private List<Consumer<JsonObject>> pipeline;

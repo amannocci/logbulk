@@ -23,7 +23,7 @@
  */
 package io.techcode.logbulk.pipeline.transform;
 
-import io.techcode.logbulk.component.TransformComponentVerticle;
+import io.techcode.logbulk.component.BaseComponentVerticle;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 
@@ -31,7 +31,7 @@ import lombok.extern.slf4j.Slf4j;
  * Metric transformer pipeline component.
  */
 @Slf4j
-public class MetricTransform extends TransformComponentVerticle {
+public class MetricTransform extends BaseComponentVerticle {
 
     // Request per second
     private long request = 0;

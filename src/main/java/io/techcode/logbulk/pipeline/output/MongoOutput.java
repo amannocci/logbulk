@@ -24,7 +24,7 @@
 package io.techcode.logbulk.pipeline.output;
 
 import com.google.common.collect.Sets;
-import io.techcode.logbulk.component.TransformComponentVerticle;
+import io.techcode.logbulk.component.BaseComponentVerticle;
 import io.techcode.logbulk.util.Flusher;
 import io.techcode.logbulk.util.Streams;
 import io.vertx.core.json.JsonArray;
@@ -42,7 +42,7 @@ import static com.google.common.base.Preconditions.checkState;
  * Mongo output pipeline component.
  */
 @Slf4j
-public class MongoOutput extends TransformComponentVerticle {
+public class MongoOutput extends BaseComponentVerticle {
 
     // Mongo client
     private MongoClient client;

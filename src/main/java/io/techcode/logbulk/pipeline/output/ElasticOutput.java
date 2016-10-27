@@ -25,7 +25,7 @@ package io.techcode.logbulk.pipeline.output;
 
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Sets;
-import io.techcode.logbulk.component.TransformComponentVerticle;
+import io.techcode.logbulk.component.BaseComponentVerticle;
 import io.techcode.logbulk.util.Flusher;
 import io.techcode.logbulk.util.Streams;
 import io.vertx.core.Vertx;
@@ -46,7 +46,7 @@ import static com.google.common.base.Preconditions.checkState;
  * File input pipeline component.
  */
 @Slf4j
-public class ElasticOutput extends TransformComponentVerticle {
+public class ElasticOutput extends BaseComponentVerticle {
 
     // Cyclable hosts
     private Iterator<String> hosts;

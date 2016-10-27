@@ -23,7 +23,7 @@
  */
 package io.techcode.logbulk.pipeline.transform;
 
-import io.techcode.logbulk.component.TransformComponentVerticle;
+import io.techcode.logbulk.component.BaseComponentVerticle;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 
@@ -33,7 +33,7 @@ import static com.google.common.base.Preconditions.checkState;
  * Json transformer pipeline component.
  */
 @Slf4j
-public class JsonTransform extends TransformComponentVerticle {
+public class JsonTransform extends BaseComponentVerticle {
 
     // Settings
     private String source;

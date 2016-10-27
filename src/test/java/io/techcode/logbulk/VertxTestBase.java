@@ -41,7 +41,7 @@ public abstract class VertxTestBase {
         vertx = Vertx.vertx();
 
         // Register the context exception handler
-        vertx.exceptionHandler(ctx.exceptionHandler());
+        vertx.exceptionHandler(h -> ctx.exceptionHandler());
     }
 
     @After public void after(TestContext ctx) {

@@ -24,7 +24,7 @@
 package io.techcode.logbulk.pipeline.transform;
 
 import com.google.common.base.Strings;
-import io.techcode.logbulk.component.TransformComponentVerticle;
+import io.techcode.logbulk.component.BaseComponentVerticle;
 import io.vertx.core.json.JsonObject;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
@@ -38,7 +38,7 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * Date transformer pipeline component.
  */
-public class DateTransform extends TransformComponentVerticle {
+public class DateTransform extends BaseComponentVerticle {
 
     // ISO formatter
     private static final DateTimeFormatter ISO_FORMATTER = ISODateTimeFormat.dateTime().withLocale(Locale.ENGLISH);

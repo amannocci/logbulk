@@ -31,7 +31,7 @@ import lombok.extern.slf4j.Slf4j;
  * Transform component verticle helper.
  */
 @Slf4j
-public abstract class TransformComponentVerticle extends ComponentVerticle implements ConvertHandler {
+public abstract class BaseComponentVerticle extends ComponentVerticle implements ConvertHandler {
 
     @Override public void start() {
         super.start();
