@@ -23,11 +23,13 @@
  */
 package io.techcode.logbulk.pipeline.transform;
 
+import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
 import io.techcode.logbulk.component.BaseComponentVerticle;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Queue;
 import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -44,11 +46,11 @@ public class LimiterTransform extends BaseComponentVerticle {
     // Back pressure
     private Set<String> previousPressure = Sets.newHashSet();
 
-    // Paused
-    private boolean paused = false;
-
     // Limit
     private int limit;
+
+    // Pending delivery
+    private Queue<JsonObject> pending = Queues.newArrayDeque();
 
     @Override public void start() {
         super.start();
@@ -58,27 +60,37 @@ public class LimiterTransform extends BaseComponentVerticle {
 
         // Flush everysecond
         vertx.setPeriodic(1000, h -> {
-            request = 0;
-            if (paused) {
-                paused = false;
-                previousPressure.forEach(this::tooglePressure);
-                previousPressure.clear();
+            if (request > limit) {
+                if (pending.size() > limit) {
+                    pending.stream().limit(limit).forEach(this::forward);
+                    int toSend = limit;
+                    while (toSend-- > 0) pending.remove();
+                } else {
+                    pending.forEach(this::forward);
+                    pending.clear();
+                    previousPressure.forEach(this::tooglePressure);
+                    previousPressure.clear();
+                    request = 0;
+                }
+            } else {
+                request = 0;
             }
         });
     }
 
     @Override public void handle(JsonObject msg) {
-        // Process
-        request += 1;
+        // Limit reached
+        if (request > limit) {
+            notifyPressure(previousPressure, headers(msg));
 
-        // Limit reached ?
-        if (request > limit && !paused) paused = true;
+            // Queue message
+            pending.add(msg);
+        } else {
+            request += 1;
 
-        // Paused
-        if (paused) notifyPressure(previousPressure, headers(msg));
-
-        // Send to the next endpoint
-        forward(msg);
+            // Send to the next endpoint
+            forward(msg);
+        }
     }
 
     @Override protected void checkConfig(JsonObject config) {
