@@ -28,6 +28,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
 import io.techcode.logbulk.util.ConvertHandler;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 
@@ -70,17 +71,18 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
 
         // Setup
         getEventBus().<JsonObject>localConsumer(endpoint).handler(this);
-        getEventBus().<String>localConsumer(endpoint + ".worker").handler(event -> {
+        getEventBus().<JsonArray>localConsumer(endpoint + ".worker").handler(event -> {
             // Decrease job
-            String worker = event.body();
-            int job = workersJob.getOrDefault(worker, 1);
-            workersJob.put(worker, --job);
+            String worker = event.body().getString(0);
+            int job = workersJob.getOrDefault(worker, 0);
+            job -= event.body().getInteger(1);
+            workersJob.put(worker, job);
 
             // Check idle
             if (job < idle) workers.add(worker);
 
             // Check if there is work to be done
-            processBuffer(Optional.of(event.body()));
+            processBuffer(Optional.of(worker));
         });
         getEventBus().<String>localConsumer(endpoint + ".pressure").handler(event -> {
             String component = event.body();

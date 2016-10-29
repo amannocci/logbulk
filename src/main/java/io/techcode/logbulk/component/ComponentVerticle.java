@@ -74,6 +74,7 @@ public class ComponentVerticle extends AbstractVerticle {
 
     // Mailbox
     private boolean hasMailbox = true;
+    private int toRelease = 0;
 
     @Override public void start() {
         this.config = config();
@@ -212,6 +213,9 @@ public class ComponentVerticle extends AbstractVerticle {
     public void forward(JsonObject msg) {
         checkNotNull(msg, "The message to forward can't be null");
 
+        // Don't forget to release
+        if (hasMailbox) toRelease += 1;
+
         // Gets some stuff
         JsonObject headers = headers(msg);
         int current = headers.getInteger("_current", 0);
@@ -240,7 +244,10 @@ public class ComponentVerticle extends AbstractVerticle {
      * Notify to mailbox that worker is available.
      */
     public void release() {
-        if (hasMailbox) eventBus.send(parentEndpoint + ".worker", endpoint);
+        if (hasMailbox) {
+            eventBus.send(parentEndpoint + ".worker", new JsonArray().add(endpoint).add(toRelease));
+            toRelease = 0;
+        }
     }
 
     /**
@@ -373,7 +380,7 @@ public class ComponentVerticle extends AbstractVerticle {
 
         if (config.getBoolean("hasMailbox", true)) {
             endpoint = parentEndpoint + ".worker." + uuid;
-            eventBus.send(parentEndpoint + ".worker", endpoint);
+            eventBus.send(parentEndpoint + ".worker", new JsonArray().add(endpoint).add(0));
         } else {
             endpoint = parentEndpoint;
             hasMailbox = false;

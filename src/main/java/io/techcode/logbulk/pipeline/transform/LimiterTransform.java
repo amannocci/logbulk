@@ -59,12 +59,13 @@ public class LimiterTransform extends BaseComponentVerticle {
         vertx.setPeriodic(1000, h -> {
             if (request > limit) {
                 if (pending.size() > limit) {
-                    pending.stream().limit(limit).forEach(this::forwardAndRelease);
-                    int toSend = limit;
-                    while (toSend-- > 0) pending.remove();
+                    pending.stream().limit(limit).forEach(this::forward);
+                    int forwarded = limit;
+                    while (forwarded-- > 0) pending.remove();
                 } else {
-                    pending.forEach(this::forwardAndRelease);
+                    pending.forEach(this::forward);
                     pending.clear();
+                    release();
                     request = 0;
                 }
             } else {
