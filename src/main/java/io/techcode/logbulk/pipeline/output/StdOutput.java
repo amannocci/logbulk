@@ -49,7 +49,7 @@ public class StdOutput extends BaseComponentVerticle {
         } else {
             log.info(body(msg).encode());
         }
-        forward(msg);
+        forwardAndRelease(msg);
     }
 
     @Override protected void checkConfig(JsonObject config) {

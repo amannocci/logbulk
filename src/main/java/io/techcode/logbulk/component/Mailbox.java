@@ -24,8 +24,8 @@
 package io.techcode.logbulk.component;
 
 import com.google.common.base.Strings;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
 import io.techcode.logbulk.util.ConvertHandler;
 import io.vertx.core.json.JsonObject;
@@ -48,12 +48,12 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
     private int threehold;
     private int idle;
 
-    // Pending message to process
-    private Queue<JsonObject> buffer = Lists.newLinkedList();
-
     // Workers
     private NavigableSet<String> workers = Sets.newTreeSet();
     private Map<String, Integer> workersJob = Maps.newHashMap();
+
+    // Pending message to process
+    private Queue<JsonObject> buffer = Queues.newArrayDeque();
 
     // Back pressure
     private Set<String> previousPressure = Sets.newHashSet();
@@ -96,7 +96,8 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
     }
 
     @Override protected void checkConfig(JsonObject config) {
-        checkState(config.getInteger("mailbox") != null, "The mailbox is required");
+        checkState(config.getInteger("mailbox") != null &&
+                config.getInteger("mailbox") > 1, "The mailbox is required");
         checkState(config.getInteger("instance") != null &&
                 config.getInteger("instance") > 0, "The instance is required");
     }

@@ -71,7 +71,7 @@ public class DispatchTransform extends BaseComponentVerticle {
         dispatch.forEach(d -> d.dispatch(msg));
 
         // Send to the next endpoint
-        forward(msg);
+        forwardAndRelease(msg);
     }
 
     @Override public void checkConfig(JsonObject config) {
@@ -102,7 +102,7 @@ public class DispatchTransform extends BaseComponentVerticle {
          * @param msg message involved.
          */
         public void dispatch(JsonObject msg) {
-            forward(updateRoute(msg.copy(), route));
+            forwardAndRelease(updateRoute(msg.copy(), route));
         }
 
     }

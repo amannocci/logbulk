@@ -68,16 +68,22 @@ public class RabbitMQOutput extends BaseComponentVerticle {
             JsonObject headers = headers(msg);
             if (headers.getLong("_rabbit_ack") != null) {
                 rabbit.basicAck(headers.getLong("_rabbit_ack"), false, h -> {
-                    if (h.failed()) handleFailure(msg, h.cause());
-                    forward(msg);
+                    if (h.failed()) {
+                        handleFailure(msg, h.cause());
+                    } else {
+                        forwardAndRelease(msg);
+                    }
                 });
             }
         } else {
             rabbit.basicPublish(exchange, queue, new JsonObject()
                     .put("properties", new JsonObject().put("contentType", "application/json"))
                     .put("body", body(msg)), h -> {
-                if (h.failed()) handleFailure(msg, h.cause());
-                forward(msg);
+                if (h.failed()) {
+                    handleFailure(msg, h.cause());
+                } else {
+                    forwardAndRelease(msg);
+                }
             });
         }
     }

@@ -23,7 +23,6 @@
  */
 package io.techcode.logbulk.pipeline.output;
 
-import com.google.common.collect.Sets;
 import io.techcode.logbulk.component.BaseComponentVerticle;
 import io.techcode.logbulk.util.Flusher;
 import io.techcode.logbulk.util.Streams;
@@ -33,7 +32,6 @@ import io.vertx.ext.mongo.MongoClient;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -55,7 +53,6 @@ public class MongoOutput extends BaseComponentVerticle {
     private Flusher flusher;
 
     // Back pressure
-    private Set<String> previousPressure = Sets.newHashSet();
     private int threehold;
     private int idle;
     private int job = 0;
@@ -96,7 +93,11 @@ public class MongoOutput extends BaseComponentVerticle {
         if (pending.size() >= bulk) {
             send();
         }
-        forward(msg);
+        if (paused) {
+            forward(msg);
+        } else {
+            forwardAndRelease(msg);
+        }
     }
 
     @Override public void stop() {
@@ -125,13 +126,9 @@ public class MongoOutput extends BaseComponentVerticle {
         pending = new JsonArray();
     }
 
-    /**
-     * Handle back pressure release.
-     */
-    private void release() {
+    @Override public void release() {
         if (--job < idle && paused) {
-            previousPressure.forEach(this::tooglePressure);
-            previousPressure.clear();
+            super.release();
             paused = false;
         }
     }

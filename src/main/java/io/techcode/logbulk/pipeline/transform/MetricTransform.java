@@ -51,7 +51,7 @@ public class MetricTransform extends BaseComponentVerticle {
         request += 1;
 
         // Send to the next endpoint
-        forward(msg);
+        forwardAndRelease(msg);
     }
 
     @Override protected void checkConfig(JsonObject config) {

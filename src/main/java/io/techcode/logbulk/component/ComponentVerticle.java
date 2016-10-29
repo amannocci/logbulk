@@ -120,7 +120,7 @@ public class ComponentVerticle extends AbstractVerticle {
             Arrays.asList(stackFrames).forEach(traces::add);
             body(msg).put("stacktrace", traces);
         }
-        forward(updateRoute(msg, fallback));
+        forwardAndRelease(updateRoute(msg, fallback));
     }
 
     /**
@@ -224,6 +224,22 @@ public class ComponentVerticle extends AbstractVerticle {
             headers.put("_current", current + 1);
             eventBus.send(nextOpt.get(), msg, DELIVERY_OPTIONS);
         }
+    }
+
+    /**
+     * Forward the body to the next stage and release worker if mailbox.
+     *
+     * @param msg message to forward.
+     */
+    public void forwardAndRelease(JsonObject msg) {
+        forward(msg);
+        release();
+    }
+
+    /**
+     * Notify to mailbox that worker is available.
+     */
+    public void release() {
         if (hasMailbox) eventBus.send(parentEndpoint + ".worker", endpoint);
     }
 
@@ -306,13 +322,13 @@ public class ComponentVerticle extends AbstractVerticle {
     }
 
     /**
-     * Create a new body and forward to next endpoint.
+     * Create a new body and forwardAndRelease to next endpoint.
      *
      * @param message message data.
      */
     protected final void createEvent(String message) {
         // Send to the next endpoint
-        forward(generateEvent(message));
+        forwardAndRelease(generateEvent(message));
     }
 
     /**

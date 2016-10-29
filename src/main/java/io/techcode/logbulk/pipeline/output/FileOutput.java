@@ -23,7 +23,6 @@
  */
 package io.techcode.logbulk.pipeline.output;
 
-import com.google.common.collect.Sets;
 import io.techcode.logbulk.component.BaseComponentVerticle;
 import io.vertx.core.VoidHandler;
 import io.vertx.core.buffer.Buffer;
@@ -31,8 +30,6 @@ import io.vertx.core.file.AsyncFile;
 import io.vertx.core.file.OpenOptions;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -48,9 +45,6 @@ public class FileOutput extends BaseComponentVerticle {
     // Use a sub buffer
     private Buffer buf;
 
-    // Back pressure
-    private Set<String> previousPressure = Sets.newHashSet();
-
     // Settings
     private String delimiter;
     private int chunkPartition;
@@ -58,8 +52,7 @@ public class FileOutput extends BaseComponentVerticle {
     // Handle pressure
     private final VoidHandler HANDLE_PRESSURE = new VoidHandler() {
         @Override protected void handle() {
-            previousPressure.forEach(FileOutput.this::tooglePressure);
-            previousPressure.clear();
+            release();
         }
     };
 
@@ -83,11 +76,12 @@ public class FileOutput extends BaseComponentVerticle {
             file.write(buf);
             buf = Buffer.buffer(chunkPartition);
             if (file.writeQueueFull()) {
-                notifyPressure(previousPressure, headers(msg));
                 file.drainHandler(HANDLE_PRESSURE);
+                forward(msg);
+                return;
             }
         }
-        forward(msg);
+        forwardAndRelease(msg);
     }
 
     @Override public void stop() {

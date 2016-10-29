@@ -51,7 +51,7 @@ public class JsonTransform extends BaseComponentVerticle {
         body.mergeIn(new JsonObject(body.getString(source)));
 
         // Send to the next endpoint
-        forward(msg);
+        forwardAndRelease(msg);
     }
 
     @Override protected void checkConfig(JsonObject config) {

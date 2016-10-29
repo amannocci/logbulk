@@ -73,13 +73,13 @@ public class GrokTransform extends BaseComponentVerticle {
         Match matcher = grok.match(field);
         matcher.captures();
         if (matcher.isNull()) {
-            forward(updateRoute(msg, fallback));
+            forwardAndRelease(updateRoute(msg, fallback));
         } else {
             // Compose
             body.mergeIn(new JsonObject(matcher.toMap()));
 
             // Send to the next endpoint
-            forward(msg);
+            forwardAndRelease(msg);
         }
     }
 

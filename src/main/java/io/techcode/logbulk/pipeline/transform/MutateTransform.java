@@ -96,7 +96,7 @@ public class MutateTransform extends BaseComponentVerticle {
         pipeline.forEach(t -> t.accept(body));
 
         // Send to the next endpoint
-        forward(msg);
+        forwardAndRelease(msg);
     }
 
     /**

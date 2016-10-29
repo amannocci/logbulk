@@ -73,7 +73,7 @@ public class AnonymiseTransform extends BaseComponentVerticle {
         });
 
         // Send to the next endpoint
-        forward(msg);
+        forwardAndRelease(msg);
     }
 
     @Override protected void checkConfig(JsonObject config) {

@@ -43,9 +43,6 @@ public class LimiterTransform extends BaseComponentVerticle {
     // Request per second
     private long request = 0;
 
-    // Back pressure
-    private Set<String> previousPressure = Sets.newHashSet();
-
     // Limit
     private int limit;
 
@@ -62,14 +59,12 @@ public class LimiterTransform extends BaseComponentVerticle {
         vertx.setPeriodic(1000, h -> {
             if (request > limit) {
                 if (pending.size() > limit) {
-                    pending.stream().limit(limit).forEach(this::forward);
+                    pending.stream().limit(limit).forEach(this::forwardAndRelease);
                     int toSend = limit;
                     while (toSend-- > 0) pending.remove();
                 } else {
-                    pending.forEach(this::forward);
+                    pending.forEach(this::forwardAndRelease);
                     pending.clear();
-                    previousPressure.forEach(this::tooglePressure);
-                    previousPressure.clear();
                     request = 0;
                 }
             } else {
@@ -81,15 +76,12 @@ public class LimiterTransform extends BaseComponentVerticle {
     @Override public void handle(JsonObject msg) {
         // Limit reached
         if (request > limit) {
-            notifyPressure(previousPressure, headers(msg));
-
-            // Queue message
             pending.add(msg);
         } else {
             request += 1;
 
             // Send to the next endpoint
-            forward(msg);
+            forwardAndRelease(msg);
         }
     }
 

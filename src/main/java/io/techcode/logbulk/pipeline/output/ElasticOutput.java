@@ -65,7 +65,6 @@ public class ElasticOutput extends BaseComponentVerticle {
 
     @Override public void handle(JsonObject msg) {
         bulk.add(msg);
-        forward(msg);
     }
 
     @Override protected void checkConfig(JsonObject config) {
@@ -96,7 +95,6 @@ public class ElasticOutput extends BaseComponentVerticle {
         private String type;
 
         // Back pressure
-        private Set<String> previousPressure = Sets.newHashSet();
         private int threehold;
         private int idle;
         private int job = 0;
@@ -139,7 +137,11 @@ public class ElasticOutput extends BaseComponentVerticle {
                 idx += body.getString("_index");
                 body.remove("_index");
             }
-            if (paused) notifyPressure(previousPressure, headers(msg));
+            if (paused) {
+                forward(msg);
+            } else {
+                forwardAndRelease(msg);
+            }
             builder.append(new JsonObject().put("index", new JsonObject()
                     .put("_type", type)
                     .put("_index", idx)).encode()).append("\n");
@@ -189,8 +191,7 @@ public class ElasticOutput extends BaseComponentVerticle {
          */
         private void release() {
             if (--job < idle && paused) {
-                previousPressure.forEach(ElasticOutput.this::tooglePressure);
-                previousPressure.clear();
+                ElasticOutput.this.release();
                 paused = false;
             }
         }
