@@ -26,8 +26,10 @@ package io.techcode.logbulk.pipeline.input;
 import com.rabbitmq.client.*;
 import io.techcode.logbulk.component.BaseComponentVerticle;
 import io.vertx.core.Context;
+import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.streams.ReadStream;
 import lombok.extern.slf4j.Slf4j;
 import net.jodah.lyra.ConnectionOptions;
 import net.jodah.lyra.Connections;
@@ -39,6 +41,7 @@ import net.jodah.lyra.util.Duration;
 import java.io.IOException;
 import java.util.stream.Collectors;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
@@ -53,12 +56,21 @@ public class RabbitMQInput extends BaseComponentVerticle {
     // Vertx context
     private Context ctx;
 
+    // Queue
+    private String queue;
+
+    // Auto ack
+    private boolean autoAck;
+
+    // Read stream
+    private RabbitMQReadStream stream;
+
     @Override public void start() {
         super.start();
 
         // Setup processing task
-        String queue = config.getString("queue");
-        boolean autoAck = config.getBoolean("autoAck", false);
+        queue = config.getString("queue");
+        autoAck = config.getBoolean("autoAck", false);
         int interval = config.getInteger("interval", 1);
         int intervalMax = config.getInteger("intervalMax", 60);
         int maxAttempts = config.getInteger("maxAttempts", -1);
@@ -103,13 +115,11 @@ public class RabbitMQInput extends BaseComponentVerticle {
 
             // Create a new channel
             rabbit = connection.createChannel();
-            rabbit.basicConsume(queue, autoAck, new DefaultConsumer(rabbit) {
-                @Override public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
-                    JsonObject msg = generateEvent(new String(body));
-                    headers(msg).put("_rabbit_ack", envelope.getDeliveryTag());
-                    ctx.runOnContext(h -> RabbitMQInput.this.handle(msg));
-                }
-            });
+            stream = new RabbitMQReadStream(rabbit);
+            handlePressure(stream);
+            stream.handler(this::forwardAndRelease);
+            stream.exceptionHandler(h -> handleFailure(generateEvent(), h));
+            stream.resume();
         } catch (Exception ex) {
             log.error("RabbitMQ can't be initialized: ", ex);
         }
@@ -122,6 +132,76 @@ public class RabbitMQInput extends BaseComponentVerticle {
     @Override protected void checkConfig(JsonObject config) {
         checkState(config.getString("dispatch") != null, "The dispatch is required");
         checkState(config.getString("queue") != null, "The queue is required");
+    }
+
+    private class RabbitMQReadStream implements ReadStream<JsonObject> {
+
+        // RabbitMQ
+        private Channel rabbit;
+
+        // Paused state
+        private boolean paused = true;
+
+        // Handlers
+        private Handler<JsonObject> handler;
+        private Handler<Throwable> exceptionHandler;
+        private Handler<Void> endHandler;
+
+        /**
+         * Create a new db read stream.
+         *
+         * @param channel rabbitmq channel.
+         */
+        public RabbitMQReadStream(Channel channel) {
+            this.rabbit = checkNotNull(channel, "The channel can't be null");
+        }
+
+        @Override public ReadStream<JsonObject> pause() {
+            if (!paused) {
+                this.paused = true;
+                try {
+                    rabbit.basicCancel(uuid);
+                } catch (IOException e) {
+                    if (exceptionHandler != null) exceptionHandler.handle(e);
+                }
+            }
+            return this;
+        }
+
+        @Override public ReadStream<JsonObject> resume() {
+            if (paused) {
+                this.paused = false;
+                try {
+                    rabbit.basicConsume(queue, autoAck, uuid, new DefaultConsumer(rabbit) {
+                        @Override public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
+                            JsonObject msg = generateEvent(new String(body));
+                            headers(msg).put("_rabbit_ack", envelope.getDeliveryTag());
+                            ctx.runOnContext(h -> {
+                                if (handler != null) handler.handle(msg);
+                            });
+                        }
+                    });
+                } catch (IOException e) {
+                    if (exceptionHandler != null) exceptionHandler.handle(e);
+                }
+            }
+            return this;
+        }
+
+        @Override public ReadStream<JsonObject> exceptionHandler(Handler<Throwable> handler) {
+            this.exceptionHandler = handler;
+            return this;
+        }
+
+        @Override public ReadStream<JsonObject> handler(Handler<JsonObject> handler) {
+            this.handler = handler;
+            return this;
+        }
+
+        @Override public ReadStream<JsonObject> endHandler(Handler<Void> endHandler) {
+            this.endHandler = endHandler;
+            return this;
+        }
     }
 
 }
