@@ -210,8 +210,10 @@ public class MysqlInput extends ComponentVerticle {
         }
 
         @Override public ReadStream<String> resume() {
-            this.paused = false;
-            read();
+            if (paused) {
+                this.paused = false;
+                read();
+            }
             return this;
         }
 
