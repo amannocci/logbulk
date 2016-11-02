@@ -28,6 +28,7 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.MessageProperties;
 import io.techcode.logbulk.component.BaseComponentVerticle;
+import io.techcode.logbulk.util.Streams;
 import io.vertx.core.Context;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -97,9 +98,7 @@ public class RabbitMQOutput extends BaseComponentVerticle {
                 .withConnectionRecoveryPolicy(recoveryPolicy);
 
         // Prepare hosts params
-        String[] hosts = config.getJsonArray("hosts", new JsonArray().add("localhost")).stream()
-                .filter(h -> h instanceof String)
-                .map(h -> (String) h)
+        String[] hosts = Streams.to(config.getJsonArray("hosts", new JsonArray().add("localhost")).stream(), String.class)
                 .collect(Collectors.toList())
                 .toArray(new String[0]);
 
