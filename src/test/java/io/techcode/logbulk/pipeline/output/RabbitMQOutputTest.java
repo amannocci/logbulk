@@ -41,6 +41,7 @@ public class RabbitMQOutputTest extends VerticleTestBase {
     @Override protected JsonObject conf() {
         JsonObject conf = super.conf();
         conf.put("modeAck", true);
+        conf.put("maxAttempts", 0);
         return conf;
     }
 

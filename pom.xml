@@ -18,6 +18,8 @@
         <nuprocess.version>1.1.0</nuprocess.version>
         <csv.version>2.2.0</csv.version>
         <disruptor.version>3.3.5</disruptor.version>
+        <lyra.version>0.5.2</lyra.version>
+        <rabbitmq.version>3.6.5</rabbitmq.version>
         <junit.version>4.12</junit.version>
         <junit.params.version>1.0.5</junit.params.version>
         <mockito.version>1.10.19</mockito.version>
@@ -47,11 +49,6 @@
         </dependency>
         <dependency>
             <groupId>io.vertx</groupId>
-            <artifactId>vertx-rabbitmq-client</artifactId>
-            <version>${vertx.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.vertx</groupId>
             <artifactId>vertx-mongo-client</artifactId>
             <version>${vertx.version}</version>
         </dependency>
@@ -59,6 +56,16 @@
             <groupId>com.github.thekrakken</groupId>
             <artifactId>java-grok</artifactId>
             <version>grok-${grok.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.rabbitmq</groupId>
+            <artifactId>amqp-client</artifactId>
+            <version>${rabbitmq.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>net.jodah</groupId>
+            <artifactId>lyra</artifactId>
+            <version>${lyra.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>

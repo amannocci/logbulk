@@ -23,10 +23,24 @@
  */
 package io.techcode.logbulk.pipeline.output;
 
+import com.rabbitmq.client.BlockedListener;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.MessageProperties;
 import io.techcode.logbulk.component.BaseComponentVerticle;
+import io.vertx.core.Context;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.rabbitmq.RabbitMQClient;
 import lombok.extern.slf4j.Slf4j;
+import net.jodah.lyra.ConnectionOptions;
+import net.jodah.lyra.Connections;
+import net.jodah.lyra.config.Config;
+import net.jodah.lyra.config.RecoveryPolicy;
+import net.jodah.lyra.config.RetryPolicy;
+import net.jodah.lyra.util.Duration;
+
+import java.io.IOException;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -37,7 +51,7 @@ import static com.google.common.base.Preconditions.checkState;
 public class RabbitMQOutput extends BaseComponentVerticle {
 
     // RabbitMQ client
-    private RabbitMQClient rabbit;
+    private Channel rabbit;
 
     // Mode ack
     private boolean modeAck;
@@ -45,8 +59,14 @@ public class RabbitMQOutput extends BaseComponentVerticle {
     // Exchange
     private String exchange;
 
-    // Queue
-    private String queue;
+    // Routing key
+    private String routingKey;
+
+    // Blocked
+    private boolean blocked = false;
+
+    // Vertx context
+    private Context ctx;
 
     @Override public void start() {
         super.start();
@@ -54,44 +74,98 @@ public class RabbitMQOutput extends BaseComponentVerticle {
         // Setup processing task
         modeAck = config.getBoolean("modeAck", false);
         exchange = config.getString("exchange");
-        queue = config.getString("queue");
-        rabbit = RabbitMQClient.create(vertx, config);
+        routingKey = config.getString("routingKey");
+        int interval = config.getInteger("interval", 1);
+        int intervalMax = config.getInteger("intervalMax", 60);
+        int maxAttempts = config.getInteger("maxAttempts", -1);
+        ctx = vertx.getOrCreateContext();
 
-        // Attempt to connect
-        rabbit.start(h -> {
-            if (h.failed()) handleFailure(generateEvent(), h.cause());
-        });
+        // Policies
+        RetryPolicy retryPolicy = new RetryPolicy()
+                .withBackoff(Duration.seconds(interval), Duration.seconds(intervalMax))
+                .withMaxAttempts(maxAttempts);
+        RecoveryPolicy recoveryPolicy = new RecoveryPolicy()
+                .withBackoff(Duration.seconds(interval), Duration.seconds(intervalMax))
+                .withMaxAttempts(maxAttempts);
+
+        // Configure policies
+        Config conf = new Config()
+                .withConnectRetryPolicy(retryPolicy)
+                .withChannelRetryPolicy(retryPolicy)
+                .withChannelRecoveryPolicy(recoveryPolicy)
+                .withConnectionRetryPolicy(retryPolicy)
+                .withConnectionRecoveryPolicy(recoveryPolicy);
+
+        // Prepare hosts params
+        String[] hosts = config.getJsonArray("hosts", new JsonArray().add("localhost")).stream()
+                .filter(h -> h instanceof String)
+                .map(h -> (String) h)
+                .collect(Collectors.toList())
+                .toArray(new String[0]);
+
+        // Configure connection options
+        try {
+            ConnectionOptions options = new ConnectionOptions();
+            options.withUsername(config.getString("user", "user1"));
+            options.withPassword(config.getString("password", "password1"));
+            options.withHosts(hosts);
+            options.withPort(config.getInteger("port", 5672));
+            options.withVirtualHost(config.getString("virtualHost", "vhost1"));
+            if (config.getBoolean("ssl", false)) options.withSsl();
+            options.withConnectionTimeout(Duration.seconds(config.getInteger("connectionTimeout", 60)));
+
+            // Create a new connection
+            Connection connection = Connections.create(options, conf);
+            connection.addBlockedListener(new BlockedListener() {
+                @Override public void handleBlocked(String s) throws IOException {
+                    ctx.runOnContext(h -> blocked = true);
+                }
+
+                @Override public void handleUnblocked() throws IOException {
+                    ctx.runOnContext(h -> {
+                        blocked = false;
+                        release();
+                    });
+                }
+            });
+
+            // Create a new channel
+            rabbit = connection.createChannel();
+        } catch (Exception ex) {
+            log.error("RabbitMQ can't be initialized: ", ex);
+        }
     }
 
     @Override public void handle(JsonObject msg) {
+        if (blocked) {
+            refuse(msg);
+            return;
+        }
+
         if (modeAck) {
             JsonObject headers = headers(msg);
             if (headers.getLong("_rabbit_ack") != null) {
-                rabbit.basicAck(headers.getLong("_rabbit_ack"), false, h -> {
-                    if (h.failed()) {
-                        handleFailure(msg, h.cause());
-                    } else {
-                        forwardAndRelease(msg);
-                    }
-                });
+                try {
+                    rabbit.basicAck(headers.getLong("_rabbit_ack"), false);
+                    forwardAndRelease(msg);
+                } catch (IOException ex) {
+                    handleFailure(msg, ex);
+                }
             }
         } else {
-            rabbit.basicPublish(exchange, queue, new JsonObject()
-                    .put("properties", new JsonObject().put("contentType", "application/json"))
-                    .put("body", body(msg)), h -> {
-                if (h.failed()) {
-                    handleFailure(msg, h.cause());
-                } else {
-                    forwardAndRelease(msg);
-                }
-            });
+            try {
+                rabbit.basicPublish(exchange, routingKey, MessageProperties.PERSISTENT_BASIC, body(msg).encode().getBytes());
+                forwardAndRelease(msg);
+            } catch (IOException ex) {
+                handleFailure(msg, ex);
+            }
         }
     }
 
     @Override protected void checkConfig(JsonObject config) {
         if (!config.getBoolean("modeAck", false)) {
             checkState(config.getString("exchange") != null, "The exchange is required");
-            checkState(config.getString("queue") != null, "The queue is required");
+            checkState(config.getString("routingKey") != null, "The routingKey is required");
         }
     }
 

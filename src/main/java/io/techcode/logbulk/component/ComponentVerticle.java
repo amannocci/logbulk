@@ -241,6 +241,17 @@ public class ComponentVerticle extends AbstractVerticle {
     }
 
     /**
+     * Refuse the message to process and send to mailbox.
+     *
+     * @param msg message to refuse.
+     */
+    public void refuse(JsonObject msg) {
+        JsonObject headers = headers(msg);
+        headers.put("_current", headers.getInteger("_current") - 1);
+        forward(msg);
+    }
+
+    /**
      * Notify to mailbox that worker is available.
      */
     public void release() {
