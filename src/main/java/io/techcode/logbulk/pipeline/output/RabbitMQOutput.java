@@ -41,6 +41,7 @@ import net.jodah.lyra.config.RetryPolicy;
 import net.jodah.lyra.util.Duration;
 
 import java.io.IOException;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -132,6 +133,16 @@ public class RabbitMQOutput extends BaseComponentVerticle {
             rabbit = connection.createChannel();
         } catch (Exception ex) {
             log.error("RabbitMQ can't be initialized: ", ex);
+        }
+    }
+
+    @Override public void stop() {
+        if (rabbit != null) {
+            try {
+                rabbit.close();
+            } catch (IOException | TimeoutException e) {
+                log.error("Error in RabbitMQ during closing: ", e);
+            }
         }
     }
 
