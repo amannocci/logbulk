@@ -60,8 +60,7 @@ public class LimiterTransform extends BaseComponentVerticle {
             if (request > limit) {
                 if (pending.size() > limit) {
                     pending.stream().limit(limit).forEach(this::forward);
-                    int forwarded = limit;
-                    while (forwarded-- > 0) pending.remove();
+                    for (int i = 0; i < limit; i++) pending.poll();
                 } else {
                     pending.forEach(this::forward);
                     pending.clear();
