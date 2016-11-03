@@ -26,8 +26,9 @@ package io.techcode.logbulk.util;
 import com.google.common.collect.Sets;
 import io.vertx.core.Handler;
 import io.vertx.core.eventbus.Message;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import io.vertx.core.streams.ReadStream;
-import lombok.extern.slf4j.Slf4j;
 
 import java.util.Set;
 
@@ -36,8 +37,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Pressure handler implementation.
  */
-@Slf4j
 public class PressureHandler implements Handler<Message<String>> {
+
+    // Logging
+    private Logger log = LoggerFactory.getLogger(getClass().getName());
 
     // Back pressure
     private Set<String> nextPressure = Sets.newHashSet();

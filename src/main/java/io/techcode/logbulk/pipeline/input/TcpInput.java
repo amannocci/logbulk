@@ -28,7 +28,6 @@ import io.techcode.logbulk.component.ComponentVerticle;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetServer;
 import io.vertx.core.net.NetSocket;
-import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 
@@ -37,7 +36,6 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * Tcp input pipeline component.
  */
-@Slf4j
 public class TcpInput extends ComponentVerticle {
 
     // TCP Server

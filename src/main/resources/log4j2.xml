@@ -2,12 +2,10 @@
 <Configuration status="WARN">
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
-            <PatternLayout pattern="[%d{yyyy-MM-dd HH:mm:ss}] [%level]: %msg%n"/>
+            <JSONLayout compact="true" eventEol="true" complete="false"/>
         </Console>
         <RollingRandomAccessFile name="File" fileName="log/logbulk-latest.log" filePattern="log/logbulk-%d{yyyy-MM-dd}-%i.log.gz">
-            <PatternLayout>
-                <Pattern>[%d{yyyy-MM-dd HH:mm:ss}] [%level]: %msg%n</Pattern>
-            </PatternLayout>
+            <JSONLayout compact="true" eventEol="true" complete="false"/>
             <Policies>
                 <TimeBasedTriggeringPolicy/>
                 <SizeBasedTriggeringPolicy size="128 MB" />

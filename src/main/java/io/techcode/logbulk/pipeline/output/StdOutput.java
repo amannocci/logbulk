@@ -25,12 +25,10 @@ package io.techcode.logbulk.pipeline.output;
 
 import io.techcode.logbulk.component.BaseComponentVerticle;
 import io.vertx.core.json.JsonObject;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Standard output pipeline component.
  */
-@Slf4j
 public class StdOutput extends BaseComponentVerticle {
 
     // Settings
@@ -47,7 +45,7 @@ public class StdOutput extends BaseComponentVerticle {
         if (pretty) {
             log.info(body(msg).encodePrettily());
         } else {
-            log.info(body(msg).encode());
+            log.info(body(msg));
         }
         forwardAndRelease(msg);
     }

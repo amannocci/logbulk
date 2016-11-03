@@ -29,14 +29,12 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.file.AsyncFile;
 import io.vertx.core.file.OpenOptions;
 import io.vertx.core.json.JsonObject;
-import lombok.extern.slf4j.Slf4j;
 
 import static com.google.common.base.Preconditions.checkState;
 
 /**
  * File output pipeline component.
  */
-@Slf4j
 public class FileOutput extends BaseComponentVerticle {
 
     // Async file instance

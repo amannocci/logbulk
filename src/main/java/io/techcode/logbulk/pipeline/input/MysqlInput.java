@@ -35,7 +35,6 @@ import io.vertx.ext.asyncsql.AsyncSQLClient;
 import io.vertx.ext.asyncsql.MySQLClient;
 import io.vertx.ext.sql.ResultSet;
 import io.vertx.ext.sql.SQLConnection;
-import lombok.extern.slf4j.Slf4j;
 
 import java.util.Iterator;
 import java.util.List;
@@ -47,7 +46,6 @@ import static com.google.common.base.Preconditions.*;
 /**
  * Mysql input pipeline component.
  */
-@Slf4j
 public class MysqlInput extends ComponentVerticle {
 
     // Async sql client

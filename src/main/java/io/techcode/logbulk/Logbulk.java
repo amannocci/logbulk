@@ -32,7 +32,8 @@ import io.techcode.logbulk.io.AppConfig;
 import io.techcode.logbulk.io.FastJsonObjectMessageCodec;
 import io.vertx.core.*;
 import io.vertx.core.json.JsonObject;
-import lombok.extern.slf4j.Slf4j;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
@@ -41,8 +42,10 @@ import java.util.Set;
 /**
  * Logbulk is an high-performance log processor.
  */
-@Slf4j
 public class Logbulk extends AbstractVerticle {
+
+    // Logging
+    private Logger log = LoggerFactory.getLogger(getClass().getName());
 
     // Application configuration
     private AppConfig config;

@@ -31,7 +31,6 @@ import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.streams.ReadStream;
-import lombok.extern.slf4j.Slf4j;
 import net.jodah.lyra.ConnectionOptions;
 import net.jodah.lyra.Connections;
 import net.jodah.lyra.config.Config;
@@ -48,7 +47,6 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * RabbitMQ output pipeline component.
  */
-@Slf4j
 public class RabbitMQInput extends BaseComponentVerticle {
 
     // RabbitMQ client

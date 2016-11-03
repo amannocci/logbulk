@@ -26,14 +26,12 @@ package io.techcode.logbulk.pipeline.input;
 import io.techcode.logbulk.component.ComponentVerticle;
 import io.vertx.core.TimeoutStream;
 import io.vertx.core.json.JsonObject;
-import lombok.extern.slf4j.Slf4j;
 
 import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Heartbeat input pipeline component.
  */
-@Slf4j
 public class HeartbeatInput extends ComponentVerticle {
 
     @Override public void start() {

@@ -33,10 +33,11 @@ import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import io.vertx.core.parsetools.RecordParser;
 import io.vertx.core.streams.ReadStream;
 import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
@@ -49,8 +50,10 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * Component verticle helper.
  */
-@Slf4j
 public class ComponentVerticle extends AbstractVerticle {
+
+    // Logging
+    protected Logger log = LoggerFactory.getLogger(getClass().getName());
 
     // Delivery options
     protected static final DeliveryOptions DELIVERY_OPTIONS = new DeliveryOptions().setCodecName("fastjsonobject");

@@ -25,12 +25,10 @@ package io.techcode.logbulk.component;
 
 import io.techcode.logbulk.util.ConvertHandler;
 import io.vertx.core.json.JsonObject;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Transform component verticle helper.
  */
-@Slf4j
 public abstract class BaseComponentVerticle extends ComponentVerticle implements ConvertHandler {
 
     @Override public void start() {

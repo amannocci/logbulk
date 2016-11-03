@@ -27,7 +27,8 @@ import com.google.common.collect.Maps;
 import com.typesafe.config.ConfigValue;
 import io.techcode.logbulk.io.AppConfig;
 import io.vertx.core.Verticle;
-import lombok.extern.slf4j.Slf4j;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 
 import java.util.Map;
 
@@ -37,8 +38,10 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * This class represent a component registry.
  */
-@Slf4j
 public class ComponentRegistry {
+
+    // Logging
+    private Logger log = LoggerFactory.getLogger(getClass().getName());
 
     // Verticle
     private Verticle verticle;

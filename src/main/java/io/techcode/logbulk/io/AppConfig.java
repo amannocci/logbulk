@@ -28,7 +28,6 @@ import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigRenderOptions;
 import com.typesafe.config.ConfigValue;
 import io.vertx.core.json.JsonObject;
-import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
 import java.util.Set;
@@ -36,7 +35,6 @@ import java.util.Set;
 /**
  * This class is a app configuration container.
  */
-@Slf4j
 public class AppConfig {
 
     // Default application reference

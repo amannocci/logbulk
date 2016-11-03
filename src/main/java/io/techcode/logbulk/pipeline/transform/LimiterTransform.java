@@ -24,20 +24,16 @@
 package io.techcode.logbulk.pipeline.transform;
 
 import com.google.common.collect.Queues;
-import com.google.common.collect.Sets;
 import io.techcode.logbulk.component.BaseComponentVerticle;
 import io.vertx.core.json.JsonObject;
-import lombok.extern.slf4j.Slf4j;
 
 import java.util.Queue;
-import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Limiter transformer pipeline component.
  */
-@Slf4j
 public class LimiterTransform extends BaseComponentVerticle {
 
     // Request per second

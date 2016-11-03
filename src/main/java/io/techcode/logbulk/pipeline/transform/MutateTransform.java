@@ -32,7 +32,6 @@ import io.techcode.logbulk.component.BaseComponentVerticle;
 import io.techcode.logbulk.util.Streams;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
@@ -47,7 +46,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Mutate transformer pipeline component.
  */
-@Slf4j
 public class MutateTransform extends BaseComponentVerticle {
 
     // Pipeline

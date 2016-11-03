@@ -30,7 +30,6 @@ import com.google.common.collect.Sets;
 import io.techcode.logbulk.util.ConvertHandler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 
@@ -39,7 +38,6 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * Mailbox implementation.
  */
-@Slf4j
 public class Mailbox extends ComponentVerticle implements ConvertHandler {
 
     // Default threehold

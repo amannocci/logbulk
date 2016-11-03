@@ -24,7 +24,6 @@
 package io.techcode.logbulk.pipeline.output;
 
 import com.google.common.collect.Iterators;
-import com.google.common.collect.Sets;
 import io.techcode.logbulk.component.BaseComponentVerticle;
 import io.techcode.logbulk.util.Flusher;
 import io.techcode.logbulk.util.Streams;
@@ -33,10 +32,8 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.json.JsonObject;
-import lombok.extern.slf4j.Slf4j;
 
 import java.util.Iterator;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -45,7 +42,6 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * File input pipeline component.
  */
-@Slf4j
 public class ElasticOutput extends BaseComponentVerticle {
 
     // Cyclable hosts

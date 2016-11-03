@@ -30,7 +30,6 @@ import io.techcode.logbulk.component.ComponentVerticle;
 import io.vertx.core.Context;
 import io.vertx.core.TimeoutStream;
 import io.vertx.core.json.JsonObject;
-import lombok.extern.slf4j.Slf4j;
 
 import java.nio.ByteBuffer;
 
@@ -39,7 +38,6 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * Exec input pipeline component.
  */
-@Slf4j
 public class ExecInput extends ComponentVerticle {
 
     // Current vertx context

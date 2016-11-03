@@ -28,14 +28,12 @@ import io.vertx.core.file.AsyncFile;
 import io.vertx.core.file.OpenOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.parsetools.RecordParser;
-import lombok.extern.slf4j.Slf4j;
 
 import static com.google.common.base.Preconditions.checkState;
 
 /**
  * File input pipeline component.
  */
-@Slf4j
 public class FileInput extends ComponentVerticle {
 
     // Record parser for delimitation

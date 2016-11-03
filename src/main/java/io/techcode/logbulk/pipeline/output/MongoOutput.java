@@ -29,7 +29,6 @@ import io.techcode.logbulk.util.Streams;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.mongo.MongoClient;
-import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -39,7 +38,6 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * Mongo output pipeline component.
  */
-@Slf4j
 public class MongoOutput extends BaseComponentVerticle {
 
     // Mongo client

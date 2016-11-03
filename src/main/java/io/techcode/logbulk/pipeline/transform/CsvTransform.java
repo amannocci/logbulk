@@ -29,7 +29,6 @@ import com.univocity.parsers.csv.CsvParser;
 import com.univocity.parsers.csv.CsvParserSettings;
 import io.techcode.logbulk.component.BaseComponentVerticle;
 import io.vertx.core.json.JsonObject;
-import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
 
@@ -38,7 +37,6 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * Csv transformer pipeline component.
  */
-@Slf4j
 public class CsvTransform extends BaseComponentVerticle {
 
     // Settings
