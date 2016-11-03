@@ -112,7 +112,9 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
             if (nextOpt.isPresent() && nextPressure.contains(nextOpt.get())) {
                 handlePressure(msg);
             } else {
-                process(msg, Optional.empty());
+                if (!process(msg, Optional.empty())) {
+                    handlePressure(msg);
+                }
             }
         }
     }
@@ -134,11 +136,12 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
      *
      * @param msg       message to process.
      * @param workerOpt optional worker.
+     * @return true if success, otherwise false.
      */
-    private void process(JsonObject msg, Optional<String> workerOpt) {
+    private boolean process(JsonObject msg, Optional<String> workerOpt) {
         // Retrieve a worker
         String worker = workerOpt.orElseGet(() -> workers.isEmpty() ? null : workers.first());
-        if (Strings.isNullOrEmpty(worker)) return;
+        if (Strings.isNullOrEmpty(worker)) return false;
 
         // Increase job
         int job = workersJob.getOrDefault(worker, 0);
@@ -147,6 +150,7 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
         // Evict if busy & send job
         if (job >= threehold) workers.remove(worker);
         getEventBus().send(worker, msg, DELIVERY_OPTIONS);
+        return true;
     }
 
     /**
@@ -156,12 +160,15 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
      */
     private void processBuffer(Optional<String> workerOpt) {
         if (buffer.size() > 0) {
-            process(buffer.poll(), workerOpt);
-
-            // Handle pressure
-            if (buffer.size() < idle && previousPressure.size() > 0) {
-                previousPressure.forEach(this::tooglePressure);
-                previousPressure.clear();
+            JsonObject msg = buffer.poll();
+            if (process(msg, workerOpt)) {
+                // Handle pressure
+                if (buffer.size() < idle && previousPressure.size() > 0) {
+                    previousPressure.forEach(this::tooglePressure);
+                    previousPressure.clear();
+                }
+            } else {
+                handlePressure(msg);
             }
         }
     }
