@@ -93,6 +93,12 @@ public class Configuration extends JsonObject {
     }
 
     @Override public JsonArray getJsonArray(String key) {
+        Object value = wrapConfig.getValue(key);
+        if (value instanceof String) {
+            JsonArray parse = new JsonArray((String) value);
+            wrapConfig.put(key, parse);
+            return parse;
+        }
         return wrapConfig.getJsonArray(key);
     }
 
@@ -117,6 +123,12 @@ public class Configuration extends JsonObject {
     }
 
     @Override public JsonArray getJsonArray(String key, JsonArray def) {
+        Object value = wrapConfig.getValue(key);
+        if (value instanceof String) {
+            JsonArray parse = new JsonArray((String) value);
+            wrapConfig.put(key, parse);
+            return parse;
+        }
         return wrapConfig.getJsonArray(key, def);
     }
 
@@ -276,7 +288,10 @@ public class Configuration extends JsonObject {
         Object value = wrapConfig.getValue(key);
         if (value instanceof String) {
             Integer parse = Ints.tryParse((String) value);
-            if (parse != null) return parse;
+            if (parse != null) {
+                put(key, parse);
+                return parse;
+            }
         }
         return wrapConfig.getInteger(key);
     }
@@ -285,7 +300,10 @@ public class Configuration extends JsonObject {
         Object value = wrapConfig.getValue(key);
         if (value instanceof String) {
             Long parse = Longs.tryParse((String) value);
-            if (parse != null) return parse;
+            if (parse != null) {
+                put(key, parse);
+                return parse;
+            }
         }
         return wrapConfig.getLong(key);
     }
@@ -294,7 +312,10 @@ public class Configuration extends JsonObject {
         Object value = wrapConfig.getValue(key);
         if (value instanceof String) {
             Double parse = Doubles.tryParse((String) value);
-            if (parse != null) return parse;
+            if (parse != null) {
+                put(key, parse);
+                return parse;
+            }
         }
         return wrapConfig.getDouble(key);
     }
@@ -303,7 +324,10 @@ public class Configuration extends JsonObject {
         Object value = wrapConfig.getValue(key);
         if (value instanceof String) {
             Float parse = Floats.tryParse((String) value);
-            if (parse != null) return parse;
+            if (parse != null) {
+                put(key, parse);
+                return parse;
+            }
         }
         return wrapConfig.getFloat(key);
     }
@@ -312,7 +336,10 @@ public class Configuration extends JsonObject {
         Object value = wrapConfig.getValue(key);
         if (value instanceof String) {
             Boolean parse = Boolean.valueOf((String) value);
-            if (parse != null) return parse;
+            if (parse != null) {
+                put(key, parse);
+                return parse;
+            }
         }
         return wrapConfig.getBoolean(key);
     }
@@ -321,7 +348,10 @@ public class Configuration extends JsonObject {
         Object value = wrapConfig.getValue(key);
         if (value instanceof String) {
             Integer parse = Ints.tryParse((String) value);
-            if (parse != null) return parse;
+            if (parse != null) {
+                put(key, parse);
+                return parse;
+            }
         }
         return wrapConfig.getInteger(key, def);
     }
@@ -330,7 +360,10 @@ public class Configuration extends JsonObject {
         Object value = wrapConfig.getValue(key);
         if (value instanceof String) {
             Long parse = Longs.tryParse((String) value);
-            if (parse != null) return parse;
+            if (parse != null) {
+                put(key, parse);
+                return parse;
+            }
         }
         return wrapConfig.getLong(key, def);
     }
@@ -339,7 +372,9 @@ public class Configuration extends JsonObject {
         Object value = wrapConfig.getValue(key);
         if (value instanceof String) {
             Double parse = Doubles.tryParse((String) value);
-            if (parse != null) return parse;
+            if (parse != null)
+                put(key, parse);
+            return parse;
         }
         return wrapConfig.getDouble(key, def);
     }
@@ -348,7 +383,10 @@ public class Configuration extends JsonObject {
         Object value = wrapConfig.getValue(key);
         if (value instanceof String) {
             Float parse = Floats.tryParse((String) value);
-            if (parse != null) return parse;
+            if (parse != null) {
+                put(key, parse);
+                return parse;
+            }
         }
         return wrapConfig.getFloat(key, def);
     }
@@ -357,7 +395,10 @@ public class Configuration extends JsonObject {
         Object value = wrapConfig.getValue(key);
         if (value instanceof String) {
             Boolean parse = Boolean.valueOf((String) value);
-            if (parse != null) return parse;
+            if (parse != null) {
+                put(key, parse);
+                return parse;
+            }
         }
         return wrapConfig.getBoolean(key, def);
     }
