@@ -29,6 +29,7 @@ import com.typesafe.config.ConfigValue;
 import io.techcode.logbulk.component.ComponentRegistry;
 import io.techcode.logbulk.component.Mailbox;
 import io.techcode.logbulk.io.AppConfig;
+import io.techcode.logbulk.io.Configuration;
 import io.techcode.logbulk.io.FastJsonObjectMessageCodec;
 import io.vertx.core.*;
 import io.vertx.core.json.JsonObject;
@@ -91,7 +92,7 @@ public class Logbulk extends AbstractVerticle {
         for (Map.Entry<String, ConfigValue> el : entries) {
             // Extract json configuration
             DeploymentOptions deployment = new DeploymentOptions();
-            JsonObject conf = new JsonObject(el.getValue().render(ConfigRenderOptions.concise().setJson(true)));
+            Configuration conf = new Configuration(new JsonObject(el.getValue().render(ConfigRenderOptions.concise().setJson(true))));
             int instance = conf.getInteger("instance", 1);
             String endpoint = el.getKey();
 
