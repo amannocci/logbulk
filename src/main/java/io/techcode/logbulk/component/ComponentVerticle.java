@@ -25,6 +25,7 @@ package io.techcode.logbulk.component;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ArrayListMultimap;
+import io.techcode.logbulk.io.Configuration;
 import io.techcode.logbulk.util.PressureHandler;
 import io.techcode.logbulk.util.Streams;
 import io.vertx.core.AbstractVerticle;
@@ -72,7 +73,7 @@ public class ComponentVerticle extends AbstractVerticle {
     @Getter private EventBus eventBus;
 
     // Configuration
-    protected JsonObject config;
+    protected Configuration config;
     protected String fallback;
 
     // Mailbox
@@ -103,9 +104,9 @@ public class ComponentVerticle extends AbstractVerticle {
         log.warn("Configuration not checked: " + getClass().getSimpleName());
     }
 
-    @Override public JsonObject config() {
+    @Override public Configuration config() {
         if (config == null) {
-            config = super.config();
+            config = new Configuration(super.config());
             checkConfig(config);
         }
         return config;
