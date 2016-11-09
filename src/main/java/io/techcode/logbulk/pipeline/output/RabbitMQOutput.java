@@ -53,8 +53,8 @@ public class RabbitMQOutput extends BaseComponentVerticle {
     // RabbitMQ client
     private Channel rabbit;
 
-    // Mode ack
-    private boolean modeAck;
+    // Mode
+    private Mode mode;
 
     // Exchange
     private String exchange;
@@ -72,7 +72,7 @@ public class RabbitMQOutput extends BaseComponentVerticle {
         super.start();
 
         // Setup processing task
-        modeAck = config.getBoolean("modeAck", false);
+        mode = Mode.valueOf(config.getString("mode", "publish").toUpperCase());
         exchange = config.getString("exchange");
         routingKey = config.getString("routingKey");
         int interval = config.getInteger("interval", 1);
@@ -150,31 +150,58 @@ public class RabbitMQOutput extends BaseComponentVerticle {
             return;
         }
 
-        if (modeAck) {
-            JsonObject headers = headers(msg);
-            if (headers.getLong("_rabbit_ack") != null) {
+        // Switch over mode
+        switch (mode) {
+            case PUBLISH:
                 try {
-                    rabbit.basicAck(headers.getLong("_rabbit_ack"), false);
+                    rabbit.basicPublish(exchange, routingKey, MessageProperties.PERSISTENT_BASIC, body(msg).encode().getBytes());
                     forwardAndRelease(msg);
                 } catch (IOException ex) {
                     handleFailure(msg, ex);
                 }
+                break;
+            case ACK: {
+                JsonObject headers = headers(msg);
+                if (headers.getLong("_rabbit_ack") != null) {
+                    try {
+                        rabbit.basicAck(headers.getLong("_rabbit_ack"), false);
+                        forwardAndRelease(msg);
+                    } catch (IOException ex) {
+                        handleFailure(msg, ex);
+                    }
+                }
             }
-        } else {
-            try {
-                rabbit.basicPublish(exchange, routingKey, MessageProperties.PERSISTENT_BASIC, body(msg).encode().getBytes());
-                forwardAndRelease(msg);
-            } catch (IOException ex) {
-                handleFailure(msg, ex);
+            break;
+            case NACK: {
+                JsonObject headers = headers(msg);
+                if (headers.getLong("_rabbit_ack") != null) {
+                    try {
+                        rabbit.basicNack(headers.getLong("_rabbit_ack"), false, true);
+                        forwardAndRelease(msg);
+                    } catch (IOException ex) {
+                        handleFailure(msg, ex);
+                    }
+                }
             }
+            break;
         }
     }
 
     @Override protected void checkConfig(JsonObject config) {
-        if (!config.getBoolean("modeAck", false)) {
+        Mode.valueOf(config.getString("mode", "publish").toUpperCase());
+        if (!config.getString("mode", "publish").equalsIgnoreCase("publish")) {
             checkState(config.getString("exchange") != null, "The exchange is required");
             checkState(config.getString("routingKey") != null, "The routingKey is required");
         }
+    }
+
+    /**
+     * Mode.
+     */
+    private enum Mode {
+        PUBLISH,
+        ACK,
+        NACK
     }
 
 }
