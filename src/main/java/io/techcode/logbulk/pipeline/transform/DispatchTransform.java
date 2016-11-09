@@ -40,7 +40,7 @@ import static com.google.common.base.Preconditions.checkState;
 public class DispatchTransform extends BaseComponentVerticle {
 
     // Dispatch routes
-    private List<SimpleDispatch> dispatch = Lists.newArrayList();
+    private List<Dispatch> dispatch = Lists.newArrayList();
 
     @Override public void start() {
         super.start();
@@ -55,10 +55,19 @@ public class DispatchTransform extends BaseComponentVerticle {
             JsonObject dispatchRoute = rawDispatch.getJsonObject(d);
             String mode = dispatchRoute.getString("mode");
             if (mode != null) {
-                if ("start".equals(mode)) {
-                    dispatch.add(new StartDispatch(dispatchRoute.getString("field"), dispatchRoute.getString("match"), d));
-                } else {
-                    dispatch.add(new ContainsDispatch(dispatchRoute.getString("field"), dispatchRoute.getString("match"), d));
+                switch (mode) {
+                    case "start":
+                        dispatch.add(new StartDispatch(dispatchRoute.getString("field"), dispatchRoute.getString("match"), d));
+                        break;
+                    case "absent":
+                        dispatch.add(new AbsentDispatch(dispatchRoute.getString("field"), d));
+                        break;
+                    case "present":
+                        dispatch.add(new PresentDispatch(dispatchRoute.getString("field"), d));
+                        break;
+                    default:
+                        dispatch.add(new ContainsDispatch(dispatchRoute.getString("field"), dispatchRoute.getString("match"), d));
+                        break;
                 }
             } else {
                 dispatch.add(new SimpleDispatch(d));
@@ -79,9 +88,23 @@ public class DispatchTransform extends BaseComponentVerticle {
     }
 
     /**
+     * Dispatch interface.
+     */
+    private interface Dispatch {
+
+        /**
+         * Dispatch the body.
+         *
+         * @param msg message involved.
+         */
+        void dispatch(JsonObject msg);
+
+    }
+
+    /**
      * Simple dispatch implementation.
      */
-    private class SimpleDispatch {
+    private class SimpleDispatch implements Dispatch {
 
         // Routes
         private String route;
@@ -92,20 +115,69 @@ public class DispatchTransform extends BaseComponentVerticle {
          * @param route route dispatching.
          */
         public SimpleDispatch(String route) {
-            checkNotNull(route, "The route can't be null");
-            this.route = route;
+            this.route = checkNotNull(route, "The route can't be null");
         }
 
-        /**
-         * Dispatch the body.
-         *
-         * @param msg message involved.
-         */
-        public void dispatch(JsonObject msg) {
+        @Override public void dispatch(JsonObject msg) {
             forwardAndRelease(updateRoute(msg.copy(), route));
         }
 
     }
+
+    /**
+     * Present dispatch implementation.
+     */
+    private class PresentDispatch extends SimpleDispatch {
+
+        // Field to match
+        private String field;
+
+        /**
+         * Create a new router dispatch.
+         *
+         * @param field field to match.
+         * @param route route dispatch.
+         */
+        public PresentDispatch(String field, String route) {
+            super(route);
+            this.field = checkNotNull(field, "The field can't be null");
+        }
+
+        @Override public void dispatch(JsonObject msg) {
+            if (body(msg).containsKey(field) || headers(msg).containsKey(field)) {
+                super.dispatch(msg);
+            }
+        }
+
+    }
+
+    /**
+     * Absent dispatch implementation.
+     */
+    private class AbsentDispatch extends SimpleDispatch {
+
+        // Field to match
+        private String field;
+
+        /**
+         * Create a new router dispatch.
+         *
+         * @param field field to match.
+         * @param route route dispatch.
+         */
+        public AbsentDispatch(String field, String route) {
+            super(route);
+            this.field = checkNotNull(field, "The field can't be null");
+        }
+
+        @Override public void dispatch(JsonObject msg) {
+            if (!body(msg).containsKey(field) && !headers(msg).containsKey(field)) {
+                super.dispatch(msg);
+            }
+        }
+
+    }
+
 
     /**
      * Start dispatch implementation.
