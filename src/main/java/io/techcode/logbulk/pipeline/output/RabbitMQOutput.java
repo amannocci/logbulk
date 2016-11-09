@@ -63,7 +63,7 @@ public class RabbitMQOutput extends BaseComponentVerticle {
     private String routingKey;
 
     // Blocked
-    private boolean blocked = false;
+    private boolean blocked = true;
 
     // Vertx context
     private Context ctx;
@@ -129,6 +129,7 @@ public class RabbitMQOutput extends BaseComponentVerticle {
 
             // Create a new channel
             rabbit = connection.createChannel();
+            blocked = false;
         } catch (Exception ex) {
             log.error("RabbitMQ can't be initialized: ", ex);
         }
