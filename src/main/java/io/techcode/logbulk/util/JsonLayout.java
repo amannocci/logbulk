@@ -24,6 +24,7 @@
 package io.techcode.logbulk.util;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.StackTraceElementProxy;
 import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.LayoutBase;
 import io.vertx.core.json.JsonArray;
@@ -44,9 +45,9 @@ public class JsonLayout extends LayoutBase<ILoggingEvent> {
         } else {
             log.put("message", event.getFormattedMessage());
         }
-        if (event.getCallerData() != null && event.getCallerData().length > 0) {
+        if (event.getThrowableProxy() != null && event.getThrowableProxy().getStackTraceElementProxyArray().length > 0) {
             JsonArray stacktrace = new JsonArray();
-            for (StackTraceElement el : event.getCallerData()) {
+            for (StackTraceElementProxy el : event.getThrowableProxy().getStackTraceElementProxyArray()) {
                 stacktrace.add(el.toString());
             }
             log.put("stacktrace", stacktrace);
