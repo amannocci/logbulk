@@ -31,22 +31,18 @@ import io.vertx.core.json.JsonObject;
  */
 public class StdOutput extends BaseComponentVerticle {
 
-    // Settings
-    private boolean pretty;
-
     @Override public void start() {
         super.start();
 
-        // Setup
-        pretty = config.getBoolean("pretty", false);
+        // Ready
+        resume();
     }
 
     @Override public void handle(JsonObject msg) {
-        if (pretty) {
-            log.info(body(msg).encodePrettily());
-        } else {
-            log.info(body(msg));
-        }
+        // Process
+        log.info(body(msg));
+
+        // Send to the next endpoint
         forwardAndRelease(msg);
     }
 

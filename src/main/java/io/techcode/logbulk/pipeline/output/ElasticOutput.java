@@ -27,7 +27,6 @@ import com.google.common.collect.Iterators;
 import io.techcode.logbulk.component.BaseComponentVerticle;
 import io.techcode.logbulk.util.Flusher;
 import io.techcode.logbulk.util.Streams;
-import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpClientRequest;
@@ -36,127 +35,111 @@ import io.vertx.core.json.JsonObject;
 import java.util.Iterator;
 import java.util.stream.Collectors;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
- * File input pipeline component.
+ * Elasticsearch output pipeline component.
  */
 public class ElasticOutput extends BaseComponentVerticle {
 
     // Cyclable hosts
     private Iterator<String> hosts;
 
-    // Bulk request builder
-    private BulkRequestBuilder bulk;
+    // Http client to perform request
+    private HttpClient http;
+
+    // Documents pending
+    private int docs = 0;
+
+    // Some settings
+    private int bulk;
+    private Flusher flusher;
+
+    // Stuff to build meta and request
+    private StringBuilder builder = new StringBuilder();
+    private String index;
+    private String type;
 
     @Override public void start() {
         super.start();
 
         // Setup processing task
-        hosts = Iterators.cycle(Streams.to(config.getJsonArray("hosts").stream(), String.class)
-                .collect(Collectors.toList()));
-        bulk = new BulkRequestBuilder(vertx, config);
+        hosts = Iterators.cycle(Streams.to(config.getJsonArray("hosts").stream(), String.class).collect(Collectors.toList()));
+        this.bulk = config.getInteger("bulk", 1000);
+        this.index = config.getString("index");
+        this.type = config.getString("type");
+
+        // Setup http client
+        HttpClientOptions options = new HttpClientOptions();
+        options.setTryUseCompression(true);
+        options.setKeepAlive(true);
+        options.setPipelining(true);
+        this.http = vertx.createHttpClient(options);
+
+        // Setup flusher
+        flusher = new Flusher(vertx, config.getInteger("flush", 10));
+        flusher.handler(h -> send());
+        flusher.start();
+
+        // Ready
+        resume();
+    }
+
+    @Override public void stop() {
+        if (http != null) http.close();
     }
 
     @Override public void handle(JsonObject msg) {
-        bulk.add(msg);
+        // Prepare header
+        String idx = index;
+        JsonObject body = body(msg);
+        if (body.containsKey("_index")) {
+            idx += body.getString("_index");
+            body.remove("_index");
+        }
+        builder.append(new JsonObject().put("index", new JsonObject()
+                .put("_type", type)
+                .put("_index", idx)).encode()).append("\n");
+
+        // Prepare body
+        builder.append(body.encode()).append("\n");
+
+        // Send if needed
+        if (++docs >= bulk) {
+            send();
+        }
+
+        // Send to the next endpoint
+        forwardAndRelease(msg);
     }
 
     @Override protected void checkConfig(JsonObject config) {
         checkState(config.getString("index") != null, "The index is required");
         checkState(config.getString("type") != null, "The type is required");
         checkState(config.getJsonArray("hosts") != null
-                && config.getJsonArray("hosts").size() > 0, "The hosts is required");
+                && Streams.to(config.getJsonArray("hosts").stream(), String.class).count() > 0, "The hosts is required");
     }
 
     /**
-     * Bulk request implementation.
+     * Send a request.
      */
-    private class BulkRequestBuilder {
+    private void send() {
+        // Pause component
+        pause();
 
-        // Http client to perform request
-        private HttpClient http;
+        // Update flusher flag
+        flusher.flushed();
 
-        // Documents pending
-        private int docs = 0;
-
-        // Some settings
-        private int bulk;
-        private Flusher flusher;
-
-        // Stuff to build meta and request
-        private StringBuilder builder = new StringBuilder();
-        private String index;
-        private String type;
-
-        // Back pressure
-        private int threehold;
-        private int idle;
-        private int job = 0;
-        private boolean paused;
-
-        /**
-         * Create a new bulk request builder.
-         *
-         * @param vertx  vertx instance.
-         * @param config component configuration.
-         */
-        public BulkRequestBuilder(Vertx vertx, JsonObject config) {
-            checkNotNull(vertx, "The vertx can't be null");
-            checkNotNull(config, "The config can't be null");
-            this.bulk = config.getInteger("bulk", 1000);
-            this.index = config.getString("index");
-            this.type = config.getString("type");
-            this.threehold = config.getInteger("queue", 100);
-            this.idle = threehold / 2;
-            HttpClientOptions options = new HttpClientOptions();
-            options.setTryUseCompression(true);
-            options.setKeepAlive(true);
-            options.setPipelining(true);
-            options.setMaxPoolSize(config.getInteger("pool", HttpClientOptions.DEFAULT_MAX_POOL_SIZE));
-            this.http = vertx.createHttpClient(options);
-            flusher = new Flusher(vertx, config.getInteger("flush", 10));
-            flusher.handler(h -> send());
-            flusher.start();
-        }
-
-        /**
-         * Add a document to the next flush
-         *
-         * @param msg message to process.
-         */
-        public void add(JsonObject msg) {
-            String idx = index;
-            JsonObject body = body(msg);
-            if (body.containsKey("_index")) {
-                idx += body.getString("_index");
-                body.remove("_index");
-            }
-            if (paused) {
-                forward(msg);
-            } else {
-                forwardAndRelease(msg);
-            }
-            builder.append(new JsonObject().put("index", new JsonObject()
-                    .put("_type", type)
-                    .put("_index", idx)).encode()).append("\n");
-            builder.append(body.encode()).append("\n");
-            if (++docs >= bulk) {
-                send();
-            }
-        }
-
-        /**
-         * Send a request.
-         */
-        private void send() {
-            flusher.flushed();
-            if (docs == 0 || paused) return;
-
+        // If no work needed
+        if (docs == 0) {
+            // Resume component
+            resume();
+        } else {
+            // Prepare http request
             int documents = docs;
             String payload = builder.toString();
             HttpClientRequest req = http.postAbs(hosts.next() + "/_bulk", res -> {
+                // Handle request status
                 if (res.statusCode() == 200) {
                     log.info("Bulk request: " + documents + " documents");
                 } else if (res.statusCode() == 429) {
@@ -166,32 +149,22 @@ public class ElasticOutput extends BaseComponentVerticle {
                 } else {
                     log.error("Failed to index document: statusCode=" + res.statusCode());
                 }
-                release();
+
+                // Resume component
+                resume();
             });
             req.setChunked(false);
             req.exceptionHandler(err -> {
                 builder.append(payload);
                 docs += documents;
-                release();
+                resume();
             });
             req.end(payload);
-            if (++job >= threehold && !paused) paused = true;
 
             // Reset size
             docs = 0;
             builder.setLength(0);
         }
-
-        /**
-         * Handle back pressure release.
-         */
-        private void release() {
-            if (--job < idle && paused) {
-                ElasticOutput.this.release();
-                paused = false;
-            }
-        }
-
     }
 
 }

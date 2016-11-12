@@ -63,6 +63,9 @@ public class AnonymiseTransform extends BaseComponentVerticle {
         // Setup
         fields = Streams.to(config.getJsonArray("fields").stream(), String.class).collect(Collectors.toList());
         hash = HASHING.getOrDefault("hashing", Hashing.md5());
+
+        // Ready
+        resume();
     }
 
     @Override public void handle(JsonObject msg) {

@@ -64,6 +64,9 @@ public class CsvTransform extends BaseComponentVerticle {
         settings.getFormat().setDelimiter(delimiter.charAt(0));
         settings.trimValues(true);
         parser = new CsvParser(settings);
+
+        // Ready
+        resume();
     }
 
     @Override public void handle(JsonObject msg) {

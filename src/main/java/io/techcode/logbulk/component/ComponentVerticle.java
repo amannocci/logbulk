@@ -116,6 +116,15 @@ public class ComponentVerticle extends AbstractVerticle {
      * Handle failure during processing.
      *
      * @param msg message involved.
+     */
+    public void handleFailure(JsonObject msg) {
+        handleFailure(msg, null);
+    }
+
+    /**
+     * Handle failure during processing.
+     *
+     * @param msg message involved.
      * @param th  error throw.
      */
     public void handleFailure(JsonObject msg, Throwable th) {

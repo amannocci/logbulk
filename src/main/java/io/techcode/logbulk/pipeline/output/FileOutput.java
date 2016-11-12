@@ -50,7 +50,7 @@ public class FileOutput extends BaseComponentVerticle {
     // Handle pressure
     private final VoidHandler HANDLE_PRESSURE = new VoidHandler() {
         @Override protected void handle() {
-            release();
+            resume();
         }
     };
 
@@ -62,23 +62,34 @@ public class FileOutput extends BaseComponentVerticle {
         delimiter = config.getString("delimiter", "\n");
         int chunk = config.getInteger("chunk", 8192);
         chunkPartition = chunk / 4;
+
+        // Setup file output
         file = vertx.fileSystem().openBlocking(path, new OpenOptions().setWrite(true).setCreate(true));
         file.setWriteQueueMaxSize(chunk);
         buf = Buffer.buffer(chunkPartition);
+
+        // Ready
+        resume();
     }
 
     @Override public void handle(JsonObject msg) {
         // Process the body
         buf.appendString(body(msg).encode()).appendString(delimiter);
+
+        // If send needed
         if (buf.length() > chunkPartition) {
             file.write(buf);
             buf = Buffer.buffer(chunkPartition);
+
+            // Overflow
             if (file.writeQueueFull()) {
+                // Pause component
+                pause();
                 file.drainHandler(HANDLE_PRESSURE);
-                forward(msg);
-                return;
             }
         }
+
+        // Send to the next endpoint
         forwardAndRelease(msg);
     }
 
@@ -90,6 +101,8 @@ public class FileOutput extends BaseComponentVerticle {
 
     @Override protected void checkConfig(JsonObject config) {
         checkState(config.getString("path") != null, "The path is required");
+        checkState(config.getInteger("instance") != null &&
+                config.getInteger("instance") == 1, "The instance must be equal to one");
     }
 
 }

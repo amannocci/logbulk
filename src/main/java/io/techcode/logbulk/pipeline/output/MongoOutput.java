@@ -50,11 +50,7 @@ public class MongoOutput extends BaseComponentVerticle {
     private int bulk;
     private Flusher flusher;
 
-    // Back pressure
-    private int threehold;
-    private int idle;
-    private int job = 0;
-    private boolean paused;
+    // Collection
     private String collection;
 
     // Settings
@@ -65,37 +61,43 @@ public class MongoOutput extends BaseComponentVerticle {
 
         // Setup processing task
         this.bulk = config.getInteger("bulk", 1000);
-        this.threehold = config.getInteger("queue", 100);
-        this.idle = threehold / 2;
         this.collection = config.getString("collection");
         dates = Streams.to(config.getJsonArray("date", new JsonArray()).stream(), String.class).collect(Collectors.toList());
 
-        // Remap configuration
+        // Setup mongo client
         JsonObject mongoConf = new JsonObject();
         mongoConf.put("db_name", config.getString("database"));
         mongoConf.put("connection_string", config.getString("uri"));
         client = MongoClient.createShared(vertx, mongoConf);
+
+        // Setup flusher
         flusher = new Flusher(vertx, config.getInteger("flush", 10));
         flusher.handler(h -> send());
         flusher.start();
+
+        // Ready
+        resume();
     }
 
     @Override public void handle(JsonObject msg) {
+        // Prepare body
         JsonObject body = body(msg);
         if (dates.size() > 0) {
             dates.stream()
                     .filter(body::containsKey)
                     .forEach(d -> body.put(d, new JsonObject().put("$date", body.getString(d))));
         }
+
+        // Enqueue for bulk request
         pending.add(body);
+
+        // If send needed
         if (pending.size() >= bulk) {
             send();
         }
-        if (paused) {
-            forward(msg);
-        } else {
-            forwardAndRelease(msg);
-        }
+
+        // Send to the next endpoint
+        forwardAndRelease(msg);
     }
 
     @Override public void stop() {
@@ -106,28 +108,34 @@ public class MongoOutput extends BaseComponentVerticle {
      * Send a request.
      */
     private void send() {
+        // Pause component
+        pause();
+
+        // Update flusher flag
         flusher.flushed();
-        if (pending.size() == 0 || paused) return;
 
-        JsonObject command = new JsonObject();
-        command.put("insert", collection);
-        command.put("documents", pending);
-        client.runCommand("insert", command, event -> {
-            if (event.failed()) {
-                log.error("Failed to insert documents");
-            }
-            release();
-        });
-        if (++job >= threehold && !paused) paused = true;
+        // If no work needed
+        if (pending.isEmpty()) {
+            // Resume component
+            resume();
+        } else {
+            // Prepare request
+            JsonObject command = new JsonObject();
+            command.put("insert", collection);
+            command.put("documents", pending);
 
-        // Reset pending
-        pending = new JsonArray();
-    }
+            // Send request
+            client.runCommand("insert", command, event -> {
+                if (event.failed()) {
+                    log.error("Failed to insert documents");
+                }
 
-    @Override public void release() {
-        if (--job < idle && paused) {
-            super.release();
-            paused = false;
+                // Resume component
+                resume();
+            });
+
+            // Reset pending
+            pending = new JsonArray();
         }
     }
 

@@ -62,9 +62,6 @@ public class RabbitMQOutput extends BaseComponentVerticle {
     // Routing key
     private String routingKey;
 
-    // Blocked
-    private boolean blocked = true;
-
     // Vertx context
     private Context ctx;
 
@@ -116,20 +113,19 @@ public class RabbitMQOutput extends BaseComponentVerticle {
             Connection connection = Connections.create(options, conf);
             connection.addBlockedListener(new BlockedListener() {
                 @Override public void handleBlocked(String s) throws IOException {
-                    ctx.runOnContext(h -> blocked = true);
+                    ctx.runOnContext(h -> pause());
                 }
 
                 @Override public void handleUnblocked() throws IOException {
-                    ctx.runOnContext(h -> {
-                        blocked = false;
-                        release();
-                    });
+                    ctx.runOnContext(h -> resume());
                 }
             });
 
             // Create a new channel
             rabbit = connection.createChannel();
-            blocked = false;
+
+            // Ready
+            resume();
         } catch (Exception ex) {
             log.error("RabbitMQ can't be initialized: ", ex);
         }
@@ -146,45 +142,31 @@ public class RabbitMQOutput extends BaseComponentVerticle {
     }
 
     @Override public void handle(JsonObject msg) {
-        if (blocked) {
-            refuse(msg);
-            return;
-        }
-
         // Switch over mode
-        switch (mode) {
-            case PUBLISH:
-                try {
+        try {
+            JsonObject headers = headers(msg);
+            switch (mode) {
+                case PUBLISH:
                     rabbit.basicPublish(exchange, routingKey, MessageProperties.PERSISTENT_BASIC, body(msg).encode().getBytes());
-                    forwardAndRelease(msg);
-                } catch (IOException ex) {
-                    handleFailure(msg, ex);
-                }
-                break;
-            case ACK: {
-                JsonObject headers = headers(msg);
-                if (headers.getLong("_rabbit_ack") != null) {
-                    try {
+                    break;
+                case ACK:
+                    if (headers.getLong("_rabbit_ack") != null) {
                         rabbit.basicAck(headers.getLong("_rabbit_ack"), false);
-                        forwardAndRelease(msg);
-                    } catch (IOException ex) {
-                        handleFailure(msg, ex);
                     }
-                }
-            }
-            break;
-            case NACK: {
-                JsonObject headers = headers(msg);
-                if (headers.getLong("_rabbit_ack") != null) {
-                    try {
+
+                    break;
+                case NACK:
+                    if (headers.getLong("_rabbit_ack") != null) {
                         rabbit.basicNack(headers.getLong("_rabbit_ack"), false, true);
-                        forwardAndRelease(msg);
-                    } catch (IOException ex) {
-                        handleFailure(msg, ex);
                     }
-                }
+
+                    break;
             }
-            break;
+
+            // Send to the next endpoint
+            forwardAndRelease(msg);
+        } catch (IOException ex) {
+            handleFailure(msg, ex);
         }
     }
 

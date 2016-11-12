@@ -24,6 +24,7 @@
 package io.techcode.logbulk.component;
 
 import io.techcode.logbulk.util.ConvertHandler;
+import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonObject;
 
 /**
@@ -31,9 +32,43 @@ import io.vertx.core.json.JsonObject;
  */
 public abstract class BaseComponentVerticle extends ComponentVerticle implements ConvertHandler {
 
+    // State pause
+    private boolean pause = true;
+
     @Override public void start() {
         super.start();
         getEventBus().<JsonObject>localConsumer(endpoint).handler(this);
+    }
+
+    @Override public void handle(Message<JsonObject> event) {
+        JsonObject message = event.body();
+        if (pause) {
+            refuse(event.body());
+        } else {
+            try {
+                handle(message);
+            } catch (Throwable th) {
+                handleFailure(message, th);
+            }
+        }
+    }
+
+    /**
+     * Resume message handling.
+     */
+    public void resume() {
+        // Update flag
+        pause = false;
+
+        // Don't forget to release because refuse use forward-release mecanism
+        release();
+    }
+
+    /**
+     * Pause message handling.
+     */
+    public void pause() {
+        pause = true;
     }
 
 }

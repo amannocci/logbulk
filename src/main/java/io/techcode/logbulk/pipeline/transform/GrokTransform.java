@@ -56,9 +56,11 @@ public class GrokTransform extends BaseComponentVerticle {
 
             // Compile an expression
             grok.compile(config.getString("format"), true);
+
+            // Ready
+            resume();
         } catch (GrokException ex) {
             log.error("Can't instanciate grok:", ex);
-            vertx.close();
         }
     }
 
@@ -66,18 +68,20 @@ public class GrokTransform extends BaseComponentVerticle {
         // Process
         JsonObject body = body(msg);
         String field = body.getString(config.getString("match"));
-        if (field == null) return;
-
-        Match matcher = grok.match(field);
-        matcher.captures();
-        if (matcher.isNull()) {
-            forwardAndRelease(updateRoute(msg, fallback));
-        } else {
-            // Compose
-            body.mergeIn(new JsonObject(matcher.toMap()));
-
-            // Send to the next endpoint
+        if (field == null) {
             forwardAndRelease(msg);
+        } else {
+            Match matcher = grok.match(field);
+            matcher.captures();
+            if (matcher.isNull()) {
+                handleFailure(msg);
+            } else {
+                // Compose
+                body.mergeIn(new JsonObject(matcher.toMap()));
+
+                // Send to the next endpoint
+                forwardAndRelease(msg);
+            }
         }
     }
 

@@ -42,6 +42,7 @@ public class MetricTransform extends BaseComponentVerticle {
             log.info(endpoint + " req/s: " + request);
             request = 0;
         });
+        resume();
     }
 
     @Override public void handle(JsonObject msg) {

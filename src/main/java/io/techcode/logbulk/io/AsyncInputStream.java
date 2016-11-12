@@ -107,8 +107,7 @@ public class AsyncInputStream implements ReadStream<Buffer> {
     }
 
     @Override public AsyncInputStream handler(Handler<Buffer> handler) {
-        checkNotNull(handler, "The handler can't be null");
-        dataHandler = handler;
+        dataHandler = checkNotNull(handler, "The handler can't be null");
         doRead();
         return this;
     }

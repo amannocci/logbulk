@@ -41,6 +41,9 @@ public class JsonTransform extends BaseComponentVerticle {
 
         // Setup
         source = config.getString("source");
+
+        // Ready
+        resume();
     }
 
     @Override public void handle(JsonObject msg) {

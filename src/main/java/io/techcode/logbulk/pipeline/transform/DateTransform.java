@@ -70,6 +70,7 @@ public class DateTransform extends BaseComponentVerticle {
                     .withLocale(Locale.ENGLISH)
                     .withDefaultYear(2016);
         }
+        resume();
     }
 
     @Override public void handle(JsonObject msg) {

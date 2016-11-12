@@ -86,6 +86,9 @@ public class MutateTransform extends BaseComponentVerticle {
 
         // Optimize space consumption
         ((ArrayList) pipeline).trimToSize();
+
+        // Ready
+        resume();
     }
 
     @Override public void handle(JsonObject msg) {

@@ -73,6 +73,9 @@ public class DispatchTransform extends BaseComponentVerticle {
                 dispatch.add(new SimpleDispatch(d));
             }
         }
+
+        // Ready
+        resume();
     }
 
     @Override public void handle(JsonObject msg) {
