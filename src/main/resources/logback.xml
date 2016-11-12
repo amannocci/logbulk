@@ -1,26 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
+    <!-- Stdout appender -->
     <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
-            <layout class="io.techcode.logbulk.util.JsonLayout"/>
+            <layout class="io.techcode.logbulk.util.logging.JsonLayout"/>
         </encoder>
     </appender>
 
+    <!-- File appender -->
     <appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>log/logbulk.log</file>
         <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
-            <layout class="io.techcode.logbulk.util.JsonLayout"/>
+            <layout class="io.techcode.logbulk.util.logging.JsonLayout"/>
         </encoder>
-        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
-            <FileNamePattern>log/logbulk.%i.zip</FileNamePattern>
-            <MinIndex>1</MinIndex>
-            <MaxIndex>10</MaxIndex>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>log/logbulk-%d{yyyy-MM-dd}-%i.zip</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>128MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <maxHistory>7</maxHistory>
+            <totalSizeCap>3GB</totalSizeCap>
+            <cleanHistoryOnStart>true</cleanHistoryOnStart>
         </rollingPolicy>
-        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-            <MaxFileSize>1024MB</MaxFileSize>
-        </triggeringPolicy>
     </appender>
 
+    <!-- Async appenders -->
     <appender name="async-file" class="ch.qos.logback.classic.AsyncAppender">
         <appender-ref ref="file"/>
     </appender>
@@ -28,6 +32,10 @@
         <appender-ref ref="stdout"/>
     </appender>
 
+    <!-- Disable loggers -->
+    <logger name="net.jodah.lyra" level="WARN"/>
+
+    <!-- Root -->
     <root level="info">
         <appender-ref ref="async-console"/>
         <appender-ref ref="async-file"/>
