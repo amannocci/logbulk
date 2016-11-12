@@ -35,6 +35,12 @@ import io.vertx.core.json.JsonObject;
  */
 public class JsonLayout extends LayoutBase<ILoggingEvent> {
 
+    boolean pretty = false;
+
+    public void setPretty(boolean pretty) {
+        this.pretty = pretty;
+    }
+
     @Override public String doLayout(ILoggingEvent event) {
         JsonObject log = new JsonObject();
         log.put("level", event.getLevel().toString());
@@ -52,7 +58,7 @@ public class JsonLayout extends LayoutBase<ILoggingEvent> {
             }
             log.put("stacktrace", stacktrace);
         }
-        return log.encode() + CoreConstants.LINE_SEPARATOR;
+        return ((pretty) ? log.encodePrettily() : log.encode()) + CoreConstants.LINE_SEPARATOR;
     }
 
 }
