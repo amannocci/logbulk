@@ -153,13 +153,11 @@ public class RabbitMQOutput extends BaseComponentVerticle {
                     if (headers.getLong("_rabbit_ack") != null) {
                         rabbit.basicAck(headers.getLong("_rabbit_ack"), false);
                     }
-
                     break;
                 case NACK:
                     if (headers.getLong("_rabbit_ack") != null) {
                         rabbit.basicNack(headers.getLong("_rabbit_ack"), false, true);
                     }
-
                     break;
             }
 
@@ -176,6 +174,7 @@ public class RabbitMQOutput extends BaseComponentVerticle {
             checkState(config.getString("exchange") != null, "The exchange is required");
             checkState(config.getString("routingKey") != null, "The routingKey is required");
         }
+        checkState(config.getBoolean("worker", false), "The component must be a worker");
     }
 
     /**
