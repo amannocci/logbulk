@@ -58,7 +58,7 @@ public class FileInput extends ComponentVerticle {
         handlePressure(file);
 
         // Begin to read
-        file.handler(buf -> parser.handle(buf));
+        file.handler(parser);
         file.exceptionHandler(th -> handleFailure(generateEvent(), th));
     }
 

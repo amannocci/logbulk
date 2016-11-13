@@ -56,8 +56,7 @@ public class StdInput extends ComponentVerticle {
         handlePressure(stream);
 
         // Begin to read
-        stream.handler(buf -> parser.handle(buf))
-                .exceptionHandler(th -> handleFailure(generateEvent(), th));
+        stream.handler(parser).exceptionHandler(th -> handleFailure(generateEvent(), th));
     }
 
     @Override protected void checkConfig(JsonObject config) {
