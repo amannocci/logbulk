@@ -24,7 +24,8 @@
 package io.techcode.logbulk.component;
 
 import com.google.common.base.Strings;
-import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.ListMultimap;
 import io.techcode.logbulk.io.Configuration;
 import io.techcode.logbulk.util.PressureHandler;
 import io.techcode.logbulk.util.Streams;
@@ -67,7 +68,7 @@ public class ComponentVerticle extends AbstractVerticle {
     protected String endpoint;
 
     // Routing
-    protected ArrayListMultimap<String, String> routing = ArrayListMultimap.create();
+    protected ListMultimap<String, String> routing;
 
     // Event Bus
     @Getter private EventBus eventBus;
@@ -88,10 +89,12 @@ public class ComponentVerticle extends AbstractVerticle {
 
         // Generate routing
         JsonObject routes = config.getJsonObject("route");
+        ImmutableListMultimap.Builder<String, String> builder = ImmutableListMultimap.builder();
         for (String route : routes.fieldNames()) {
-            routing.putAll(route, Streams.to(routes.getJsonArray(route).stream(), String.class)
+            builder.putAll(route, Streams.to(routes.getJsonArray(route).stream(), String.class)
                     .collect(Collectors.toList()));
         }
+        routing = builder.build();
     }
 
     /**
