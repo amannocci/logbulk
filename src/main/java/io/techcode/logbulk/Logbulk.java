@@ -35,6 +35,7 @@ import io.vertx.core.*;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import lombok.Getter;
 
 import java.util.List;
 import java.util.Map;
@@ -49,18 +50,20 @@ public class Logbulk extends AbstractVerticle {
     private Logger log = LoggerFactory.getLogger(getClass().getName());
 
     // Application configuration
-    private AppConfig config;
+    @Getter private AppConfig config;
 
     // Component registry
     private ComponentRegistry registry;
 
     @Override public void start(Future<Void> startFuture) {
+        // Ensure error are handle correctly
+        vertx.exceptionHandler(th -> log.error(th));
+
         // Load configuration
         config = new AppConfig();
 
         // Register all components
         registry = new ComponentRegistry(this);
-        registry.registerAll(config);
 
         // Register custom codecs
         vertx.eventBus().registerCodec(new FastJsonObjectMessageCodec());

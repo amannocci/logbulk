@@ -43,4 +43,27 @@ public final class Streams {
         return stream.filter(type::isInstance).map(e -> (T) e);
     }
 
+    /**
+     * Creates a lazily concatenated stream whose elements are all the
+     * elements of all streams. The resulting stream is ordered if both
+     * of the input streams are ordered, and parallel if either of the input
+     * streams is parallel. When the resulting stream is closed, the close
+     * handlers for both input streams are invoked.
+     *
+     * @param <T>     The type of stream elements.
+     * @param streams all streams.
+     * @return the concatenation of all streams.
+     * @implNote Use caution when constructing streams from repeated concatenation.
+     * Accessing an element of a deeply concatenated stream can result in deep
+     * call chains, or even {@code StackOverflowException}.
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> Stream<T> concat(Iterable<Stream<T>> streams) {
+        Stream<T> concat = Stream.empty();
+        for (Stream<T> stream : streams) {
+            concat = Stream.concat(concat, stream);
+        }
+        return concat;
+    }
+
 }

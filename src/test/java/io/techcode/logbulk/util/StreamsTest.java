@@ -26,6 +26,7 @@ package io.techcode.logbulk.util;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -61,6 +62,16 @@ public class StreamsTest {
     @Test public void testTo4() throws Exception {
         List<Float> typed = Streams.to(untypedStream, Float.class).collect(Collectors.toList());
         assertEquals(1, typed.size());
+    }
+
+    @Test public void testConcat() throws Exception {
+        List<String> typed = Streams.concat(Arrays.asList(
+                Stream.of("test0"),
+                Stream.of("test1"),
+                Stream.of("test2"),
+                Stream.of("test3", "test4")
+        )).collect(Collectors.toList());
+        assertEquals(5, typed.size());
     }
 
 }

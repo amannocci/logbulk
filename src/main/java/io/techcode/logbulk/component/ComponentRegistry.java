@@ -25,12 +25,18 @@ package io.techcode.logbulk.component;
 
 import com.google.common.collect.Maps;
 import com.typesafe.config.ConfigValue;
+import io.techcode.logbulk.Logbulk;
 import io.techcode.logbulk.io.AppConfig;
-import io.vertx.core.Verticle;
+import io.techcode.logbulk.util.Streams;
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -44,7 +50,7 @@ public class ComponentRegistry {
     private Logger log = LoggerFactory.getLogger(getClass().getName());
 
     // Verticle
-    private Verticle verticle;
+    private Logbulk verticle;
 
     // Registry
     private Map<String, String> registry = Maps.newHashMap();
@@ -52,18 +58,17 @@ public class ComponentRegistry {
     /**
      * Create a new component registry.
      */
-    public ComponentRegistry(Verticle verticle) {
+    public ComponentRegistry(Logbulk verticle) {
         this.verticle = checkNotNull(verticle, "The verticle can't be null");
+        registerAll();
+        analyzeRoutes();
     }
 
     /**
      * Register all components in configuration.
-     *
-     * @param config application configuration.
      */
-    public void registerAll(AppConfig config) {
-        checkNotNull(config, "The configuration can't be null");
-        for (Map.Entry<String, ConfigValue> entry : config.components()) {
+    public void registerAll() {
+        for (Map.Entry<String, ConfigValue> entry : verticle.getConfig().components()) {
             for (Map.Entry<String, ConfigValue> el : entry.getValue().atKey(entry.getKey()).entrySet()) {
                 try {
                     Class.forName(el.getValue().unwrapped().toString());
@@ -74,6 +79,36 @@ public class ComponentRegistry {
                     return;
                 }
             }
+        }
+    }
+
+    /**
+     * Analyze all routes in configuration.
+     */
+    public void analyzeRoutes() {
+        // Configuration
+        AppConfig config = verticle.getConfig();
+
+        // Retrieve all defined components
+        Set<String> components = Streams.concat(Arrays.asList(
+                config.inputs().stream().map(Map.Entry::getKey),
+                config.transforms().stream().map(Map.Entry::getKey),
+                config.outputs().stream().map(Map.Entry::getKey)
+        )).collect(Collectors.toSet());
+
+        // Iterate over components defined in routes
+        JsonObject routes = verticle.getConfig().routes();
+        List<String> unknowns = routes.fieldNames().stream()
+                .flatMap(route -> Streams.to(routes.getJsonArray(route).stream(), String.class))
+                .distinct()
+                .filter(c -> !components.contains(c))
+                .distinct()
+                .collect(Collectors.toList());
+
+        // Print
+        if (unknowns.size() > 0) {
+            unknowns.forEach(c -> log.error("The component '" + c + "' isn't defined"));
+            verticle.getVertx().close();
         }
     }
 

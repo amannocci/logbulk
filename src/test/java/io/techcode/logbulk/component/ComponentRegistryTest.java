@@ -24,8 +24,9 @@
 package io.techcode.logbulk.component;
 
 import com.google.common.collect.Sets;
+import io.techcode.logbulk.Logbulk;
 import io.techcode.logbulk.io.AppConfig;
-import io.vertx.core.Verticle;
+import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 import org.junit.Test;
@@ -47,23 +48,38 @@ public class ComponentRegistryTest {
 
     @Test public void testRegisterAll() {
         // Prepare mocks
-        Verticle mockedVerticle = mock(Verticle.class);
+        Logbulk mockedVerticle = mock(Logbulk.class);
         AppConfig mockedConfig = mock(AppConfig.class);
+        when(mockedVerticle.getConfig()).thenReturn(mockedConfig);
+        when(mockedConfig.routes()).thenReturn(new JsonObject());
         when(mockedConfig.components()).thenReturn(Sets.newHashSet());
 
         // Test
-        ComponentRegistry registry = new ComponentRegistry(mockedVerticle);
-        registry.registerAll(mockedConfig);
+        new ComponentRegistry(mockedVerticle);
         verify(mockedConfig).components();
+    }
+
+    @Test public void testAnalyzeRoutes() {
+        // Prepare mocks
+        Logbulk mockedVerticle = mock(Logbulk.class);
+        AppConfig mockedConfig = mock(AppConfig.class);
+        when(mockedVerticle.getConfig()).thenReturn(mockedConfig);
+        when(mockedConfig.routes()).thenReturn(new JsonObject());
+        when(mockedConfig.components()).thenReturn(Sets.newHashSet());
+
+        // Test
+        new ComponentRegistry(mockedVerticle);
+        verify(mockedConfig).routes();
     }
 
     private void testGetComponent(String component) {
         // Prepare mocks
-        Verticle mockedVerticle = mock(Verticle.class);
+        Logbulk mockedVerticle = mock(Logbulk.class);
+        when(mockedVerticle.getConfig()).thenReturn(new AppConfig());
 
         // Test
         ComponentRegistry registry = new ComponentRegistry(mockedVerticle);
-        registry.registerAll(new AppConfig());
+        registry.registerAll();
         assertNotNull(registry.getComponent(component));
     }
 
