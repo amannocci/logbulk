@@ -83,6 +83,12 @@ public class MutateTransform extends BaseComponentVerticle {
         if (config.containsKey("gsub")) {
             pipeline.add(new GsubTask(config));
         }
+        if (config.containsKey("mask")) {
+            pipeline.add(new MaskTask(config));
+        }
+        if (config.containsKey("unmask")) {
+            pipeline.add(new UnmaskTask(config));
+        }
 
         // Optimize space consumption
         ((ArrayList) pipeline).trimToSize();
@@ -93,11 +99,67 @@ public class MutateTransform extends BaseComponentVerticle {
 
     @Override public void handle(JsonObject msg) {
         // Process
-        JsonObject body = body(msg);
-        pipeline.forEach(t -> t.accept(body));
+        pipeline.forEach(t -> t.accept(msg));
 
         // Send to the next endpoint
         forwardAndRelease(msg);
+    }
+
+    /**
+     * Mask task implementation.
+     */
+    private class MaskTask implements Consumer<JsonObject> {
+
+        // Field to mask
+        private String toMask;
+
+        /**
+         * Create a new mask task.
+         *
+         * @param config configuration of the task.
+         */
+        private MaskTask(JsonObject config) {
+            checkNotNull(config, "The configuration can't be null");
+            toMask = config.getString("mask");
+        }
+
+        @Override public void accept(JsonObject msg) {
+            JsonObject headers = headers(msg);
+            JsonObject body = body(msg);
+
+            if (body.containsKey(toMask) && body.getValue(toMask) instanceof JsonObject) {
+                JsonObject mask = body.getJsonObject(toMask);
+                headers.put("_mask", body);
+                msg.put("body", mask);
+            }
+        }
+
+    }
+
+    /**
+     * Unmask task implementation.
+     */
+    private class UnmaskTask implements Consumer<JsonObject> {
+
+        /**
+         * Create a new unmask task.
+         *
+         * @param config configuration of the task.
+         */
+        private UnmaskTask(JsonObject config) {
+            checkNotNull(config, "The configuration can't be null");
+        }
+
+        @Override public void accept(JsonObject msg) {
+            JsonObject headers = headers(msg);
+
+            if (headers.containsKey("_mask")) {
+                JsonObject unmask = headers.getJsonObject("_mask");
+                headers.remove("_mask");
+                msg.put("body", unmask);
+            }
+        }
+
     }
 
     /**
@@ -119,7 +181,8 @@ public class MutateTransform extends BaseComponentVerticle {
             ((ArrayList) toRemove).trimToSize();
         }
 
-        @Override public void accept(JsonObject body) {
+        @Override public void accept(JsonObject msg) {
+            JsonObject body = body(msg);
             toRemove.forEach(body::remove);
         }
 
@@ -147,7 +210,8 @@ public class MutateTransform extends BaseComponentVerticle {
             ((ArrayList) toStrip).trimToSize();
         }
 
-        @Override public void accept(JsonObject body) {
+        @Override public void accept(JsonObject msg) {
+            JsonObject body = body(msg);
             toStrip.forEach(key -> {
                 if (body.containsKey(key)) {
                     body.put(key, pattern.matcher(body.getString(key)).replaceAll(" "));
@@ -176,7 +240,8 @@ public class MutateTransform extends BaseComponentVerticle {
             ((ArrayList) toLowercase).trimToSize();
         }
 
-        @Override public void accept(JsonObject body) {
+        @Override public void accept(JsonObject msg) {
+            JsonObject body = body(msg);
             toLowercase.forEach(key -> {
                 if (body.containsKey(key)) {
                     body.put(key, body.getString(key).toLowerCase());
@@ -205,7 +270,8 @@ public class MutateTransform extends BaseComponentVerticle {
             ((ArrayList) toUppercase).trimToSize();
         }
 
-        @Override public void accept(JsonObject body) {
+        @Override public void accept(JsonObject msg) {
+            JsonObject body = body(msg);
             toUppercase.forEach(key -> {
                 if (body.containsKey(key)) {
                     body.put(key, body.getString(key).toUpperCase());
@@ -236,7 +302,8 @@ public class MutateTransform extends BaseComponentVerticle {
             }
         }
 
-        @Override public void accept(JsonObject body) {
+        @Override public void accept(JsonObject msg) {
+            JsonObject body = body(msg);
             toUpdate.keySet().stream().filter(body::containsKey).forEach(key -> {
                 body.put(key, toUpdate.get(key));
             });
@@ -271,7 +338,8 @@ public class MutateTransform extends BaseComponentVerticle {
             }
         }
 
-        @Override public void accept(JsonObject body) {
+        @Override public void accept(JsonObject msg) {
+            JsonObject body = body(msg);
             toGsub.keySet().stream().filter(body::containsKey).forEach(key -> {
                 if (body.getValue(key) instanceof String) {
                     Pair<String, String> pair = toGsub.get(key);
@@ -303,7 +371,8 @@ public class MutateTransform extends BaseComponentVerticle {
             }
         }
 
-        @Override public void accept(JsonObject body) {
+        @Override public void accept(JsonObject msg) {
+            JsonObject body = body(msg);
             toJoin.keySet().stream().filter(body::containsKey).forEach(key -> {
                 Object raw = body.getMap().get(key);
                 if (raw instanceof List) {
@@ -337,7 +406,8 @@ public class MutateTransform extends BaseComponentVerticle {
             }
         }
 
-        @Override public void accept(JsonObject body) {
+        @Override public void accept(JsonObject msg) {
+            JsonObject body = body(msg);
             toRename.keySet().stream().filter(body::containsKey).forEach(key -> {
                 body.getMap().put(toRename.get(key), body.getMap().get(key));
                 body.remove(key);
@@ -377,7 +447,8 @@ public class MutateTransform extends BaseComponentVerticle {
             }
         }
 
-        @Override public void accept(JsonObject body) {
+        @Override public void accept(JsonObject msg) {
+            JsonObject body = body(msg);
             toConvert.keySet().stream().filter(body::containsKey).forEach(key -> {
                 switch (toConvert.get(key)) {
                     case 0:
