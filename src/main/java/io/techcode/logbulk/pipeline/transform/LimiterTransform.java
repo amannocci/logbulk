@@ -67,6 +67,9 @@ public class LimiterTransform extends BaseComponentVerticle {
                 request = 0;
             }
         });
+
+        // Ready
+        resume();
     }
 
     @Override public void handle(JsonObject msg) {
