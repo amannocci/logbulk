@@ -17,7 +17,7 @@
         <lombok.version>1.16.10</lombok.version>
         <nuprocess.version>1.1.0</nuprocess.version>
         <csv.version>2.2.3</csv.version>
-        <lyra.version>0.5.2</lyra.version>
+        <lyra.version>0.5.3</lyra.version>
         <rabbitmq.version>3.6.5</rabbitmq.version>
         <junit.version>4.12</junit.version>
         <junit.params.version>1.0.5</junit.params.version>
