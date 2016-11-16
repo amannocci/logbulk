@@ -56,9 +56,6 @@ public class MutateTransform extends BaseComponentVerticle {
 
         // Aggregate all operations perform
         pipeline = Lists.newArrayList();
-        if (config.containsKey("remove")) {
-            pipeline.add(new RemoveTask(config));
-        }
         if (config.containsKey("rename")) {
             pipeline.add(new RenameTask(config));
         }
@@ -88,6 +85,9 @@ public class MutateTransform extends BaseComponentVerticle {
         }
         if (config.containsKey("unmask")) {
             pipeline.add(new UnmaskTask(config));
+        }
+        if (config.containsKey("remove")) {
+            pipeline.add(new RemoveTask(config));
         }
 
         // Optimize space consumption
