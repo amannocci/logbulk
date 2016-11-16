@@ -29,7 +29,10 @@ import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.MessageProperties;
 import io.techcode.logbulk.component.BaseComponentVerticle;
 import io.techcode.logbulk.util.Streams;
+import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
+import io.vertx.core.Handler;
+import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import net.jodah.lyra.ConnectionOptions;
@@ -146,23 +149,40 @@ public class RabbitMQOutput extends BaseComponentVerticle {
         try {
             JsonObject headers = headers(msg);
             switch (mode) {
-                case PUBLISH:
+                case PUBLISH: {
                     rabbit.basicPublish(exchange, routingKey, MessageProperties.PERSISTENT_BASIC, body(msg).encode().getBytes());
-                    break;
-                case ACK:
-                    if (headers.getLong("_rabbit_ack") != null) {
-                        rabbit.basicAck(headers.getLong("_rabbit_ack"), false);
-                    }
-                    break;
-                case NACK:
-                    if (headers.getLong("_rabbit_ack") != null) {
-                        rabbit.basicNack(headers.getLong("_rabbit_ack"), false, true);
-                    }
-                    break;
-            }
 
-            // Send to the next endpoint
-            forwardAndRelease(msg);
+                    // Send to the next endpoint
+                    forwardAndRelease(msg);
+                }
+                break;
+                case ACK: {
+                    String source = headers.getString("_rabbit_source");
+                    if (source != null) {
+                        getEventBus().send(source + ".ack", msg, DELIVERY_OPTIONS, (Handler<AsyncResult<Message<Void>>>) e -> {
+                            if (e.succeeded()) {
+                                forwardAndRelease(msg);
+                            } else {
+                                handleFailure(msg, e.cause());
+                            }
+                        });
+                    }
+                }
+                break;
+                case NACK: {
+                    String source = headers.getString("_rabbit_source");
+                    if (source != null) {
+                        getEventBus().send(source + ".nack", msg, DELIVERY_OPTIONS, (Handler<AsyncResult<Message<Void>>>) e -> {
+                            if (e.succeeded()) {
+                                forwardAndRelease(msg);
+                            } else {
+                                handleFailure(msg, e.cause());
+                            }
+                        });
+                    }
+                }
+                break;
+            }
         } catch (IOException ex) {
             handleFailure(msg, ex);
         }

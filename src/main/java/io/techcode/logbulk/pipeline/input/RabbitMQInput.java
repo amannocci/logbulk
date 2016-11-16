@@ -120,6 +120,32 @@ public class RabbitMQInput extends BaseComponentVerticle {
         } catch (Exception ex) {
             log.error("RabbitMQ can't be initialized: ", ex);
         }
+
+        // Register ack & nack consumer
+        getEventBus().<JsonObject>localConsumer(endpoint + ".ack")
+                .handler(message -> {
+                    JsonObject headers = headers(message.body());
+                    if (headers.getLong("_rabbit_ack") != null) {
+                        try {
+                            rabbit.basicAck(headers.getLong("_rabbit_ack"), false);
+                            message.reply(null);
+                        } catch (IOException ex) {
+                            message.fail(0, ex.getMessage());
+                        }
+                    }
+                });
+        getEventBus().<JsonObject>localConsumer(endpoint + ".nack")
+                .handler(message -> {
+                    JsonObject headers = headers(message.body());
+                    if (headers.getLong("_rabbit_ack") != null) {
+                        try {
+                            rabbit.basicNack(headers.getLong("_rabbit_ack"), false, true);
+                            message.reply(null);
+                        } catch (IOException ex) {
+                            message.fail(0, ex.getMessage());
+                        }
+                    }
+                });
     }
 
     @Override public void handle(JsonObject msg) {
@@ -173,6 +199,7 @@ public class RabbitMQInput extends BaseComponentVerticle {
                         @Override public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
                             JsonObject msg = generateEvent(new String(body));
                             headers(msg).put("_rabbit_ack", envelope.getDeliveryTag());
+                            headers(msg).put("_rabbit_source", endpoint);
                             ctx.runOnContext(h -> {
                                 if (handler != null) handler.handle(msg);
                             });
