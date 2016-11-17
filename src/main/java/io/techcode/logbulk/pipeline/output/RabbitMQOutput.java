@@ -81,57 +81,59 @@ public class RabbitMQOutput extends BaseComponentVerticle {
         ctx = vertx.getOrCreateContext();
 
         // Policies
-        RetryPolicy retryPolicy = new RetryPolicy()
-                .withBackoff(Duration.seconds(interval), Duration.seconds(intervalMax))
-                .withMaxAttempts(maxAttempts);
-        RecoveryPolicy recoveryPolicy = new RecoveryPolicy()
-                .withBackoff(Duration.seconds(interval), Duration.seconds(intervalMax))
-                .withMaxAttempts(maxAttempts);
+        if (mode == Mode.PUBLISH) {
+            RetryPolicy retryPolicy = new RetryPolicy()
+                    .withBackoff(Duration.seconds(interval), Duration.seconds(intervalMax))
+                    .withMaxAttempts(maxAttempts);
+            RecoveryPolicy recoveryPolicy = new RecoveryPolicy()
+                    .withBackoff(Duration.seconds(interval), Duration.seconds(intervalMax))
+                    .withMaxAttempts(maxAttempts);
 
-        // Configure policies
-        Config conf = new Config()
-                .withConnectRetryPolicy(retryPolicy)
-                .withChannelRetryPolicy(retryPolicy)
-                .withChannelRecoveryPolicy(recoveryPolicy)
-                .withConnectionRetryPolicy(retryPolicy)
-                .withConnectionRecoveryPolicy(recoveryPolicy);
+            // Configure policies
+            Config conf = new Config()
+                    .withConnectRetryPolicy(retryPolicy)
+                    .withChannelRetryPolicy(retryPolicy)
+                    .withChannelRecoveryPolicy(recoveryPolicy)
+                    .withConnectionRetryPolicy(retryPolicy)
+                    .withConnectionRecoveryPolicy(recoveryPolicy);
 
-        // Prepare hosts params
-        String[] hosts = Streams.to(config.getJsonArray("hosts", new JsonArray().add("localhost")).stream(), String.class)
-                .collect(Collectors.toList())
-                .toArray(new String[0]);
+            // Prepare hosts params
+            String[] hosts = Streams.to(config.getJsonArray("hosts", new JsonArray().add("localhost")).stream(), String.class)
+                    .collect(Collectors.toList())
+                    .toArray(new String[0]);
 
-        // Configure connection options
-        try {
-            ConnectionOptions options = new ConnectionOptions();
-            options.withUsername(config.getString("user", "user1"));
-            options.withPassword(config.getString("password", "password1"));
-            options.withHosts(hosts);
-            options.withPort(config.getInteger("port", 5672));
-            options.withVirtualHost(config.getString("virtualHost", "vhost1"));
-            if (config.getBoolean("ssl", false)) options.withSsl();
-            options.withConnectionTimeout(Duration.seconds(config.getInteger("connectionTimeout", 60)));
+            // Configure connection options
+            try {
+                ConnectionOptions options = new ConnectionOptions();
+                options.withUsername(config.getString("user", "user1"));
+                options.withPassword(config.getString("password", "password1"));
+                options.withHosts(hosts);
+                options.withPort(config.getInteger("port", 5672));
+                options.withVirtualHost(config.getString("virtualHost", "vhost1"));
+                if (config.getBoolean("ssl", false)) options.withSsl();
+                options.withConnectionTimeout(Duration.seconds(config.getInteger("connectionTimeout", 60)));
 
-            // Create a new connection
-            Connection connection = Connections.create(options, conf);
-            connection.addBlockedListener(new BlockedListener() {
-                @Override public void handleBlocked(String s) throws IOException {
-                    ctx.runOnContext(h -> pause());
-                }
+                // Create a new connection
+                Connection connection = Connections.create(options, conf);
+                connection.addBlockedListener(new BlockedListener() {
+                    @Override public void handleBlocked(String s) throws IOException {
+                        ctx.runOnContext(h -> pause());
+                    }
 
-                @Override public void handleUnblocked() throws IOException {
-                    ctx.runOnContext(h -> resume());
-                }
-            });
+                    @Override public void handleUnblocked() throws IOException {
+                        ctx.runOnContext(h -> resume());
+                    }
+                });
 
-            // Create a new channel
-            rabbit = connection.createChannel();
-
-            // Ready
-            resume();
-        } catch (Exception ex) {
-            log.error("RabbitMQ can't be initialized: ", ex);
+                // Create a new channel
+                rabbit = connection.createChannel();
+            } catch (Exception ex) {
+                log.error("RabbitMQ can't be initialized: ", ex);
+            }
         }
+
+        // Ready
+        resume();
     }
 
     @Override public void stop() {
