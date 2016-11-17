@@ -43,12 +43,14 @@ public class CsvTransform extends BaseComponentVerticle {
     private String source;
     private CsvParser parser;
     private Map<Integer, String> columns;
+    private boolean nullable;
 
     @Override public void start() {
         super.start();
 
         // Setup
         source = config.getString("field");
+        nullable = config.getBoolean("nullable", true);
         String separator = config.getString("separator");
         String delimiter = config.getString("delimiter");
         JsonObject rawColumns = config.getJsonObject("columns");
@@ -77,7 +79,12 @@ public class CsvTransform extends BaseComponentVerticle {
             String[] cols = parser.parseLine(field);
             if (cols.length >= columns.size()) {
                 for (int key : columns.keySet()) {
-                    body.put(columns.get(key), cols[key]);
+                    String col = cols[key];
+                    if (col == null) {
+                        if (nullable) body.put(columns.get(key), cols[key]);
+                    } else {
+                        body.put(columns.get(key), cols[key]);
+                    }
                 }
             }
         }
