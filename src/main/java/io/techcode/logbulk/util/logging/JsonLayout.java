@@ -24,10 +24,9 @@
 package io.techcode.logbulk.util.logging;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.StackTraceElementProxy;
+import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.LayoutBase;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 /**
@@ -51,12 +50,11 @@ public class JsonLayout extends LayoutBase<ILoggingEvent> {
         } else {
             log.put("message", event.getFormattedMessage());
         }
-        if (event.getThrowableProxy() != null && event.getThrowableProxy().getStackTraceElementProxyArray().length > 0) {
-            JsonArray stacktrace = new JsonArray();
-            for (StackTraceElementProxy el : event.getThrowableProxy().getStackTraceElementProxyArray()) {
-                stacktrace.add(el.toString());
-            }
-            log.put("stacktrace", stacktrace);
+
+        // Handle internal vert.x stacktrace
+        IThrowableProxy th = event.getThrowableProxy();
+        if (th != null && th.getStackTraceElementProxyArray().length > 0) {
+            log.put("stacktrace", ExceptionUtils.getStackTrace(log.getJsonArray("stacktrace"), th));
         }
         return ((pretty) ? log.encodePrettily() : log.encode()) + CoreConstants.LINE_SEPARATOR;
     }

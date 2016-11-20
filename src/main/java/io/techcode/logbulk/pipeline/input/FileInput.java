@@ -58,12 +58,11 @@ public class FileInput extends ComponentVerticle {
         handlePressure(file);
 
         // Begin to read
-        file.handler(parser);
-        file.exceptionHandler(th -> handleFailure(generateEvent(), th));
+        file.handler(parser).exceptionHandler(THROWABLE_HANDLER);
     }
 
     @Override public void stop() {
-        file.close();
+        if (file != null) file.close();
     }
 
     @Override protected void checkConfig(JsonObject config) {

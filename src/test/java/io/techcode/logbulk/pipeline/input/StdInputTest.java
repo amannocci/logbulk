@@ -41,6 +41,7 @@ public class StdInputTest extends VerticleTestBase {
     @Override protected JsonObject conf() {
         JsonObject conf = super.conf();
         conf.put("dispatch", "foobar");
+        conf.put("hasMailbox", false);
         return conf;
     }
 

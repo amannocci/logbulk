@@ -45,6 +45,7 @@ public class MysqlInputTest extends VerticleTestBase {
         conf.put("statement", "foobar limit");
         conf.put("parameters", new JsonObject());
         conf.put("order", new JsonArray());
+        conf.put("hasMailbox", false);
         return conf;
     }
 

@@ -74,7 +74,7 @@ public class GrokTransform extends BaseComponentVerticle {
             Match matcher = grok.match(field);
             matcher.captures();
             if (matcher.isNull()) {
-                handleFailure(msg);
+                handleFallback(msg);
             } else {
                 // Compose
                 body.mergeIn(new JsonObject(matcher.toMap()));

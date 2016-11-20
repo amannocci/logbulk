@@ -56,6 +56,7 @@ public class TcpInput extends ComponentVerticle {
         server.connectHandler(c -> {
             connections.add(c);
             c.handler(inputParser(config));
+            c.exceptionHandler(THROWABLE_HANDLER);
             handlePressure(c, h -> connections.remove(c));
         });
 
@@ -64,8 +65,7 @@ public class TcpInput extends ComponentVerticle {
             if (h.succeeded()) {
                 log.info("Listening on port => " + host + ':' + port);
             } else {
-                handleFailure(generateEvent("Can't listen on port => " + host + ':' + port), h.cause());
-                log.error("Can't listen on port => " + host + ':' + port);
+                log.error("Can't listen on port => " + host + ':' + port, h.cause());
             }
         });
     }

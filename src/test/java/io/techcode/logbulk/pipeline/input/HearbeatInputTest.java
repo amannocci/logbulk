@@ -42,6 +42,7 @@ public class HearbeatInputTest extends VerticleTestBase {
         JsonObject conf = super.conf();
         conf.put("message", "foobar");
         conf.put("dispatch", "foobar");
+        conf.put("hasMailbox", false);
         return conf;
     }
 

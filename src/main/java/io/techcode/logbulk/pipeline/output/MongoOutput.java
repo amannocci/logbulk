@@ -127,7 +127,7 @@ public class MongoOutput extends BaseComponentVerticle {
             // Send request
             client.runCommand("insert", command, event -> {
                 if (event.failed()) {
-                    log.error("Failed to insert documents");
+                    log.error("Failed to insert documents", event.cause());
                 }
 
                 // Resume component

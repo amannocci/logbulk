@@ -60,7 +60,7 @@ public abstract class VerticleTestBase extends VertxTestBase {
         conf.put("route", new JsonObject().put("test", new JsonArray().add("test")));
         conf.put("instance", 1);
         conf.put("endpoint", "test");
-        conf.put("hasMailbox", false);
+        conf.put("hasMailbox", true);
         conf.put("mailbox", Mailbox.DEFAULT_THREEHOLD);
         return conf;
     }

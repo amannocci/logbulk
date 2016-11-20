@@ -42,6 +42,7 @@ public class TcpInputTest extends VerticleTestBase {
         JsonObject conf = super.conf();
         conf.put("dispatch", "foobar");
         conf.put("port", 1024);
+        conf.put("hasMailbox", false);
         return conf;
     }
 

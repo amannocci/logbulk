@@ -115,7 +115,7 @@ public class RabbitMQInput extends BaseComponentVerticle {
             stream = new RabbitMQReadStream(rabbit);
             handlePressure(stream);
             stream.handler(this::forwardAndRelease);
-            stream.exceptionHandler(h -> handleFailure(generateEvent(), h));
+            stream.exceptionHandler(THROWABLE_HANDLER);
             stream.resume();
         } catch (Exception ex) {
             log.error("RabbitMQ can't be initialized: ", ex);
@@ -133,7 +133,7 @@ public class RabbitMQInput extends BaseComponentVerticle {
                             message.fail(0, ex.getMessage());
                         }
                     }
-                });
+                }).exceptionHandler(THROWABLE_HANDLER);
         getEventBus().<JsonObject>localConsumer(endpoint + ".nack")
                 .handler(message -> {
                     JsonObject headers = headers(message.body());
@@ -145,7 +145,7 @@ public class RabbitMQInput extends BaseComponentVerticle {
                             message.fail(0, ex.getMessage());
                         }
                     }
-                });
+                }).exceptionHandler(THROWABLE_HANDLER);
     }
 
     @Override public void handle(JsonObject msg) {

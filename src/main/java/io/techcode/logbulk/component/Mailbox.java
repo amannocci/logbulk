@@ -68,7 +68,7 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
         threehold *= componentCount;
 
         // Setup
-        getEventBus().<JsonObject>localConsumer(endpoint).handler(this);
+        getEventBus().<JsonObject>localConsumer(endpoint).handler(this).exceptionHandler(THROWABLE_HANDLER);
         getEventBus().<JsonArray>localConsumer(endpoint + ".worker").handler(event -> {
             // Decrease job
             String worker = event.body().getString(0);
@@ -81,7 +81,7 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
 
             // Check if there is work to be done
             processBuffer(Optional.of(worker));
-        });
+        }).exceptionHandler(THROWABLE_HANDLER);
         getEventBus().<String>localConsumer(endpoint + ".pressure").handler(event -> {
             String component = event.body();
             if (nextPressure.contains(component)) {
@@ -92,7 +92,7 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
             } else {
                 nextPressure.add(component);
             }
-        });
+        }).exceptionHandler(THROWABLE_HANDLER);
     }
 
     @Override protected void checkConfig(JsonObject config) {

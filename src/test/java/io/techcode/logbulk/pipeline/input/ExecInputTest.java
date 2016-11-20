@@ -41,6 +41,7 @@ public class ExecInputTest extends VerticleTestBase {
     @Override protected JsonObject conf() {
         JsonObject conf = super.conf();
         conf.put("command", "foobar");
+        conf.put("hasMailbox", false);
         conf.put("dispatch", "foobar");
         return conf;
     }

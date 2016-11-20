@@ -59,7 +59,7 @@ public class ExecInput extends ComponentVerticle {
                     NuProcessBuilder builder = new NuProcessBuilder(interpreter, arguments, command);
                     builder.setProcessListener(new ProcessHandler());
                     builder.start();
-                }).exceptionHandler(th -> handleFailure(generateEvent(), th));
+                }).exceptionHandler(THROWABLE_HANDLER);
         handlePressure(stream);
     }
 

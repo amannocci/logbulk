@@ -42,6 +42,7 @@ public class FileInputTest extends VerticleTestBase {
         JsonObject conf = super.conf();
         conf.put("path", "foobar");
         conf.put("dispatch", "foobar");
+        conf.put("hasMailbox", false);
         return conf;
     }
 

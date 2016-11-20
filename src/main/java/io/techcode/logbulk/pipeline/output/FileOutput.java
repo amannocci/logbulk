@@ -66,6 +66,7 @@ public class FileOutput extends BaseComponentVerticle {
         // Setup file output
         file = vertx.fileSystem().openBlocking(path, new OpenOptions().setWrite(true).setCreate(true));
         file.setWriteQueueMaxSize(chunk);
+        file.exceptionHandler(THROWABLE_HANDLER);
         buf = Buffer.buffer(chunkPartition);
 
         // Ready

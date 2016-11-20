@@ -43,6 +43,7 @@ public class RabbitMQInputTest extends VerticleTestBase {
         conf.put("dispatch", "foobar");
         conf.put("queue", "foobar");
         conf.put("maxAttempts", 0);
+        conf.put("hasMailbox", false);
         return conf;
     }
 

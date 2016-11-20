@@ -155,6 +155,7 @@ public class ElasticOutput extends BaseComponentVerticle {
             });
             req.setChunked(false);
             req.exceptionHandler(err -> {
+                THROWABLE_HANDLER.handle(err);
                 builder.append(payload);
                 docs += documents;
                 resume();

@@ -165,7 +165,7 @@ public class RabbitMQOutput extends BaseComponentVerticle {
                             if (e.succeeded()) {
                                 forwardAndRelease(msg);
                             } else {
-                                handleFailure(msg, e.cause());
+                                handleFallback(msg, e.cause());
                             }
                         });
                     }
@@ -178,7 +178,7 @@ public class RabbitMQOutput extends BaseComponentVerticle {
                             if (e.succeeded()) {
                                 forwardAndRelease(msg);
                             } else {
-                                handleFailure(msg, e.cause());
+                                handleFallback(msg, e.cause());
                             }
                         });
                     }
@@ -186,7 +186,7 @@ public class RabbitMQOutput extends BaseComponentVerticle {
                 break;
             }
         } catch (IOException ex) {
-            handleFailure(msg, ex);
+            handleFallback(msg, ex);
         }
     }
 

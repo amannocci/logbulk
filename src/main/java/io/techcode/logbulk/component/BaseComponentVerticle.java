@@ -37,7 +37,9 @@ public abstract class BaseComponentVerticle extends ComponentVerticle implements
 
     @Override public void start() {
         super.start();
-        getEventBus().<JsonObject>localConsumer(endpoint).handler(this);
+        getEventBus().<JsonObject>localConsumer(endpoint)
+                .handler(this)
+                .exceptionHandler(THROWABLE_HANDLER);
     }
 
     @Override public void handle(Message<JsonObject> event) {
@@ -48,7 +50,7 @@ public abstract class BaseComponentVerticle extends ComponentVerticle implements
             try {
                 handle(message);
             } catch (Throwable th) {
-                handleFailure(message, th);
+                handleFallback(message, th);
             }
         }
     }
