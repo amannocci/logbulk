@@ -284,8 +284,10 @@ public class ComponentVerticle extends AbstractVerticle {
      * Notify to mailbox that worker is available.
      */
     public void release() {
-        if (hasMailbox) {
-            eventBus.send(parentEndpoint + ".worker", new JsonArray().add(endpoint).add(toRelease));
+        if (hasMailbox && toRelease > 0) {
+            JsonArray msg = new JsonArray().add(endpoint);
+            if (toRelease > 1) msg.add(toRelease);
+            eventBus.send(parentEndpoint + ".worker", msg);
             toRelease = 0;
         }
     }

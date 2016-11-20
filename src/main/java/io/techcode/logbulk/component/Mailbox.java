@@ -70,10 +70,13 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
         // Setup
         getEventBus().<JsonObject>localConsumer(endpoint).handler(this).exceptionHandler(THROWABLE_HANDLER);
         getEventBus().<JsonArray>localConsumer(endpoint + ".worker").handler(event -> {
+            // Isolate body message
+            JsonArray body = event.body();
+
             // Decrease job
-            String worker = event.body().getString(0);
+            String worker = body.getString(0);
             int job = workersJob.getOrDefault(worker, 0);
-            job -= event.body().getInteger(1);
+            job -= (body.size() == 2) ? body.getInteger(1) : 1;
             workersJob.put(worker, job);
 
             // Check idle
