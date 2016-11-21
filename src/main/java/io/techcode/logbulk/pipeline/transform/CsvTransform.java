@@ -63,6 +63,8 @@ public class CsvTransform extends BaseComponentVerticle {
         // Setup parser
         CsvParserSettings settings = new CsvParserSettings();
         settings.getFormat().setLineSeparator(separator);
+        settings.setIgnoreTrailingWhitespaces(true);
+        settings.setIgnoreLeadingWhitespaces(true);
         settings.getFormat().setDelimiter(delimiter.charAt(0));
         settings.trimValues(true);
         parser = new CsvParser(settings);
@@ -81,7 +83,11 @@ public class CsvTransform extends BaseComponentVerticle {
                 for (int key : columns.keySet()) {
                     String col = cols[key];
                     if (col == null) {
-                        if (nullable) body.put(columns.get(key), cols[key]);
+                        if (nullable) {
+                            body.put(columns.get(key), cols[key]);
+                        } else {
+                            body.remove(columns.get(key));
+                        }
                     } else {
                         body.put(columns.get(key), cols[key]);
                     }
