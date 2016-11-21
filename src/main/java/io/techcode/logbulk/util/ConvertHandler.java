@@ -37,7 +37,7 @@ public interface ConvertHandler extends Handler<Message<JsonObject>> {
         try {
             handle(message);
         } catch (Throwable th) {
-            handleFailure(message, th);
+            handleFallback(message, th);
         }
     }
 
@@ -49,12 +49,12 @@ public interface ConvertHandler extends Handler<Message<JsonObject>> {
     void handle(JsonObject message);
 
     /**
-     * Handle failure during processing.
+     * Handle fallback during processing.
      *
-     * @param message message involved.
-     * @param th      error throw.
+     * @param msg message involved.
+     * @param th  error throw.
      */
-    default void handleFailure(JsonObject message, Throwable th) {
+    default void handleFallback(JsonObject msg, Throwable th) {
     }
 
 }
