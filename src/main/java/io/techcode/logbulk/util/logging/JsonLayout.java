@@ -63,10 +63,10 @@ public class JsonLayout extends LayoutBase<ILoggingEvent> {
 
         // Handle internal vert.x stacktrace
         IThrowableProxy th = event.getThrowableProxy();
-        if (th != null && th.getStackTraceElementProxyArray().length > 0) {
+        if (th != null) {
             JsonArray stacktrace = ExceptionUtils.getStackTrace(log.getJsonArray("stacktrace"), th);
             if (stringify) {
-                log.put("stacktrace", Joiner.on('\n').join(stacktrace));
+                log.put("stacktrace", JOINER.join(stacktrace));
             } else {
                 log.put("stacktrace", stacktrace);
             }
