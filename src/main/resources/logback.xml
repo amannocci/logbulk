@@ -15,6 +15,7 @@
         <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
             <layout class="io.techcode.logbulk.util.logging.JsonLayout">
                 <pretty>false</pretty>
+                <stringify>false</stringify>
             </layout>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
