@@ -137,11 +137,13 @@ public class ComponentVerticle extends AbstractVerticle {
      */
     public void handleFallback(JsonObject msg, Throwable th) {
         checkNotNull(msg, "The message can't be null");
+        JsonObject headers = headers(msg);
         JsonObject body = body(msg);
         if (th != null) {
-            body.put("stacktrace", ExceptionUtils.getStackTrace(th));
-
-            // Override level if stacktrace exist
+            JsonArray stacktrace = ExceptionUtils.getStackTrace(th);
+            headers.put("_stacktrace", stacktrace);
+            body.put("stacktrace", stacktrace);
+            body.put("_level", LogLevel.ERROR);
             body.put("level", LogLevel.ERROR);
         }
         if (Strings.isNullOrEmpty(fallback)) {
