@@ -30,7 +30,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Binder helper for Json Object binding.
  */
-public class Binder {
+public class Binder<T extends Binder<T>> {
 
     // Some functions
     public static final Function IDENTITY = (from, to, fieldFrom, fieldTo) -> {
@@ -82,9 +82,9 @@ public class Binder {
      * @param from from object.
      * @return same object for chaining.
      */
-    public Binder from(JsonObject from) {
+    public T from(JsonObject from) {
         this.from = checkNotNull(from, "The json object from can't be null");
-        return this;
+        return (T) this;
     }
 
     /**
@@ -93,9 +93,9 @@ public class Binder {
      * @param to to object.
      * @return same object for chaining.
      */
-    public Binder to(JsonObject to) {
+    public T to(JsonObject to) {
         this.to = checkNotNull(to, "The json object to can't be null");
-        return this;
+        return (T) this;
     }
 
     /**
@@ -106,9 +106,9 @@ public class Binder {
      * @param function transformation to apply
      * @return same object for chaining.
      */
-    public Binder bind(String from, String to, Function function) {
+    public T bind(String from, String to, Function function) {
         function.apply(this.from, this.to, from, to);
-        return this;
+        return (T) this;
     }
 
     /**
