@@ -63,7 +63,7 @@ public class ComponentVerticle extends AbstractVerticle {
 
     // Delivery options
     protected static final DeliveryOptions DELIVERY_OPTIONS = new DeliveryOptions().setCodecName("fastjsonobject");
-    protected final Handler<Throwable> THROWABLE_HANDLER = th -> log.error(null, th);
+    protected final Handler<Throwable> THROWABLE_HANDLER = th -> log.error(th);
 
     // UUID of the component
     protected final String uuid = UUID.randomUUID().toString();

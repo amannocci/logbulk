@@ -52,24 +52,28 @@ public class JsonLayout extends LayoutBase<ILoggingEvent> {
 
     @Override public String doLayout(ILoggingEvent event) {
         JsonObject log = new JsonObject();
-        log.put("level", event.getLevel().toString());
-        log.put("thread", event.getThreadName());
-        log.put("timestamp", event.getTimeStamp());
-        if (event.getMessage().startsWith("{") && event.getMessage().endsWith("}")) {
-            log.mergeIn(new JsonObject(event.getMessage()));
-        } else {
-            log.put("message", event.getFormattedMessage());
-        }
-
-        // Handle internal vert.x stacktrace
-        IThrowableProxy th = event.getThrowableProxy();
-        if (th != null) {
-            JsonArray stacktrace = ExceptionUtils.getStackTrace(log.getJsonArray("stacktrace"), th);
-            if (stringify) {
-                log.put("stacktrace", JOINER.join(stacktrace));
+        try {
+            log.put("level", event.getLevel().toString());
+            log.put("thread", event.getThreadName());
+            log.put("timestamp", event.getTimeStamp());
+            if (event.getMessage().startsWith("{") && event.getMessage().endsWith("}")) {
+                log.mergeIn(new JsonObject(event.getMessage()));
             } else {
-                log.put("stacktrace", stacktrace);
+                log.put("message", event.getFormattedMessage());
             }
+
+            // Handle internal vert.x stacktrace
+            IThrowableProxy th = event.getThrowableProxy();
+            if (th != null) {
+                JsonArray stacktrace = ExceptionUtils.getStackTrace(log.getJsonArray("stacktrace"), th);
+                if (stringify) {
+                    log.put("stacktrace", JOINER.join(stacktrace));
+                } else {
+                    log.put("stacktrace", stacktrace);
+                }
+            }
+        } catch (Throwable th) {
+            th.printStackTrace();
         }
         return ((pretty) ? log.encodePrettily() : log.encode()) + CoreConstants.LINE_SEPARATOR;
     }

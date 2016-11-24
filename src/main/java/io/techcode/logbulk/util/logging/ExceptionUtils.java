@@ -2,6 +2,7 @@ package io.techcode.logbulk.util.logging;
 
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.StackTraceElementProxy;
+import com.google.common.base.Strings;
 import io.vertx.core.json.JsonArray;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -82,10 +83,13 @@ public final class ExceptionUtils {
      * @param th         throwable to process.
      */
     private static void extractStacktrace(JsonArray stacktrace, Throwable th) {
-        stacktrace.add(th.getMessage());
+        String message = th.getMessage();
+        if (!Strings.isNullOrEmpty(message)) stacktrace.add(message);
         StackTraceElement[] trace = th.getStackTrace();
-        for (StackTraceElement el : trace) {
-            stacktrace.add("at " + el.toString());
+        if (trace != null) {
+            for (StackTraceElement el : trace) {
+                stacktrace.add("at " + el.toString());
+            }
         }
     }
 
@@ -96,10 +100,13 @@ public final class ExceptionUtils {
      * @param th         throwable to process.
      */
     private static void extractStacktrace(JsonArray stacktrace, IThrowableProxy th) {
-        stacktrace.add(th.getMessage());
+        String message = th.getMessage();
+        if (!Strings.isNullOrEmpty(message)) stacktrace.add(message);
         StackTraceElementProxy[] trace = th.getStackTraceElementProxyArray();
-        for (StackTraceElementProxy el : trace) {
-            stacktrace.add(el.toString());
+        if (trace != null) {
+            for (StackTraceElementProxy el : trace) {
+                stacktrace.add(el.toString());
+            }
         }
     }
 

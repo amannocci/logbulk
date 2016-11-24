@@ -40,7 +40,7 @@ public class StdOutput extends BaseComponentVerticle {
 
     @Override public void handle(JsonObject msg) {
         // Process
-        log.info(body(msg));
+        log.info(body(msg).encode());
 
         // Send to the next endpoint
         forwardAndRelease(msg);
