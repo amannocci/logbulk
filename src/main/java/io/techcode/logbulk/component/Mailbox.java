@@ -63,7 +63,7 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
 
         // Retrieve configuration settings
         threehold = config.getInteger("mailbox");
-        idle = threehold / 2;
+        idle = Math.max(1, threehold / 2);
         int componentCount = config.getInteger("instance");
         threehold *= componentCount;
 
@@ -100,7 +100,7 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
 
     @Override protected void checkConfig(JsonObject config) {
         checkState(config.getInteger("mailbox") != null &&
-                config.getInteger("mailbox") > 1, "The mailbox is required");
+                config.getInteger("mailbox") > 0, "The mailbox is required");
         checkState(config.getInteger("instance") != null &&
                 config.getInteger("instance") > 0, "The instance is required");
     }
