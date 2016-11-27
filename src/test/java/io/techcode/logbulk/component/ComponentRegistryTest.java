@@ -98,6 +98,7 @@ public class ComponentRegistryTest {
             "transform.mutate",
             "transform.metric",
             "transform.limiter",
+            "transform.regex",
             "transform.anonymise",
             "transform.csv",
             "output.file",
