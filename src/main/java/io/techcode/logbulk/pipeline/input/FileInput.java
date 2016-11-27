@@ -24,10 +24,17 @@
 package io.techcode.logbulk.pipeline.input;
 
 import io.techcode.logbulk.component.ComponentVerticle;
+import io.techcode.logbulk.util.concurrent.VertxScheduler;
+import io.vertx.core.Future;
 import io.vertx.core.file.AsyncFile;
 import io.vertx.core.file.OpenOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.parsetools.RecordParser;
+import net.jodah.failsafe.Failsafe;
+import net.jodah.failsafe.RetryPolicy;
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -36,9 +43,6 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public class FileInput extends ComponentVerticle {
 
-    // Record parser for delimitation
-    private RecordParser parser;
-
     // Async file instance
     private AsyncFile file;
 
@@ -46,19 +50,48 @@ public class FileInput extends ComponentVerticle {
         super.start();
 
         // Configuration
-        parser = inputParser(config);
+        int interval = config.getInteger("interval", 1);
+        int intervalMax = config.getInteger("intervalMax", 60);
+        int maxAttempts = config.getInteger("maxAttempts", -1);
+        RetryPolicy retryPolicy = new RetryPolicy()
+                .withBackoff(interval, intervalMax, TimeUnit.SECONDS)
+                .withMaxRetries(maxAttempts);
+        RecordParser parser = inputParser(config);
 
         // Setup processing task
         String path = config.getString("path");
         int chunk = config.getInteger("chunk", 8192);
-        file = vertx.fileSystem().openBlocking(path, new OpenOptions().setRead(true));
-        file.setReadBufferSize(chunk);
 
-        // Handle back-pressure
-        handlePressure(file);
+        // Execute logic
+        Failsafe.with(retryPolicy)
+                .with(VertxScheduler.create(vertx))
+                .runAsync(execution -> {
+                    // Check if exist & attempt to read
+                    Future<Boolean> action = Future.future();
+                    vertx.fileSystem().exists(path, action.completer());
+                    action.compose(exist -> {
+                        Future<AsyncFile> subAction = Future.future();
+                        if (exist) {
+                            vertx.fileSystem().open(path, new OpenOptions().setRead(true), subAction.completer());
+                        } else {
+                            subAction.fail(StringUtils.EMPTY);
+                        }
+                        return subAction;
+                    }).setHandler(h -> {
+                        if (h.succeeded()) {
+                            file = h.result();
+                            file.setReadBufferSize(chunk);
 
-        // Begin to read
-        file.handler(parser).exceptionHandler(THROWABLE_HANDLER);
+                            // Handle back-pressure
+                            handlePressure(file);
+
+                            // Begin to read
+                            file.handler(parser).exceptionHandler(THROWABLE_HANDLER);
+                        } else if (!execution.retryOn(h.cause())) {
+                            log.error(h.cause());
+                        }
+                    });
+                });
     }
 
     @Override public void stop() {

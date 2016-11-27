@@ -28,7 +28,7 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.MessageProperties;
 import io.techcode.logbulk.component.BaseComponentVerticle;
-import io.techcode.logbulk.util.Streams;
+import io.techcode.logbulk.util.stream.Streams;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Handler;

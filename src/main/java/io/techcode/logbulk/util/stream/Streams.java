@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.logbulk.util;
+package io.techcode.logbulk.util.stream;
 
 import java.util.stream.Stream;
 

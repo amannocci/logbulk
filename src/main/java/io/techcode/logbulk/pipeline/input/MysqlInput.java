@@ -25,7 +25,7 @@ package io.techcode.logbulk.pipeline.input;
 
 import com.google.common.base.Strings;
 import io.techcode.logbulk.component.ComponentVerticle;
-import io.techcode.logbulk.util.Streams;
+import io.techcode.logbulk.util.stream.Streams;
 import io.vertx.core.AsyncResultHandler;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;

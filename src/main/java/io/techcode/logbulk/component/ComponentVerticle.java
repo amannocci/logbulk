@@ -29,7 +29,7 @@ import com.google.common.collect.ListMultimap;
 import io.netty.handler.logging.LogLevel;
 import io.techcode.logbulk.io.Configuration;
 import io.techcode.logbulk.util.PressureHandler;
-import io.techcode.logbulk.util.Streams;
+import io.techcode.logbulk.util.stream.Streams;
 import io.techcode.logbulk.util.logging.ExceptionUtils;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Handler;

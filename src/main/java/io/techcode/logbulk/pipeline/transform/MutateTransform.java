@@ -29,7 +29,7 @@ import com.google.common.collect.Maps;
 import com.google.common.primitives.Floats;
 import com.google.common.primitives.Ints;
 import io.techcode.logbulk.component.BaseComponentVerticle;
-import io.techcode.logbulk.util.Streams;
+import io.techcode.logbulk.util.stream.Streams;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.tuple.Pair;

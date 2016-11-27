@@ -26,7 +26,7 @@ package io.techcode.logbulk.pipeline.transform;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import io.techcode.logbulk.component.BaseComponentVerticle;
-import io.techcode.logbulk.util.Streams;
+import io.techcode.logbulk.util.stream.Streams;
 import io.vertx.core.json.JsonObject;
 
 import java.nio.charset.StandardCharsets;

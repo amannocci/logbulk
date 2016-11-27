@@ -27,7 +27,7 @@ import com.google.common.collect.Maps;
 import com.typesafe.config.ConfigValue;
 import io.techcode.logbulk.Logbulk;
 import io.techcode.logbulk.io.AppConfig;
-import io.techcode.logbulk.util.Streams;
+import io.techcode.logbulk.util.stream.Streams;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;

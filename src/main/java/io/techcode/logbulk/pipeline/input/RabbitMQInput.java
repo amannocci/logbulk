@@ -25,7 +25,7 @@ package io.techcode.logbulk.pipeline.input;
 
 import com.rabbitmq.client.*;
 import io.techcode.logbulk.component.BaseComponentVerticle;
-import io.techcode.logbulk.util.Streams;
+import io.techcode.logbulk.util.stream.Streams;
 import io.vertx.core.Context;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
