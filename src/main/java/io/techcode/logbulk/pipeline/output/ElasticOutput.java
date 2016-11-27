@@ -24,6 +24,7 @@
 package io.techcode.logbulk.pipeline.output;
 
 import com.google.common.collect.Iterators;
+import com.google.common.collect.Lists;
 import io.techcode.logbulk.component.BaseComponentVerticle;
 import io.techcode.logbulk.util.Flusher;
 import io.techcode.logbulk.util.stream.Streams;
@@ -33,6 +34,7 @@ import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.json.JsonObject;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -48,15 +50,12 @@ public class ElasticOutput extends BaseComponentVerticle {
     // Http client to perform request
     private HttpClient http;
 
-    // Documents pending
-    private int docs = 0;
-
     // Some settings
     private int bulk;
     private Flusher flusher;
 
     // Stuff to build meta and request
-    private StringBuilder builder = new StringBuilder();
+    private List<JsonObject> pending = Lists.newArrayList();
     private String index;
     private String type;
 
@@ -90,27 +89,13 @@ public class ElasticOutput extends BaseComponentVerticle {
     }
 
     @Override public void handle(JsonObject msg) {
-        // Prepare header
-        String idx = index;
-        JsonObject body = body(msg);
-        if (body.containsKey("_index")) {
-            idx += body.getString("_index");
-            body.remove("_index");
-        }
-        builder.append(new JsonObject().put("index", new JsonObject()
-                .put("_type", type)
-                .put("_index", idx)).encode()).append("\n");
-
-        // Prepare body
-        builder.append(body.encode()).append("\n");
+        // Add to pending message
+        pending.add(msg);
 
         // Send if needed
-        if (++docs >= bulk) {
+        if (pending.size() >= bulk) {
             send();
         }
-
-        // Send to the next endpoint
-        forwardAndRelease(msg);
     }
 
     @Override protected void checkConfig(JsonObject config) {
@@ -124,47 +109,61 @@ public class ElasticOutput extends BaseComponentVerticle {
      * Send a request.
      */
     private void send() {
-        // Pause component
-        pause();
-
         // Update flusher flag
         flusher.flushed();
 
         // If no work needed
-        if (docs == 0) {
-            // Resume component
-            resume();
-        } else {
+        if (pending.size() > 0) {
+            List<JsonObject> process = pending;
+            pending = Lists.newArrayList();
+
+            StringBuilder builder = new StringBuilder();
+            for (JsonObject msg : process) {
+                // Prepare header
+                String idx = index;
+                JsonObject body = body(msg);
+                if (body.containsKey("_index")) {
+                    idx += body.getString("_index");
+                    body.remove("_index");
+                }
+                builder.append(new JsonObject().put("index", new JsonObject()
+                        .put("_type", type)
+                        .put("_index", idx)).encode()).append("\n");
+
+                // Prepare body
+                builder.append(body.encode()).append("\n");
+            }
+
             // Prepare http request
-            int documents = docs;
             String payload = builder.toString();
             HttpClientRequest req = http.postAbs(hosts.next() + "/_bulk", res -> {
                 // Handle request status
                 if (res.statusCode() == 200) {
-                    log.info("Bulk request: " + documents + " documents");
+                    log.info("Bulk request: " + process.size() + " documents");
+                    process.forEach(this::forward);
                 } else if (res.statusCode() == 429) {
                     log.error("Too many requests: statusCode=429");
+                    process.forEach(this::refuse);
                 } else if (res.statusCode() == 503) {
                     log.error("Service unavailable: statusCode=503");
+                    process.forEach(this::refuse);
                 } else {
                     log.error("Failed to index document: statusCode=" + res.statusCode());
+                    process.forEach(this::refuse);
                 }
 
                 // Resume component
-                resume();
+                process.clear();
+                release();
             });
             req.setChunked(false);
             req.exceptionHandler(err -> {
                 THROWABLE_HANDLER.handle(err);
-                builder.append(payload);
-                docs += documents;
-                resume();
+                process.forEach(this::refuse);
+                process.clear();
+                release();
             });
             req.end(payload);
-
-            // Reset size
-            docs = 0;
-            builder.setLength(0);
         }
     }
 
