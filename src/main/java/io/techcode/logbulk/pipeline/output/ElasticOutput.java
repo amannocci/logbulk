@@ -24,17 +24,18 @@
 package io.techcode.logbulk.pipeline.output;
 
 import com.google.common.collect.Iterators;
-import com.google.common.collect.Lists;
+import com.google.common.collect.Queues;
 import io.techcode.logbulk.component.BaseComponentVerticle;
 import io.techcode.logbulk.util.Flusher;
 import io.techcode.logbulk.util.stream.Streams;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpClientRequest;
+import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 
+import java.util.Deque;
 import java.util.Iterator;
-import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -55,7 +56,7 @@ public class ElasticOutput extends BaseComponentVerticle {
     private Flusher flusher;
 
     // Stuff to build meta and request
-    private List<JsonObject> pending = Lists.newArrayList();
+    private Deque<JsonObject> pending = Queues.newArrayDeque();
     private String index;
     private String type;
 
@@ -117,9 +118,10 @@ public class ElasticOutput extends BaseComponentVerticle {
 
         // If no work needed
         if (pending.size() > 0) {
-            List<JsonObject> process = pending;
-            pending = Lists.newArrayList();
+            Deque<JsonObject> process = pending;
+            pending = Queues.newArrayDeque();
 
+            // Prepare header
             StringBuilder builder = new StringBuilder();
             for (JsonObject msg : process) {
                 // Prepare header
@@ -143,27 +145,25 @@ public class ElasticOutput extends BaseComponentVerticle {
                 // Handle request status
                 if (res.statusCode() == 200) {
                     log.info("Bulk request: " + process.size() + " documents");
-                    process.forEach(this::forward);
+                    while (process.size() > 0) forward(process.removeLast());
                 } else if (res.statusCode() == 429) {
                     log.error("Too many requests: statusCode=429");
-                    process.forEach(this::refuse);
+                    while (process.size() > 0) refuse(process.removeLast());
                 } else if (res.statusCode() == 503) {
                     log.error("Service unavailable: statusCode=503");
-                    process.forEach(this::refuse);
+                    while (process.size() > 0) refuse(process.removeLast());
                 } else {
                     log.error("Failed to index document: statusCode=" + res.statusCode());
-                    process.forEach(this::refuse);
+                    while (process.size() > 0) refuse(process.removeLast());
                 }
 
                 // Resume component
-                process.clear();
                 release();
             });
             req.setChunked(false);
             req.exceptionHandler(err -> {
                 THROWABLE_HANDLER.handle(err);
-                process.forEach(this::refuse);
-                process.clear();
+                while (process.size() > 0) refuse(process.removeLast());
                 release();
             });
             req.end(payload);
