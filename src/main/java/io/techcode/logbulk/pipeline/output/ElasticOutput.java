@@ -109,6 +109,9 @@ public class ElasticOutput extends BaseComponentVerticle {
      * Send a request.
      */
     private void send() {
+        // Alreay paused
+        if (isPause()) return;
+
         // Update flusher flag
         flusher.flushed();
 
