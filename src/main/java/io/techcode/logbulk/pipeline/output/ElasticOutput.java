@@ -31,7 +31,6 @@ import io.techcode.logbulk.util.stream.Streams;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpClientRequest;
-import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 
 import java.util.Deque;
@@ -110,9 +109,6 @@ public class ElasticOutput extends BaseComponentVerticle {
      * Send a request.
      */
     private void send() {
-        // Alreay paused
-        if (isPause()) return;
-
         // Update flusher flag
         flusher.flushed();
 
@@ -121,8 +117,10 @@ public class ElasticOutput extends BaseComponentVerticle {
             Deque<JsonObject> process = pending;
             pending = Queues.newArrayDeque();
 
-            // Prepare header
+            // Prepare request building
             StringBuilder builder = new StringBuilder();
+
+            // Iterate over each message
             for (JsonObject msg : process) {
                 // Prepare header
                 String idx = index;
@@ -160,7 +158,7 @@ public class ElasticOutput extends BaseComponentVerticle {
                 // Resume component
                 release();
             });
-            req.setChunked(false);
+            req.setChunked(true);
             req.exceptionHandler(err -> {
                 THROWABLE_HANDLER.handle(err);
                 while (process.size() > 0) refuse(process.removeLast());

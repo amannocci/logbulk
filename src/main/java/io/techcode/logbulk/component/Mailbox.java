@@ -106,17 +106,9 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
     }
 
     @Override public void handle(JsonObject msg) {
-        if (workers.isEmpty()) {
-            handlePressure(msg);
-        } else {
-            Optional<String> nextOpt = next(headers(msg));
-            if (nextOpt.isPresent() && nextPressure.contains(nextOpt.get())) {
-                handlePressure(msg);
-            } else {
-                if (!process(msg, Optional.empty())) {
-                    handlePressure(msg);
-                }
-            }
+        handlePressure(msg);
+        if (workers.size() > 0) {
+            processBuffer(Optional.empty());
         }
     }
 
@@ -151,6 +143,7 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
         // Evict if busy & send job
         if (job >= threehold) workers.remove(worker);
         getEventBus().send(worker, msg, DELIVERY_OPTIONS);
+        processBuffer(Optional.empty());
         return true;
     }
 
@@ -162,14 +155,19 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
     private void processBuffer(Optional<String> workerOpt) {
         if (buffer.size() > 0) {
             JsonObject msg = buffer.poll();
-            if (process(msg, workerOpt)) {
-                // Handle pressure
-                if (buffer.size() < idle && previousPressure.size() > 0) {
-                    previousPressure.forEach(this::tooglePressure);
-                    previousPressure.clear();
-                }
-            } else {
+            Optional<String> nextOpt = next(headers(msg));
+            if (nextOpt.isPresent() && nextPressure.contains(nextOpt.get())) {
                 handlePressure(msg);
+            } else {
+                if (process(msg, workerOpt)) {
+                    // Handle pressure
+                    if (buffer.size() < idle && previousPressure.size() > 0) {
+                        previousPressure.forEach(this::tooglePressure);
+                        previousPressure.clear();
+                    }
+                } else {
+                    handlePressure(msg);
+                }
             }
         }
     }
