@@ -25,6 +25,7 @@ package io.techcode.logbulk;
 
 import io.techcode.logbulk.component.Mailbox;
 import io.vertx.core.DeploymentOptions;
+import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.TestContext;
@@ -61,6 +62,7 @@ public abstract class VerticleTestBase extends VertxTestBase {
         conf.put("instance", 1);
         conf.put("endpoint", "test");
         conf.put("hasMailbox", true);
+        conf.put("settings", new JsonObject());
         conf.put("mailbox", Mailbox.DEFAULT_THREEHOLD);
         return conf;
     }

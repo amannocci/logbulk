@@ -107,6 +107,7 @@ public class Logbulk extends AbstractVerticle {
             conf.put("endpoint", endpoint);
             if (!"input".equals(section)) deployment.setInstances(instance);
             conf.put("hasMailbox", !"input".equals(section));
+            conf.put("settings", config.settings());
             conf.put("route", config.routes());
 
             // Handle generic case

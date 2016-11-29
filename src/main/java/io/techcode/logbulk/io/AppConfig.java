@@ -41,6 +41,7 @@ public class AppConfig {
     public static final Config REFERENCE = ConfigFactory.defaultReference();
 
     // All configuration keys
+    private static final String SETTING = "setting";
     private static final String COMPONENT = "component";
     private static final String INPUT = "input";
     private static final String OUTPUT = "output";
@@ -64,6 +65,15 @@ public class AppConfig {
      */
     public Set<Map.Entry<String, ConfigValue>> components() {
         return section(COMPONENT);
+    }
+
+    /**
+     * Gets the setting section.
+     *
+     * @return setting section.
+     */
+    public JsonObject settings() {
+        return new JsonObject(config.getConfig(SETTING).root().render(ConfigRenderOptions.concise().setOriginComments(false).setJson(true)));
     }
 
     /**

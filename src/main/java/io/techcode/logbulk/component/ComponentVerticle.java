@@ -29,8 +29,8 @@ import com.google.common.collect.ListMultimap;
 import io.netty.handler.logging.LogLevel;
 import io.techcode.logbulk.io.Configuration;
 import io.techcode.logbulk.util.PressureHandler;
-import io.techcode.logbulk.util.stream.Streams;
 import io.techcode.logbulk.util.logging.ExceptionUtils;
+import io.techcode.logbulk.util.stream.Streams;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Handler;
 import io.vertx.core.eventbus.DeliveryOptions;
@@ -81,6 +81,7 @@ public class ComponentVerticle extends AbstractVerticle {
     // Configuration
     protected Configuration config;
     protected String fallback;
+    private boolean tracing = true;
 
     // Mailbox
     private boolean hasMailbox = true;
@@ -91,6 +92,10 @@ public class ComponentVerticle extends AbstractVerticle {
         eventBus = vertx.eventBus();
         fallback = config.getString("fallback", StringUtils.EMPTY);
         endpoint(config);
+
+        // Settings
+        JsonObject settings = config.getJsonObject("settings", new JsonObject());
+        tracing = settings.getBoolean("tracing", false);
 
         // Generate routing
         JsonObject routes = config.getJsonObject("route");
@@ -257,6 +262,16 @@ public class ComponentVerticle extends AbstractVerticle {
             if (current > -1) headers.put("_previous", current);
             if (current == 0) headers.remove("_route_old");
             headers.put("_current", current + 1);
+
+            // Add trace
+            if (tracing) {
+                JsonArray traces = headers.getJsonArray("_traces");
+                if (traces == null) {
+                    traces = new JsonArray();
+                    headers.put("_traces", traces);
+                }
+                traces.add(endpoint);
+            }
             eventBus.send(nextOpt.get(), msg, DELIVERY_OPTIONS);
         }
     }
