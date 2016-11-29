@@ -83,14 +83,14 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
             if (job < idle) workers.add(worker);
 
             // Check if there is work to be done
-            processBuffer(Optional.of(worker));
+            processBuffers();
         }).exceptionHandler(THROWABLE_HANDLER);
         getEventBus().<String>localConsumer(endpoint + ".pressure").handler(event -> {
             String component = event.body();
             if (nextPressure.contains(component)) {
                 nextPressure.remove(component);
                 if (nextPressure.isEmpty()) {
-                    processBuffer(Optional.empty());
+                    processBuffers();
                 }
             } else {
                 nextPressure.add(component);
@@ -108,7 +108,7 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
     @Override public void handle(JsonObject msg) {
         handlePressure(msg);
         if (workers.size() > 0) {
-            processBuffer(Optional.empty());
+            processBuffers();
         }
     }
 
@@ -127,13 +127,12 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
     /**
      * Send body to an available worker.
      *
-     * @param msg       message to process.
-     * @param workerOpt optional worker.
+     * @param msg message to process.
      * @return true if success, otherwise false.
      */
-    private boolean process(JsonObject msg, Optional<String> workerOpt) {
+    private boolean process(JsonObject msg) {
         // Retrieve a worker
-        String worker = workerOpt.orElseGet(() -> workers.isEmpty() ? null : workers.first());
+        String worker = (workers.isEmpty()) ? null : workers.first();
         if (Strings.isNullOrEmpty(worker)) return false;
 
         // Increase job
@@ -143,33 +142,39 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
         // Evict if busy & send job
         if (job >= threehold) workers.remove(worker);
         getEventBus().send(worker, msg, DELIVERY_OPTIONS);
-        processBuffer(Optional.empty());
         return true;
     }
 
     /**
-     * Attempt to process an body in the buffer.
-     *
-     * @param workerOpt optional worker.
+     * Attempt to process as much message possible in buffer.
      */
-    private void processBuffer(Optional<String> workerOpt) {
+    private void processBuffers() {
+        while (processBuffer()) ;
+    }
+
+    /**
+     * Attempt to process an body in the buffer.
+     */
+    private boolean processBuffer() {
         if (buffer.size() > 0) {
             JsonObject msg = buffer.poll();
             Optional<String> nextOpt = next(headers(msg));
             if (nextOpt.isPresent() && nextPressure.contains(nextOpt.get())) {
                 handlePressure(msg);
             } else {
-                if (process(msg, workerOpt)) {
+                if (process(msg)) {
                     // Handle pressure
                     if (buffer.size() < idle && previousPressure.size() > 0) {
                         previousPressure.forEach(this::tooglePressure);
                         previousPressure.clear();
                     }
+                    return true;
                 } else {
                     handlePressure(msg);
                 }
             }
         }
+        return false;
     }
 
 }
