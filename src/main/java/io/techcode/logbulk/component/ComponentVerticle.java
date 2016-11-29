@@ -25,6 +25,7 @@ package io.techcode.logbulk.component;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.ListMultimap;
 import io.netty.handler.logging.LogLevel;
 import io.techcode.logbulk.io.Configuration;
@@ -178,6 +179,16 @@ public class ComponentVerticle extends AbstractVerticle {
      */
     public JsonObject body(JsonObject message) {
         return message.getJsonObject("body");
+    }
+
+    /**
+     * Returns the source of the message.
+     *
+     * @param headers headers of the body.
+     * @return source of the message.
+     */
+    public String source(JsonObject headers) {
+        return headers.getString("_source");
     }
 
     /**
@@ -370,7 +381,11 @@ public class ComponentVerticle extends AbstractVerticle {
         }
 
         // Options
-        if (!hasMailbox) headers.put("_route", config.getString("dispatch"));
+        if (!hasMailbox) {
+            String dispatch = config.getString("dispatch");
+            headers.put("_route", dispatch);
+            headers.put("_source", routing.get(dispatch).get(1));
+        }
         headers.put("_current", 0);
 
         // Send to the next endpoint
@@ -403,8 +418,17 @@ public class ComponentVerticle extends AbstractVerticle {
             // Handle pressure
             String previous = previousOpt.get();
             if (!previousPressure.contains(previous)) {
-                tooglePressure(previous);
-                previousPressure.add(previous);
+                if (previousPressure.isEmpty()) {
+                    tooglePressure(previous);
+                    previousPressure.add(previous);
+                } else {
+                    String old = Iterables.getLast(previousPressure);
+                    previousPressure.clear();
+                    String source = source(headers);
+                    previousPressure.add(source);
+                    tooglePressure(source);
+                    tooglePressure(old);
+                }
             }
         } else {
             checkState(previousOpt.isPresent(), "There is always a previous component");
