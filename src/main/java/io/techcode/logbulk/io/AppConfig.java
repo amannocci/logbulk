@@ -73,7 +73,7 @@ public class AppConfig {
      * @return setting section.
      */
     public JsonObject settings() {
-        return new JsonObject(config.getConfig(SETTING).root().render(ConfigRenderOptions.concise().setOriginComments(false).setJson(true)));
+        return new Configuration(new JsonObject(config.getConfig(SETTING).root().render(ConfigRenderOptions.concise().setOriginComments(false).setJson(true))));
     }
 
     /**
