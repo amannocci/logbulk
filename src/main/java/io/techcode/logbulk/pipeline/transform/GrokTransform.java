@@ -24,10 +24,10 @@
 package io.techcode.logbulk.pipeline.transform;
 
 import io.techcode.logbulk.component.BaseComponentVerticle;
+import io.thekraken.grok.api.Grok;
+import io.thekraken.grok.api.Match;
+import io.thekraken.grok.api.exception.GrokException;
 import io.vertx.core.json.JsonObject;
-import oi.thekraken.grok.api.Grok;
-import oi.thekraken.grok.api.Match;
-import oi.thekraken.grok.api.exception.GrokException;
 
 import java.util.List;
 
