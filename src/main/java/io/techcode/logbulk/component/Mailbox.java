@@ -24,6 +24,7 @@
 package io.techcode.logbulk.component;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
@@ -55,7 +56,7 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
     private Queue<JsonObject> buffer = Queues.newArrayDeque();
 
     // Back pressure
-    private Set<String> previousPressure = Sets.newHashSet();
+    private List<String> previousPressure = Lists.newArrayListWithCapacity(1);
     private Set<String> nextPressure = Sets.newHashSet();
 
     @Override public void start() {

@@ -25,7 +25,6 @@ package io.techcode.logbulk.component;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableListMultimap;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.ListMultimap;
 import io.netty.handler.logging.LogLevel;
 import io.techcode.logbulk.io.Configuration;
@@ -47,7 +46,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -410,7 +408,7 @@ public class ComponentVerticle extends AbstractVerticle {
      * @param previousPressure already notified component.
      * @param headers          headers body involved.
      */
-    public void notifyPressure(Set<String> previousPressure, JsonObject headers) {
+    public void notifyPressure(List<String> previousPressure, JsonObject headers) {
         // Always return a previous in mailbox context
         Optional<String> previousOpt = previous(headers);
         if (previousOpt.isPresent()) {
@@ -422,8 +420,7 @@ public class ComponentVerticle extends AbstractVerticle {
                     tooglePressure(previous);
                     previousPressure.add(previous);
                 } else {
-                    String old = Iterables.getLast(previousPressure);
-                    previousPressure.clear();
+                    String old = previousPressure.remove(0);
                     String source = source(headers);
                     previousPressure.add(source);
                     tooglePressure(source);
