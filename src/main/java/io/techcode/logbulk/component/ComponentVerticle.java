@@ -93,7 +93,7 @@ public class ComponentVerticle extends AbstractVerticle {
         endpoint(config);
 
         // Settings
-        JsonObject settings = config.getJsonObject("settings", new JsonObject());
+        JsonObject settings = new Configuration(config.getJsonObject("settings", new JsonObject()));
         tracing = settings.getBoolean("tracing", false);
 
         // Generate routing
