@@ -23,7 +23,6 @@
  */
 package io.techcode.logbulk.component;
 
-import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Queues;
@@ -31,6 +30,8 @@ import com.google.common.collect.Sets;
 import io.techcode.logbulk.util.ConvertHandler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
 import java.util.*;
 
@@ -49,8 +50,8 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
     private int idle;
 
     // Workers
-    private NavigableSet<String> workers = Sets.newTreeSet();
-    private Map<String, Integer> workersJob = Maps.newHashMap();
+    private NavigableSet<Worker> workers = Sets.newTreeSet();
+    private Map<String, Worker> workersJob = Maps.newHashMap();
 
     // Pending message to process
     private Queue<JsonObject> buffer = Queues.newArrayDeque();
@@ -74,14 +75,19 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
             // Isolate body message
             JsonArray body = event.body();
 
+            // Retrieve worker
+            String workerName = body.getString(0);
+            Worker worker = getOrCreate(workerName);
+
+            // Remove from set before anything
+            workers.remove(worker);
+
             // Decrease job
-            String worker = body.getString(0);
-            int job = workersJob.getOrDefault(worker, 0);
-            job -= (body.size() == 2) ? body.getInteger(1) : 1;
-            workersJob.put(worker, job);
+            worker.job -= (body.size() == 2) ? body.getInteger(1) : 1;
+            workersJob.put(workerName, worker);
 
             // Check idle
-            if (job < idle) workers.add(worker);
+            if (worker.job < idle) workers.add(worker);
 
             // Check if there is work to be done
             processBuffers();
@@ -133,16 +139,18 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
      */
     private boolean process(JsonObject msg) {
         // Retrieve a worker
-        String worker = (workers.isEmpty()) ? null : workers.first();
-        if (Strings.isNullOrEmpty(worker)) return false;
+        Worker worker = (workers.isEmpty()) ? null : workers.first();
+        if (worker == null) return false;
+
+        // Remove from set before anything
+        workers.remove(worker);
 
         // Increase job
-        int job = workersJob.getOrDefault(worker, 0);
-        workersJob.put(worker, ++job);
+        worker.job++;
 
         // Evict if busy & send job
-        if (job >= threehold) workers.remove(worker);
-        getEventBus().send(worker, msg, DELIVERY_OPTIONS);
+        if (worker.job < threehold) workers.add(worker);
+        getEventBus().send(worker.name, msg, DELIVERY_OPTIONS);
         return true;
     }
 
@@ -176,6 +184,30 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
             }
         }
         return false;
+    }
+
+    /**
+     * Get or create a worker based on his name.
+     *
+     * @param workerName worker name.
+     * @return a worker.
+     */
+    private Worker getOrCreate(String workerName) {
+        return Optional.ofNullable(workersJob.get(workerName)).orElseGet(() -> new Worker(workerName, 0));
+    }
+
+    /**
+     * Worker component representation.
+     */
+    @AllArgsConstructor
+    @Data
+    private class Worker implements Comparable<Worker> {
+        private final String name;
+        private int job;
+
+        @Override public int compareTo(Worker o) {
+            return Integer.compare(job, o.job);
+        }
     }
 
 }
