@@ -99,7 +99,7 @@ public class Binder<T extends Binder<T>> {
     }
 
     /**
-     * Bind a field of from object to
+     * Bind a field of from object to.
      *
      * @param from     from field to bind.
      * @param to       to field to bind.
@@ -108,6 +108,20 @@ public class Binder<T extends Binder<T>> {
      */
     public T bind(String from, String to, Function function) {
         function.apply(this.from, this.to, from, to);
+        return (T) this;
+    }
+
+    /**
+     * Bind a field or null of from object to.
+     *
+     * @param from     from field to bind.
+     * @param to       to field to bind.
+     * @param function transformation to apply
+     * @return same object for chaining.
+     */
+    public T bindOrNull(String from, String to, Function function) {
+        bind(from, to, function);
+        if (!this.to.containsKey(to)) this.to.putNull(to);
         return (T) this;
     }
 
