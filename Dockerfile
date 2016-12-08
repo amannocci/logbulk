@@ -1,4 +1,4 @@
-FROM openjdk:8u111-jre-alpine
+FROM openjdk:8u111-jre
 
 # Maintainer
 MAINTAINER adrien.mannocci@gmail.com
