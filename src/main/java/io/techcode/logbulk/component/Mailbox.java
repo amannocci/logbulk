@@ -50,15 +50,15 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
     private int idle;
 
     // Workers
-    private NavigableSet<Worker> workers = Sets.newTreeSet();
-    private Map<String, Worker> workersJob = Maps.newHashMap();
+    private final NavigableSet<Worker> workers = Sets.newTreeSet();
+    private final Map<String, Worker> workersJob = Maps.newHashMap();
 
     // Pending message to process
-    private Queue<JsonObject> buffer = Queues.newArrayDeque();
+    private final Queue<JsonObject> buffer = Queues.newArrayDeque();
 
     // Back pressure
-    private List<String> previousPressure = Lists.newArrayListWithCapacity(1);
-    private Set<String> nextPressure = Sets.newHashSet();
+    private final List<String> previousPressure = Lists.newArrayListWithCapacity(1);
+    private final Set<String> nextPressure = Sets.newHashSet();
 
     @Override public void start() {
         super.start();

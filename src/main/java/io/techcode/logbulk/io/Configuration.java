@@ -38,6 +38,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -48,7 +50,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class Configuration extends JsonObject {
 
     // Wrap configuration
-    private JsonObject wrapConfig;
+    private final JsonObject wrapConfig;
 
     /**
      * Create a new configuration.
@@ -84,22 +86,80 @@ public class Configuration extends JsonObject {
         wrapConfig = new JsonObject(map);
     }
 
+    private <T> T getTyped(String key, Function<String, T> func, Supplier<T> supplier) {
+        Object value = wrapConfig.getValue(key);
+        if (value instanceof String) {
+            T parse = func.apply((String) value);
+            if (parse != null) {
+                put(key, parse);
+                return parse;
+            }
+        }
+        return supplier.get();
+    }
+
+    @Override public Integer getInteger(String key) {
+        return getTyped(key, Ints::tryParse, () -> wrapConfig.getInteger(key));
+    }
+
+    @Override public Integer getInteger(String key, Integer def) {
+        return getTyped(key, Ints::tryParse, () -> wrapConfig.getInteger(key, def));
+    }
+
+    @Override public Long getLong(String key) {
+        return getTyped(key, Longs::tryParse, () -> wrapConfig.getLong(key));
+    }
+
+    @Override public Long getLong(String key, Long def) {
+        return getTyped(key, Longs::tryParse, () -> wrapConfig.getLong(key, def));
+    }
+
+    @Override public Double getDouble(String key) {
+        return getTyped(key, Doubles::tryParse, () -> wrapConfig.getDouble(key));
+    }
+
+    @Override public Double getDouble(String key, Double def) {
+        return getTyped(key, Doubles::tryParse, () -> wrapConfig.getDouble(key, def));
+    }
+
+    @Override public Float getFloat(String key) {
+        return getTyped(key, Floats::tryParse, () -> wrapConfig.getFloat(key));
+    }
+
+    @Override public Float getFloat(String key, Float def) {
+        return getTyped(key, Floats::tryParse, () -> wrapConfig.getFloat(key, def));
+    }
+
+    @Override public Boolean getBoolean(String key) {
+        return getTyped(key, Boolean::valueOf, () -> wrapConfig.getBoolean(key));
+    }
+
+    @Override public Boolean getBoolean(String key, Boolean def) {
+        return getTyped(key, Boolean::valueOf, () -> wrapConfig.getBoolean(key, def));
+    }
+
     @Override public String getString(String key) {
         return wrapConfig.getString(key);
+    }
+
+    @Override public String getString(String key, String def) {
+        return wrapConfig.getString(key, def);
     }
 
     @Override public JsonObject getJsonObject(String key) {
         return wrapConfig.getJsonObject(key);
     }
 
+    @Override public JsonObject getJsonObject(String key, JsonObject def) {
+        return wrapConfig.getJsonObject(key, def);
+    }
+
     @Override public JsonArray getJsonArray(String key) {
-        Object value = wrapConfig.getValue(key);
-        if (value instanceof String) {
-            JsonArray parse = new JsonArray((String) value);
-            wrapConfig.put(key, parse);
-            return parse;
-        }
-        return wrapConfig.getJsonArray(key);
+        return getTyped(key, JsonArray::new, () -> wrapConfig.getJsonArray(key));
+    }
+
+    @Override public JsonArray getJsonArray(String key, JsonArray def) {
+        return getTyped(key, JsonArray::new, () -> wrapConfig.getJsonArray(key, def));
     }
 
     @Override public byte[] getBinary(String key) {
@@ -112,24 +172,6 @@ public class Configuration extends JsonObject {
 
     @Override public Object getValue(String key) {
         return wrapConfig.getValue(key);
-    }
-
-    @Override public String getString(String key, String def) {
-        return wrapConfig.getString(key, def);
-    }
-
-    @Override public JsonObject getJsonObject(String key, JsonObject def) {
-        return wrapConfig.getJsonObject(key, def);
-    }
-
-    @Override public JsonArray getJsonArray(String key, JsonArray def) {
-        Object value = wrapConfig.getValue(key);
-        if (value instanceof String) {
-            JsonArray parse = new JsonArray((String) value);
-            wrapConfig.put(key, parse);
-            return parse;
-        }
-        return wrapConfig.getJsonArray(key, def);
     }
 
     @Override public byte[] getBinary(String key, byte[] def) {
@@ -282,125 +324,6 @@ public class Configuration extends JsonObject {
 
     @Override public Spliterator<Map.Entry<String, Object>> spliterator() {
         return wrapConfig.spliterator();
-    }
-
-    @Override public Integer getInteger(String key) {
-        Object value = wrapConfig.getValue(key);
-        if (value instanceof String) {
-            Integer parse = Ints.tryParse((String) value);
-            if (parse != null) {
-                put(key, parse);
-                return parse;
-            }
-        }
-        return wrapConfig.getInteger(key);
-    }
-
-    @Override public Long getLong(String key) {
-        Object value = wrapConfig.getValue(key);
-        if (value instanceof String) {
-            Long parse = Longs.tryParse((String) value);
-            if (parse != null) {
-                put(key, parse);
-                return parse;
-            }
-        }
-        return wrapConfig.getLong(key);
-    }
-
-    @Override public Double getDouble(String key) {
-        Object value = wrapConfig.getValue(key);
-        if (value instanceof String) {
-            Double parse = Doubles.tryParse((String) value);
-            if (parse != null) {
-                put(key, parse);
-                return parse;
-            }
-        }
-        return wrapConfig.getDouble(key);
-    }
-
-    @Override public Float getFloat(String key) {
-        Object value = wrapConfig.getValue(key);
-        if (value instanceof String) {
-            Float parse = Floats.tryParse((String) value);
-            if (parse != null) {
-                put(key, parse);
-                return parse;
-            }
-        }
-        return wrapConfig.getFloat(key);
-    }
-
-    @Override public Boolean getBoolean(String key) {
-        Object value = wrapConfig.getValue(key);
-        if (value instanceof String) {
-            Boolean parse = Boolean.valueOf((String) value);
-            if (parse != null) {
-                put(key, parse);
-                return parse;
-            }
-        }
-        return wrapConfig.getBoolean(key);
-    }
-
-    @Override public Integer getInteger(String key, Integer def) {
-        Object value = wrapConfig.getValue(key);
-        if (value instanceof String) {
-            Integer parse = Ints.tryParse((String) value);
-            if (parse != null) {
-                put(key, parse);
-                return parse;
-            }
-        }
-        return wrapConfig.getInteger(key, def);
-    }
-
-    @Override public Long getLong(String key, Long def) {
-        Object value = wrapConfig.getValue(key);
-        if (value instanceof String) {
-            Long parse = Longs.tryParse((String) value);
-            if (parse != null) {
-                put(key, parse);
-                return parse;
-            }
-        }
-        return wrapConfig.getLong(key, def);
-    }
-
-    @Override public Double getDouble(String key, Double def) {
-        Object value = wrapConfig.getValue(key);
-        if (value instanceof String) {
-            Double parse = Doubles.tryParse((String) value);
-            if (parse != null)
-                put(key, parse);
-            return parse;
-        }
-        return wrapConfig.getDouble(key, def);
-    }
-
-    @Override public Float getFloat(String key, Float def) {
-        Object value = wrapConfig.getValue(key);
-        if (value instanceof String) {
-            Float parse = Floats.tryParse((String) value);
-            if (parse != null) {
-                put(key, parse);
-                return parse;
-            }
-        }
-        return wrapConfig.getFloat(key, def);
-    }
-
-    @Override public Boolean getBoolean(String key, Boolean def) {
-        Object value = wrapConfig.getValue(key);
-        if (value instanceof String) {
-            Boolean parse = Boolean.valueOf((String) value);
-            if (parse != null) {
-                put(key, parse);
-                return parse;
-            }
-        }
-        return wrapConfig.getBoolean(key, def);
     }
 
 }

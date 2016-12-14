@@ -40,13 +40,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class PressureHandler implements Handler<Message<String>> {
 
     // Logging
-    private Logger log = LoggerFactory.getLogger(getClass().getName());
+    private final Logger log = LoggerFactory.getLogger(getClass().getName());
 
     // Back pressure
-    private Set<String> nextPressure = Sets.newHashSet();
+    private final Set<String> nextPressure = Sets.newHashSet();
 
     // Stream source
-    private ReadStream stream;
+    private final ReadStream stream;
 
     // State of the stream
     private boolean paused = false;

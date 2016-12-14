@@ -67,7 +67,7 @@ public class GrokTransform extends BaseComponentVerticle {
     @Override public void handle(JsonObject msg) {
         // Process
         JsonObject body = body(msg);
-        String field = body.getString(config.getString("match"));
+        String field = body.getString(config.getString("field"));
         if (field == null) {
             forwardAndRelease(msg);
         } else {

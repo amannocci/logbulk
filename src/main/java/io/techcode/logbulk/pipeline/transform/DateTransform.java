@@ -45,7 +45,7 @@ public class DateTransform extends BaseComponentVerticle {
 
     // Settings
     private String target;
-    private String match;
+    private String field;
     private DateTimeFormatter formatter;
     private DateTimeFormatter metaFormatter;
 
@@ -54,7 +54,7 @@ public class DateTransform extends BaseComponentVerticle {
 
         // Setup
         target = config.getString("target", "@timestamp");
-        match = config.getString("match");
+        field = config.getString("field");
         String meta = config.getString("meta");
 
         // Formatter
@@ -77,10 +77,10 @@ public class DateTransform extends BaseComponentVerticle {
         // Process
         JsonObject body = body(msg);
         DateTime time = null;
-        if (match == null) {
+        if (field == null) {
             time = new DateTime(System.currentTimeMillis());
         } else {
-            String field = body.getString(match);
+            String field = body.getString(this.field);
             if (field != null) {
                 time = formatter.parseDateTime(field);
             }
@@ -99,7 +99,7 @@ public class DateTransform extends BaseComponentVerticle {
     }
 
     @Override protected void checkConfig(JsonObject config) {
-        if (config.getString("match") != null) {
+        if (config.getString("field") != null) {
             checkState(config.getString("format") != null, "The format is required");
         }
     }

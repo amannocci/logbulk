@@ -43,7 +43,7 @@ public class LimiterTransform extends BaseComponentVerticle {
     private int limit;
 
     // Pending delivery
-    private Queue<JsonObject> pending = Queues.newArrayDeque();
+    private final Queue<JsonObject> pending = Queues.newArrayDeque();
 
     @Override public void start() {
         super.start();

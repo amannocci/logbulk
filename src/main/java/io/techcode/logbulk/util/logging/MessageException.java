@@ -10,7 +10,7 @@ public class MessageException extends Exception {
     private static final StackTraceElement[] UNASSIGNED_STACK = new StackTraceElement[0];
 
     // Message
-    private String message;
+    private final String message;
 
     /**
      * Create a simple message exception.

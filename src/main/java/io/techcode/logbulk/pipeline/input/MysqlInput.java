@@ -51,9 +51,6 @@ public class MysqlInput extends ComponentVerticle {
     // Async sql client
     private AsyncSQLClient client;
 
-    // Read stream
-    private DBReadStream stream;
-
     @Override public void start() {
         super.start();
 
@@ -62,7 +59,7 @@ public class MysqlInput extends ComponentVerticle {
         JsonObject parameters = config.getJsonObject("parameters");
         JsonArray order = config.getJsonArray("order");
         client = MySQLClient.createShared(vertx, config);
-        stream = new DBReadStream(client, statement, parameters, order, config.getString("track"), config.getBoolean("nonEmpty", false));
+        DBReadStream stream = new DBReadStream(client, statement, parameters, order, config.getString("track"), config.getBoolean("nonEmpty", false));
 
         // Setup periodic task
         handlePressure(stream);
@@ -83,15 +80,15 @@ public class MysqlInput extends ComponentVerticle {
     private class DBReadStream implements ReadStream<String> {
 
         // Async sql client
-        private AsyncSQLClient client;
+        private final AsyncSQLClient client;
 
         // Statement
-        private String statement;
+        private final String statement;
 
         // Parameters & Order
-        private JsonObject parameters;
-        private JsonArray queryParams = new JsonArray();
-        private boolean nonEmpty;
+        private final JsonObject parameters;
+        private final JsonArray queryParams = new JsonArray();
+        private final boolean nonEmpty;
         private String track;
         private int trackPos = 0;
 

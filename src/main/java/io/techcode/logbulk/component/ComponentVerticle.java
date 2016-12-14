@@ -58,11 +58,11 @@ import static com.google.common.base.Preconditions.checkState;
 public class ComponentVerticle extends AbstractVerticle {
 
     // Logging
-    protected Logger log = LoggerFactory.getLogger(getClass().getName());
+    protected final Logger log = LoggerFactory.getLogger(getClass().getName());
 
     // Delivery options
     protected static final DeliveryOptions DELIVERY_OPTIONS = new DeliveryOptions().setCodecName("fastjsonobject");
-    protected final Handler<Throwable> THROWABLE_HANDLER = th -> log.error(th);
+    protected final Handler<Throwable> THROWABLE_HANDLER = log::error;
 
     // UUID of the component
     protected final String uuid = UUID.randomUUID().toString();

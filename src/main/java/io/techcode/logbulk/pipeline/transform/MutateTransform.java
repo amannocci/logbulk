@@ -111,7 +111,7 @@ public class MutateTransform extends BaseComponentVerticle {
     private class MaskTask implements Consumer<JsonObject> {
 
         // Field to mask
-        private String toMask;
+        private final String toMask;
 
         /**
          * Create a new mask task.
@@ -168,7 +168,7 @@ public class MutateTransform extends BaseComponentVerticle {
     private class RemoveTask implements Consumer<JsonObject> {
 
         // Field to remove
-        private List<String> toRemove;
+        private final List<String> toRemove;
 
         /**
          * Create a new remove task.
@@ -197,7 +197,7 @@ public class MutateTransform extends BaseComponentVerticle {
         private final Pattern pattern = Pattern.compile("\\s+");
 
         // Field to strip
-        private List<String> toStrip;
+        private final List<String> toStrip;
 
         /**
          * Create a new strip task.
@@ -227,7 +227,7 @@ public class MutateTransform extends BaseComponentVerticle {
     private class LowercaseTask implements Consumer<JsonObject> {
 
         // Field to strip
-        private List<String> toLowercase;
+        private final List<String> toLowercase;
 
         /**
          * Create a new strip task.
@@ -257,7 +257,7 @@ public class MutateTransform extends BaseComponentVerticle {
     private class UppercaseTask implements Consumer<JsonObject> {
 
         // Field to strip
-        private List<String> toUppercase;
+        private final List<String> toUppercase;
 
         /**
          * Create a new strip task.
@@ -287,7 +287,7 @@ public class MutateTransform extends BaseComponentVerticle {
     private class UpdateTask implements Consumer<JsonObject> {
 
         // Element to update
-        private Map<String, String> toUpdate;
+        private final Map<String, String> toUpdate;
 
         /**
          * Create a new remame task.
@@ -317,7 +317,7 @@ public class MutateTransform extends BaseComponentVerticle {
     private class GsubTask implements Consumer<JsonObject> {
 
         // Element to gsub
-        private Map<String, Pair<String, String>> toGsub = Maps.newTreeMap();
+        private final Map<String, Pair<String, String>> toGsub = Maps.newTreeMap();
 
         /**
          * Create a new gsub task.
@@ -356,7 +356,7 @@ public class MutateTransform extends BaseComponentVerticle {
     private class JoinTask implements Consumer<JsonObject> {
 
         // Element to join
-        private Map<String, String> toJoin;
+        private final Map<String, String> toJoin;
 
         /**
          * Create a new join task.
@@ -391,7 +391,7 @@ public class MutateTransform extends BaseComponentVerticle {
     private class RenameTask implements Consumer<JsonObject> {
 
         // Element to rename
-        private Map<String, String> toRename;
+        private final Map<String, String> toRename;
 
         /**
          * Create a new remame task.
@@ -422,7 +422,7 @@ public class MutateTransform extends BaseComponentVerticle {
     private class ConvertTask implements Consumer<JsonObject> {
 
         // Element to convert
-        private Map<String, Byte> toConvert;
+        private final Map<String, Byte> toConvert;
 
         /**
          * Create a new remame task.

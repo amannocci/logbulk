@@ -40,7 +40,7 @@ import static com.google.common.base.Preconditions.checkState;
 public class DispatchTransform extends BaseComponentVerticle {
 
     // Dispatch routes
-    private List<Dispatch> dispatch = Lists.newArrayList();
+    private final List<Dispatch> dispatch = Lists.newArrayList();
 
     @Override public void start() {
         super.start();
@@ -110,7 +110,7 @@ public class DispatchTransform extends BaseComponentVerticle {
     private class SimpleDispatch implements Dispatch {
 
         // Routes
-        private String route;
+        private final String route;
 
         /**
          * Create a new simple dispatch.
@@ -133,7 +133,7 @@ public class DispatchTransform extends BaseComponentVerticle {
     private class PresentDispatch extends SimpleDispatch {
 
         // Field to match
-        private String field;
+        private final String field;
 
         /**
          * Create a new router dispatch.
@@ -160,7 +160,7 @@ public class DispatchTransform extends BaseComponentVerticle {
     private class AbsentDispatch extends SimpleDispatch {
 
         // Field to match
-        private String field;
+        private final String field;
 
         /**
          * Create a new router dispatch.
@@ -188,10 +188,10 @@ public class DispatchTransform extends BaseComponentVerticle {
     private class StartDispatch extends SimpleDispatch {
 
         // Field to match
-        private String field;
+        private final String field;
 
         // Pattern to match
-        private String match;
+        private final String match;
 
         /**
          * Create a new start dispatch.
@@ -220,10 +220,10 @@ public class DispatchTransform extends BaseComponentVerticle {
     private class ContainsDispatch extends SimpleDispatch {
 
         // Field to match
-        private String field;
+        private final String field;
 
         // Pattern to match
-        private String match;
+        private final String match;
 
         /**
          * Create a new contains dispatch.

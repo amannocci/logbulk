@@ -26,7 +26,6 @@ package io.techcode.logbulk.pipeline.input;
 import io.techcode.logbulk.component.ComponentVerticle;
 import io.techcode.logbulk.io.AsyncInputStream;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.parsetools.RecordParser;
 
 import java.util.concurrent.Executors;
 
@@ -37,26 +36,17 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public class StdInput extends ComponentVerticle {
 
-    // Record parser for delimitation
-    private RecordParser parser;
-
-    // Async file instance
-    private AsyncInputStream stream;
-
     @Override public void start() {
         super.start();
 
-        // Configuration
-        parser = inputParser(config);
-
         // Stream
-        stream = new AsyncInputStream(vertx, Executors.newSingleThreadExecutor(), System.in);
+        AsyncInputStream stream = new AsyncInputStream(vertx, Executors.newSingleThreadExecutor(), System.in);
 
         // Handle back-pressure
         handlePressure(stream);
 
         // Begin to read
-        stream.handler(parser).exceptionHandler(THROWABLE_HANDLER);
+        stream.handler(inputParser(config)).exceptionHandler(THROWABLE_HANDLER);
     }
 
     @Override protected void checkConfig(JsonObject config) {

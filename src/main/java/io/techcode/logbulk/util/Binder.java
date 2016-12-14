@@ -82,6 +82,7 @@ public class Binder<T extends Binder<T>> {
      * @param from from object.
      * @return same object for chaining.
      */
+    @SuppressWarnings("unchecked")
     public T from(JsonObject from) {
         this.from = checkNotNull(from, "The json object from can't be null");
         return (T) this;
@@ -93,6 +94,7 @@ public class Binder<T extends Binder<T>> {
      * @param to to object.
      * @return same object for chaining.
      */
+    @SuppressWarnings("unchecked")
     public T to(JsonObject to) {
         this.to = checkNotNull(to, "The json object to can't be null");
         return (T) this;
@@ -106,6 +108,7 @@ public class Binder<T extends Binder<T>> {
      * @param function transformation to apply
      * @return same object for chaining.
      */
+    @SuppressWarnings("unchecked")
     public T bind(String from, String to, Function function) {
         function.apply(this.from, this.to, from, to);
         return (T) this;
@@ -119,6 +122,7 @@ public class Binder<T extends Binder<T>> {
      * @param function transformation to apply
      * @return same object for chaining.
      */
+    @SuppressWarnings("unchecked")
     public T bindOrNull(String from, String to, Function function) {
         bind(from, to, function);
         if (!this.to.containsKey(to)) this.to.putNull(to);

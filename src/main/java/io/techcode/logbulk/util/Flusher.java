@@ -37,10 +37,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class Flusher {
 
     // Vertx instance
-    private Vertx vertx;
+    private final Vertx vertx;
 
     // Periodic flush
-    private long time;
+    private final long time;
 
     // Task Id
     private long taskId = -1;

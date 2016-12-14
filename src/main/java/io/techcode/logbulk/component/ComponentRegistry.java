@@ -31,6 +31,7 @@ import io.techcode.logbulk.util.stream.Streams;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import lombok.NonNull;
 
 import java.util.Arrays;
 import java.util.List;
@@ -47,18 +48,18 @@ import static com.google.common.base.Preconditions.checkState;
 public class ComponentRegistry {
 
     // Logging
-    private Logger log = LoggerFactory.getLogger(getClass().getName());
+    private final Logger log = LoggerFactory.getLogger(getClass().getName());
 
     // Verticle
-    private Logbulk verticle;
+    private final Logbulk verticle;
 
     // Registry
-    private Map<String, String> registry = Maps.newHashMap();
+    private final Map<String, String> registry = Maps.newHashMap();
 
     /**
      * Create a new component registry.
      */
-    public ComponentRegistry(Logbulk verticle) {
+    public ComponentRegistry(@NonNull Logbulk verticle) {
         this.verticle = checkNotNull(verticle, "The verticle can't be null");
         registerAll();
         analyzeRoutes();

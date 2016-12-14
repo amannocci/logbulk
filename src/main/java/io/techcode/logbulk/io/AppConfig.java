@@ -49,7 +49,7 @@ public class AppConfig {
     private static final String ROUTE = "route";
 
     // Configuration wrapped
-    private Config config;
+    private final Config config;
 
     /**
      * Create a new app config.

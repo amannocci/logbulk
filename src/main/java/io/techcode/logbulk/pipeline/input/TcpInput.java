@@ -42,7 +42,7 @@ public class TcpInput extends ComponentVerticle {
     private NetServer server;
 
     // List of connection
-    private List<NetSocket> connections = Lists.newLinkedList();
+    private final List<NetSocket> connections = Lists.newLinkedList();
 
     @Override public void start() {
         super.start();

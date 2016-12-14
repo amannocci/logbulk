@@ -61,9 +61,6 @@ public class RabbitMQInput extends BaseComponentVerticle {
     // Auto ack
     private boolean autoAck;
 
-    // Read stream
-    private RabbitMQReadStream stream;
-
     @Override public void start() {
         super.start();
 
@@ -112,7 +109,7 @@ public class RabbitMQInput extends BaseComponentVerticle {
 
             // Create a new channel
             rabbit = connection.createChannel();
-            stream = new RabbitMQReadStream(rabbit);
+            RabbitMQReadStream stream = new RabbitMQReadStream(rabbit);
             handlePressure(stream);
             stream.handler(this::forwardAndRelease);
             stream.exceptionHandler(THROWABLE_HANDLER);
@@ -160,7 +157,7 @@ public class RabbitMQInput extends BaseComponentVerticle {
     private class RabbitMQReadStream implements ReadStream<JsonObject> {
 
         // RabbitMQ
-        private Channel rabbit;
+        private final Channel rabbit;
 
         // Paused state
         private boolean paused = true;

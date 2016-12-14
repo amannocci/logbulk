@@ -40,7 +40,7 @@ public class JsonTransform extends BaseComponentVerticle {
         super.start();
 
         // Setup
-        source = config.getString("source");
+        source = config.getString("field");
 
         // Ready
         resume();

@@ -47,7 +47,7 @@ import java.util.Set;
 public class Logbulk extends AbstractVerticle {
 
     // Logging
-    private Logger log = LoggerFactory.getLogger(getClass().getName());
+    private final Logger log = LoggerFactory.getLogger(getClass().getName());
 
     // Application configuration
     @Getter private AppConfig config;

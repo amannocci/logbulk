@@ -35,7 +35,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
- * TODO
+ * An adapter that workaround vertx scheduler.
  */
 @Value
 public class VertxScheduler implements Scheduler {
@@ -63,13 +63,13 @@ public class VertxScheduler implements Scheduler {
     private class VertxScheduledFuture extends DefaultScheduledFuture<Object> {
 
         // Context of run
-        private Context ctx;
+        private final Context ctx;
 
         // Some properties
         private long timerId;
-        private Callable<?> callable;
-        private long delay;
-        private TimeUnit unit;
+        private final Callable<?> callable;
+        private final long delay;
+        private final TimeUnit unit;
 
         /**
          * Create a new vertx scheduled future.
