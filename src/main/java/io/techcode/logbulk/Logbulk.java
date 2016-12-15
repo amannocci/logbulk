@@ -99,7 +99,7 @@ public class Logbulk extends AbstractVerticle {
         for (Map.Entry<String, ConfigValue> el : entries) {
             // Extract json configuration
             DeploymentOptions deployment = new DeploymentOptions();
-            Configuration conf = new Configuration(new JsonObject(el.getValue().render(ConfigRenderOptions.concise().setJson(true))));
+            Configuration conf = new Configuration(el.getValue().render(ConfigRenderOptions.concise().setJson(true)));
             int instance = conf.getInteger("instance", 1);
             String endpoint = el.getKey();
 

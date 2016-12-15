@@ -73,7 +73,7 @@ public class AppConfig {
      * @return setting section.
      */
     public JsonObject settings() {
-        return new JsonObject(config.getConfig(SETTING).root().render(ConfigRenderOptions.concise().setOriginComments(false).setJson(true)));
+        return block(SETTING);
     }
 
     /**
@@ -109,16 +109,27 @@ public class AppConfig {
      * @return route section.
      */
     public JsonObject routes() {
-        return new JsonObject(config.getConfig(ROUTE).root().render(ConfigRenderOptions.concise().setOriginComments(false).setJson(true)));
+        return block(ROUTE);
     }
 
     /**
-     * Gets a section.route
+     * Gets a section route.
      *
+     * @param key section key.
      * @return section.
      */
     private Set<Map.Entry<String, ConfigValue>> section(String key) {
         return config.getObject(key).entrySet();
+    }
+
+    /**
+     * Gets a block route.
+     *
+     * @param key block key.
+     * @return block.
+     */
+    private JsonObject block(String key) {
+        return new Configuration(config.getConfig(key).root().render(ConfigRenderOptions.concise().setOriginComments(false).setJson(true)));
     }
 
     @Override public String toString() {
