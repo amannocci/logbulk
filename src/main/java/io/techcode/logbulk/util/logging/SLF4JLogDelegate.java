@@ -125,7 +125,7 @@ public class SLF4JLogDelegate implements LogDelegate {
     }
 
     private void log(int level, Object message, Throwable th, Object... params) {
-        if (th != null && ((th instanceof IllegalStateException) || !"Result is already complete: succeeded".equals(th.getMessage()))) {
+        if (th != null && (th instanceof IllegalStateException) && "Result is already complete: succeeded".equals(th.getMessage())) {
             return;
         }
 
