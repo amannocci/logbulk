@@ -26,7 +26,7 @@ package io.techcode.logbulk.pipeline.transform;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Ints;
 import io.techcode.logbulk.component.BaseComponentVerticle;
-import io.techcode.logbulk.util.logging.MessageException;
+import io.techcode.vertx.logging.MessageException;
 import io.vertx.core.json.JsonObject;
 
 import java.util.Map;
