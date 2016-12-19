@@ -40,7 +40,7 @@ public class JsonTransformTest extends VerticleTestBase {
 
     @Override protected JsonObject conf() {
         JsonObject conf = super.conf();
-        conf.put("source", "foobar");
+        conf.put("field", "foobar");
         return conf;
     }
 
