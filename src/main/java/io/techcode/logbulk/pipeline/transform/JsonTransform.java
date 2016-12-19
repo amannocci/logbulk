@@ -34,13 +34,13 @@ import static com.google.common.base.Preconditions.checkState;
 public class JsonTransform extends BaseComponentVerticle {
 
     // Settings
-    private String source;
+    private String field;
 
     @Override public void start() {
         super.start();
 
         // Setup
-        source = config.getString("field");
+        field = config.getString("field");
 
         // Ready
         resume();
@@ -49,14 +49,14 @@ public class JsonTransform extends BaseComponentVerticle {
     @Override public void handle(JsonObject msg) {
         // Process
         JsonObject body = body(msg);
-        body.mergeIn(new JsonObject(body.getString(source)));
+        body.mergeIn(new JsonObject(body.getString(field)));
 
         // Send to the next endpoint
         forwardAndRelease(msg);
     }
 
     @Override protected void checkConfig(JsonObject config) {
-        checkState(config.getString("source") != null, "The source is required");
+        checkState(config.getString("field") != null, "The field is required");
     }
 
 }
