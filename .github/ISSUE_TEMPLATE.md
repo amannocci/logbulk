@@ -1,13 +1,15 @@
-### Expected behavior
+##### Expected behavior
 
-### Actual behavior
+##### Actual behavior
 
-### Steps to reproduce
+##### Steps to reproduce
 
-### Minimal yet complete reproducer code (or URL to code)
+##### Minimal yet complete reproducer code (or URL to code)
 
-### Netty version
+##### Logbulk version
 
-### JVM version (e.g. `java -version`)
+##### JVM version (e.g. `java -version`)
 
-### OS version (e.g. `uname -a`)
+##### OS version (e.g. `uname -a`)
+
+##### Describe the feature
