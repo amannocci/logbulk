@@ -29,9 +29,9 @@ import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.streams.ReadStream;
 import lombok.Getter;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PushbackInputStream;
@@ -158,7 +158,7 @@ public class AsyncInputStream implements ReadStream<Buffer> {
                     }
                 } catch (final Exception e) {
                     status = STATUS_CLOSED;
-                    IOUtils.closeQuietly(in);
+                    closeQuietly(in);
                     vertx.runOnContext(event -> {
                         if (failureHandler != null) {
                             failureHandler.handle(e);
@@ -237,8 +237,22 @@ public class AsyncInputStream implements ReadStream<Buffer> {
             offset += tmp.length;
             return buffer;
         } catch (IOException e) {
-            IOUtils.closeQuietly(in);
+            closeQuietly(in);
             return ArrayUtils.EMPTY_BYTE_ARRAY;
+        }
+    }
+
+    /**
+     * Closes a Closeable unconditionally.
+     *
+     * @param closeable the object to close, may be null or already closed.
+     */
+    private void closeQuietly(Closeable closeable) {
+        try {
+            if (closeable != null) {
+                closeable.close();
+            }
+        } catch (IOException ignored) {
         }
     }
 
