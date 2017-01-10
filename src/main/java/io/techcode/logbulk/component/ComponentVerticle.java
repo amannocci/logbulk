@@ -251,15 +251,12 @@ public class ComponentVerticle extends AbstractVerticle {
     }
 
     /**
-     * Forward the body to the next stage and release worker if mailbox.
+     * Forward the body to the next stage.
      *
      * @param msg message to forward.
      */
-    public void forward(JsonObject msg) {
+    public void send(JsonObject msg) {
         checkNotNull(msg, "The message to forward can't be null");
-
-        // Don't forget to release
-        if (hasMailbox) toRelease += 1;
 
         // Gets some stuff
         JsonObject headers = headers(msg);
@@ -283,6 +280,21 @@ public class ComponentVerticle extends AbstractVerticle {
             }
             eventBus.send(nextOpt.get(), msg, DELIVERY_OPTIONS);
         }
+    }
+
+    /**
+     * Forward the body to the next stage and release worker if mailbox.
+     *
+     * @param msg message to forward.
+     */
+    public void forward(JsonObject msg) {
+        checkNotNull(msg, "The message to forward can't be null");
+
+        // Don't forget to release
+        if (hasMailbox) toRelease += 1;
+
+        // Send to next endpoint
+        send(msg);
     }
 
     /**
@@ -423,8 +435,11 @@ public class ComponentVerticle extends AbstractVerticle {
                     String old = previousPressure.remove(0);
                     String source = source(headers);
                     previousPressure.add(source);
-                    tooglePressure(source);
-                    tooglePressure(old);
+
+                    if (!source.equals(old)) {
+                        tooglePressure(source);
+                        tooglePressure(old);
+                    }
                 }
             }
         } else {

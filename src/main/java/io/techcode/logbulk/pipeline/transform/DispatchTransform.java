@@ -122,7 +122,7 @@ public class DispatchTransform extends BaseComponentVerticle {
         }
 
         @Override public void dispatch(JsonObject msg) {
-            forwardAndRelease(updateRoute(msg.copy(), route));
+            send(updateRoute(msg.copy(), route));
         }
 
     }
