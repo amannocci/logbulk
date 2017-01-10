@@ -153,6 +153,7 @@ public class Logbulk extends AbstractVerticle {
                 mailboxConf.put("instance", instance);
                 mailboxConf.put("endpoint", endpoint);
                 mailboxConf.put("hasMailbox", false);
+                mailboxConf.put("fifo", conf.getBoolean("fifo", true));
                 mailboxConf.put("mailbox", conf.getInteger("mailbox", Mailbox.DEFAULT_THRESHOLD));
                 vertx.deployVerticle(Mailbox.class.getName(), new DeploymentOptions().setConfig(mailboxConf), deploy);
             } else {

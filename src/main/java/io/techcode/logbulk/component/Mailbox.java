@@ -54,7 +54,8 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
     private final Map<String, Worker> workersJob = Maps.newHashMap();
 
     // Pending message to process
-    private final Queue<JsonObject> buffer = Queues.newArrayDeque();
+    private final Deque<JsonObject> buffer = Queues.newArrayDeque();
+    private boolean fifo;
 
     // Back pressure
     private final List<String> previousPressure = Lists.newArrayListWithCapacity(1);
@@ -65,6 +66,7 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
 
         // Retrieve configuration settings
         threshold = config.getInteger("mailbox");
+        fifo = config.getBoolean("fifo", true);
         idle = Math.max(1, threshold / 2);
         int componentCount = config.getInteger("instance");
         threshold *= componentCount;
@@ -180,7 +182,7 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
      */
     private boolean processBuffer() {
         if (buffer.size() > 0) {
-            JsonObject msg = buffer.poll();
+            JsonObject msg = (fifo) ? buffer.pollFirst() : buffer.pollLast();
             Optional<String> nextOpt = next(headers(msg));
             if (nextOpt.isPresent() && nextPressure.contains(nextOpt.get())) {
                 handlePressure(msg);
