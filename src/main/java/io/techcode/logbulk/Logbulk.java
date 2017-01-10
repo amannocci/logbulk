@@ -31,6 +31,7 @@ import io.techcode.logbulk.component.Mailbox;
 import io.techcode.logbulk.io.AppConfig;
 import io.techcode.logbulk.io.Configuration;
 import io.techcode.logbulk.io.FastJsonObjectMessageCodec;
+import io.techcode.logbulk.util.StatusMonitor;
 import io.vertx.core.*;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -55,6 +56,9 @@ public class Logbulk extends AbstractVerticle {
     // Component registry
     private ComponentRegistry registry;
 
+    // Status monitor
+    private StatusMonitor monitor;
+
     @Override public void start(Future<Void> startFuture) {
         // Ensure error are handle correctly
         vertx.exceptionHandler(th -> {
@@ -72,12 +76,21 @@ public class Logbulk extends AbstractVerticle {
         // Register custom codecs
         vertx.eventBus().registerCodec(new FastJsonObjectMessageCodec());
 
+        // Setup status monitor
+        monitor = new StatusMonitor(vertx, config.settings().getLong("status", -1L));
+
         // Deploy all outputs & transforms components and input
         CompositeFuture.all(
                 setups("output", config.outputs()),
                 setups("transform", config.transforms())
         ).setHandler(h ->
-                setups("input", config.inputs()).setHandler(e -> startFuture.complete())
+                setups("input", config.inputs()).setHandler(e -> {
+                    // Release monitor if uneeded
+                    monitor = null;
+
+                    // Notify
+                    startFuture.complete();
+                })
         );
     }
 
@@ -131,12 +144,16 @@ public class Logbulk extends AbstractVerticle {
 
             // Deploy mailbox first
             if (conf.getBoolean("hasMailbox")) {
+                // Add to monitoring if needed
+                if (monitor.isEnable()) monitor.addMailbox(endpoint);
+
+                // Create configuration and deploy
                 JsonObject mailboxConf = new JsonObject();
                 mailboxConf.put("route", conf.getJsonObject("route"));
                 mailboxConf.put("instance", instance);
                 mailboxConf.put("endpoint", endpoint);
                 mailboxConf.put("hasMailbox", false);
-                mailboxConf.put("mailbox", conf.getInteger("mailbox", Mailbox.DEFAULT_THREEHOLD));
+                mailboxConf.put("mailbox", conf.getInteger("mailbox", Mailbox.DEFAULT_THRESHOLD));
                 vertx.deployVerticle(Mailbox.class.getName(), new DeploymentOptions().setConfig(mailboxConf), deploy);
             } else {
                 deploy.handle(null);

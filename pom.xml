@@ -8,6 +8,7 @@
         <main.verticle>io.techcode.logbulk.Logbulk</main.verticle>
         <vertx.version>3.3.3</vertx.version>
         <vertx.logging.version>0.1.0</vertx.logging.version>
+        <vertx.when.version>4.0.0</vertx.when.version>
         <guava.version>20.0</guava.version>
         <grok.version>0.1.5</grok.version>
         <joda-time.version>2.9.7</joda-time.version>
@@ -54,6 +55,11 @@
             <groupId>io.techcode.vertx</groupId>
             <artifactId>vertx-logging</artifactId>
             <version>${vertx.logging.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.englishtown.vertx</groupId>
+            <artifactId>vertx-when</artifactId>
+            <version>${vertx.when.version}</version>
         </dependency>
         <dependency>
             <groupId>io.thekraken</groupId>

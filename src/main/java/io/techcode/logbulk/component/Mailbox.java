@@ -42,11 +42,11 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public class Mailbox extends ComponentVerticle implements ConvertHandler {
 
-    // Default threehold
-    public final static int DEFAULT_THREEHOLD = 1000;
+    // Default threshold
+    public final static int DEFAULT_THRESHOLD = 1000;
 
-    // Treehold
-    private int threehold;
+    // Threshold
+    private int threshold;
     private int idle;
 
     // Workers
@@ -64,10 +64,10 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
         super.start();
 
         // Retrieve configuration settings
-        threehold = config.getInteger("mailbox");
-        idle = Math.max(1, threehold / 2);
+        threshold = config.getInteger("mailbox");
+        idle = Math.max(1, threshold / 2);
         int componentCount = config.getInteger("instance");
-        threehold *= componentCount;
+        threshold *= componentCount;
 
         // Setup
         getEventBus().<JsonObject>localConsumer(endpoint).handler(this).exceptionHandler(THROWABLE_HANDLER);
@@ -103,6 +103,20 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
                 nextPressure.add(component);
             }
         }).exceptionHandler(THROWABLE_HANDLER);
+        getEventBus().<JsonObject>localConsumer(endpoint + ".status").handler(event -> {
+            JsonObject workerStatus = new JsonObject();
+            for (Worker worker : workers) {
+                workerStatus.put(worker.name.substring(worker.name.length() - 36), worker.job);
+            }
+
+            JsonObject message = event.body();
+            message.put(endpoint, new JsonObject()
+                    .put("mailbox", buffer.size())
+                    .put("idle", idle)
+                    .put("threshold", threshold)
+                    .put("worker", workerStatus));
+            event.reply(message, DELIVERY_OPTIONS);
+        });
     }
 
     @Override protected void checkConfig(JsonObject config) {
@@ -126,7 +140,7 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
      */
     private void handlePressure(JsonObject msg) {
         buffer.add(msg);
-        if (buffer.size() > threehold) {
+        if (buffer.size() > threshold) {
             notifyPressure(previousPressure, headers(msg));
         }
     }
@@ -149,7 +163,7 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
         worker.job++;
 
         // Evict if busy & send job
-        if (worker.job < threehold) workers.add(worker);
+        if (worker.job < threshold) workers.add(worker);
         getEventBus().send(worker.name, msg, DELIVERY_OPTIONS);
         return true;
     }
