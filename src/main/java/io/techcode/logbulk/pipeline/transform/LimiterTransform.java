@@ -25,6 +25,7 @@ package io.techcode.logbulk.pipeline.transform;
 
 import com.google.common.collect.Queues;
 import io.techcode.logbulk.component.BaseComponentVerticle;
+import io.techcode.logbulk.net.Packet;
 import io.vertx.core.json.JsonObject;
 
 import java.util.Queue;
@@ -43,7 +44,7 @@ public class LimiterTransform extends BaseComponentVerticle {
     private int limit;
 
     // Pending delivery
-    private final Queue<JsonObject> pending = Queues.newArrayDeque();
+    private final Queue<Packet> pending = Queues.newArrayDeque();
 
     @Override public void start() {
         super.start();
@@ -72,15 +73,15 @@ public class LimiterTransform extends BaseComponentVerticle {
         resume();
     }
 
-    @Override public void handle(JsonObject msg) {
+    @Override public void handle(Packet packet) {
         // Limit reached
         if (request > limit) {
-            pending.add(msg);
+            pending.add(packet);
         } else {
             request += 1;
 
             // Send to the next endpoint
-            forwardAndRelease(msg);
+            forwardAndRelease(packet);
         }
     }
 

@@ -28,6 +28,7 @@ import com.google.common.primitives.Ints;
 import com.univocity.parsers.csv.CsvParser;
 import com.univocity.parsers.csv.CsvParserSettings;
 import io.techcode.logbulk.component.BaseComponentVerticle;
+import io.techcode.logbulk.net.Packet;
 import io.vertx.core.json.JsonObject;
 
 import java.util.Map;
@@ -73,9 +74,9 @@ public class CsvTransform extends BaseComponentVerticle {
         resume();
     }
 
-    @Override public void handle(JsonObject msg) {
+    @Override public void handle(Packet packet) {
         // Process
-        JsonObject body = body(msg);
+        JsonObject body = packet.getBody();
         String field = body.getString(source);
         if (field != null) {
             String[] cols = parser.parseLine(field);
@@ -96,7 +97,7 @@ public class CsvTransform extends BaseComponentVerticle {
         }
 
         // Send to the next endpoint
-        forwardAndRelease(msg);
+        forwardAndRelease(packet);
     }
 
     @Override protected void checkConfig(JsonObject config) {

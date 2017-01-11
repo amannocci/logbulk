@@ -28,12 +28,12 @@ import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ListMultimap;
 import io.netty.handler.logging.LogLevel;
 import io.techcode.logbulk.io.Configuration;
+import io.techcode.logbulk.net.Packet;
 import io.techcode.logbulk.util.PressureHandler;
 import io.techcode.logbulk.util.stream.Streams;
 import io.techcode.vertx.logging.ExceptionUtils;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Handler;
-import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -61,7 +61,6 @@ public class ComponentVerticle extends AbstractVerticle {
     protected final Logger log = LoggerFactory.getLogger(getClass().getName());
 
     // Delivery options
-    public static final DeliveryOptions DELIVERY_OPTIONS = new DeliveryOptions().setCodecName("fastjsonobject");
     protected final Handler<Throwable> THROWABLE_HANDLER = log::error;
 
     // UUID of the component
@@ -127,66 +126,36 @@ public class ComponentVerticle extends AbstractVerticle {
     /**
      * Handle fallback during processing.
      *
-     * @param msg message involved.
+     * @param packet packet involved.
      */
-    public void handleFallback(JsonObject msg) {
-        handleFallback(msg, null);
+    public void handleFallback(Packet packet) {
+        handleFallback(packet, null);
     }
 
     /**
      * Handle fallback during processing.
      *
-     * @param msg message involved.
-     * @param th  error throw.
+     * @param packet packet involved.
+     * @param th     error throw.
      */
-    public void handleFallback(JsonObject msg, Throwable th) {
-        checkNotNull(msg, "The message can't be null");
-        JsonObject headers = headers(msg);
-        JsonObject body = body(msg);
+    public void handleFallback(Packet packet, Throwable th) {
+        checkNotNull(packet, "The packet can't be null");
+        Packet.Header headers = packet.getHeader();
+        JsonObject body = packet.getBody();
         if (th != null) {
             JsonArray stacktrace = ExceptionUtils.getStackTrace(th);
             headers.put("_stacktrace", stacktrace);
             body.put("stacktrace", stacktrace);
-            body.put("_level", LogLevel.ERROR);
+            headers.put("_level", LogLevel.ERROR);
             body.put("level", LogLevel.ERROR);
         }
         if (Strings.isNullOrEmpty(fallback)) {
             // Log info if no fallback
-            log.info(body(msg).encode());
+            log.info(packet.getBody().encode());
         } else {
             // Otherwise send to fallback
-            forwardAndRelease(updateRoute(msg, fallback));
+            forwardAndRelease(updateRoute(packet, fallback));
         }
-    }
-
-    /**
-     * Extract headers part of the message.
-     *
-     * @param message message to process.
-     * @return headers part.
-     */
-    public JsonObject headers(JsonObject message) {
-        return message.getJsonObject("headers");
-    }
-
-    /**
-     * Extract body part of the message.
-     *
-     * @param message message to process.
-     * @return body part.
-     */
-    public JsonObject body(JsonObject message) {
-        return message.getJsonObject("body");
-    }
-
-    /**
-     * Returns the source of the message.
-     *
-     * @param headers headers of the body.
-     * @return source of the message.
-     */
-    public String source(JsonObject headers) {
-        return headers.getString("_source");
     }
 
     /**
@@ -195,16 +164,16 @@ public class ComponentVerticle extends AbstractVerticle {
      * @param headers headers of the body.
      * @return previous component processor for this body.
      */
-    public Optional<String> previous(JsonObject headers) {
+    public Optional<String> previous(Packet.Header headers) {
         checkNotNull(headers, "Headers can't be null");
 
         // Gets some stuff
-        int previous = headers.getInteger("_previous", -1);
+        int previous = headers.getPrevious();
 
         // Possible previous component
         if (previous >= 0) {
-            String route = headers.getString("_route_old");
-            if (route == null) route = headers.getString("_route");
+            String route = headers.getOldRoute();
+            if (route == null) route = headers.getRoute();
             List<String> endpoints = this.routing.get(route);
             return Optional.of(endpoints.get(previous));
         } else {
@@ -213,16 +182,16 @@ public class ComponentVerticle extends AbstractVerticle {
     }
 
     /**
-     * Returns the next component processor for this body.
+     * Returns the next component processor for this packet.
      *
-     * @param headers headers of the body.
-     * @return next component processor for this body.
+     * @param headers headers of the packet.
+     * @return next component processor for this packet.
      */
-    public Optional<String> next(JsonObject headers) {
+    public Optional<String> next(Packet.Header headers) {
         checkNotNull(headers, "Headers can't be null");
 
         // Gets some stuff
-        int current = headers.getInteger("_current", 0);
+        int current = headers.getCurrent();
         return next(headers, current);
     }
 
@@ -232,14 +201,14 @@ public class ComponentVerticle extends AbstractVerticle {
      * @param headers headers of the body.
      * @return next component processor for this body.
      */
-    private Optional<String> next(JsonObject headers, int current) {
+    private Optional<String> next(Packet.Header headers, int current) {
         checkNotNull(headers, "Headers can't be null");
 
         // Gets some stuff
         int next = current + 1;
 
         // Retrieve routing
-        String route = headers.getString("_route");
+        String route = headers.getRoute();
         List<String> endpoints = this.routing.get(route);
 
         // Possible next component
@@ -251,23 +220,23 @@ public class ComponentVerticle extends AbstractVerticle {
     }
 
     /**
-     * Forward the body to the next stage.
+     * Forward the packet to the next stage.
      *
-     * @param msg message to forward.
+     * @param packet packet to forward.
      */
-    public void send(JsonObject msg) {
-        checkNotNull(msg, "The message to forward can't be null");
+    public void send(Packet packet) {
+        checkNotNull(packet, "The packet to forward can't be null");
 
         // Gets some stuff
-        JsonObject headers = headers(msg);
-        int current = headers.getInteger("_current", 0);
+        Packet.Header headers = packet.getHeader();
+        int current = headers.getCurrent();
 
         // Determine next stage
         Optional<String> nextOpt = next(headers, current);
         if (nextOpt.isPresent()) {
-            if (current > -1) headers.put("_previous", current);
-            if (current == 0) headers.remove("_route_old");
-            headers.put("_current", current + 1);
+            if (current > -1) headers.setPrevious(current);
+            if (current == 0) headers.setOldRoute(null);
+            headers.setCurrent(current + 1);
 
             // Add trace
             if (tracing) {
@@ -278,44 +247,44 @@ public class ComponentVerticle extends AbstractVerticle {
                 }
                 traces.add(endpoint);
             }
-            eventBus.send(nextOpt.get(), msg, DELIVERY_OPTIONS);
+            eventBus.send(nextOpt.get(), packet);
         }
     }
 
     /**
      * Forward the body to the next stage and release worker if mailbox.
      *
-     * @param msg message to forward.
+     * @param packet packet to forward.
      */
-    public void forward(JsonObject msg) {
-        checkNotNull(msg, "The message to forward can't be null");
+    public void forward(Packet packet) {
+        checkNotNull(packet, "The packet to forward can't be null");
 
         // Don't forget to release
         if (hasMailbox) toRelease += 1;
 
         // Send to next endpoint
-        send(msg);
+        send(packet);
     }
 
     /**
-     * Forward the body to the next stage and release worker if mailbox.
+     * Forward the packet to the next stage and release worker if mailbox.
      *
-     * @param msg message to forward.
+     * @param packet packet to forward.
      */
-    public void forwardAndRelease(JsonObject msg) {
-        forward(msg);
+    public void forwardAndRelease(Packet packet) {
+        forward(packet);
         release();
     }
 
     /**
-     * Refuse the message to process and send to mailbox.
+     * Refuse the packet to process and send to mailbox.
      *
-     * @param msg message to refuse.
+     * @param packet packet to refuse.
      */
-    public void refuse(JsonObject msg) {
-        JsonObject headers = headers(msg);
-        headers.put("_current", headers.getInteger("_current") - 1);
-        forward(msg);
+    public void refuse(Packet packet) {
+        Packet.Header headers = packet.getHeader();
+        headers.setCurrent(headers.getCurrent() - 1);
+        forward(packet);
     }
 
     /**
@@ -331,19 +300,19 @@ public class ComponentVerticle extends AbstractVerticle {
     }
 
     /**
-     * Update route of message.
+     * Update route of packet.
      *
-     * @param msg   message to update.
-     * @param route route to use.
+     * @param packet packet to update.
+     * @param route  route to use.
      * @return same object for chaining.
      */
-    public JsonObject updateRoute(JsonObject msg, String route) {
-        JsonObject headers = headers(msg);
-        headers.put("_route_old", headers.getString("_route"));
-        headers.put("_route", route);
-        headers.put("_previous", headers.getInteger("_current"));
-        headers.put("_current", -1);
-        return msg;
+    public Packet updateRoute(Packet packet, String route) {
+        Packet.Header headers = packet.getHeader();
+        headers.setOldRoute(headers.getRoute());
+        headers.setRoute(route);
+        headers.setPrevious(headers.getCurrent());
+        headers.setCurrent(-1);
+        return packet;
     }
 
     /**
@@ -378,13 +347,13 @@ public class ComponentVerticle extends AbstractVerticle {
     }
 
     /**
-     * Create a new message.
+     * Create a new packet.
      *
      * @param message message data.
      */
-    protected final JsonObject generateEvent(String message) {
+    protected final Packet generateEvent(String message) {
         // Create a new body
-        JsonObject headers = new JsonObject();
+        Packet.Header.HeaderBuilder headers = Packet.Header.builder();
         JsonObject body = new JsonObject();
         if (!Strings.isNullOrEmpty(message)) {
             body.put("message", message);
@@ -393,15 +362,15 @@ public class ComponentVerticle extends AbstractVerticle {
         // Options
         if (!hasMailbox) {
             String dispatch = config.getString("dispatch");
-            headers.put("_route", dispatch);
-            headers.put("_source", routing.get(dispatch).get(1));
+            headers.route(dispatch);
+            headers.source(routing.get(dispatch).get(1));
         }
-        headers.put("_current", 0);
 
-        // Send to the next endpoint
-        return new JsonObject()
-                .put("headers", headers)
-                .put("body", body);
+        // Generate
+        return Packet.builder()
+                .header(headers.build())
+                .body(body)
+                .build();
     }
 
     /**
@@ -420,7 +389,7 @@ public class ComponentVerticle extends AbstractVerticle {
      * @param previousPressure already notified component.
      * @param headers          headers body involved.
      */
-    public void notifyPressure(List<String> previousPressure, JsonObject headers) {
+    public void notifyPressure(List<String> previousPressure, Packet.Header headers) {
         // Always return a previous in mailbox context
         Optional<String> previousOpt = previous(headers);
         if (previousOpt.isPresent()) {
@@ -433,7 +402,7 @@ public class ComponentVerticle extends AbstractVerticle {
                     previousPressure.add(previous);
                 } else {
                     String old = previousPressure.remove(0);
-                    String source = source(headers);
+                    String source = headers.getSource();
                     previousPressure.add(source);
 
                     if (!source.equals(old)) {

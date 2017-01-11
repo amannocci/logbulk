@@ -26,6 +26,7 @@ package io.techcode.logbulk.pipeline.transform;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Ints;
 import io.techcode.logbulk.component.BaseComponentVerticle;
+import io.techcode.logbulk.net.Packet;
 import io.techcode.vertx.logging.MessageException;
 import io.vertx.core.json.JsonObject;
 
@@ -67,9 +68,9 @@ public class RegexTransform extends BaseComponentVerticle {
         resume();
     }
 
-    @Override public void handle(JsonObject msg) {
+    @Override public void handle(Packet packet) {
         // Process
-        JsonObject body = body(msg);
+        JsonObject body = packet.getBody();
         String field = body.getString(source);
         if (field != null) {
             Matcher matcher = pattern.matcher(field);
@@ -88,12 +89,12 @@ public class RegexTransform extends BaseComponentVerticle {
                         }
                     }
                 }
-                forwardAndRelease(msg);
+                forwardAndRelease(packet);
             } else {
-                handleFallback(msg, new MessageException("The field '" + source + "' can't be match"));
+                handleFallback(packet, new MessageException("The field '" + source + "' can't be match"));
             }
         } else {
-            handleFallback(msg, new MessageException("The field '" + source + "' can't be found"));
+            handleFallback(packet, new MessageException("The field '" + source + "' can't be found"));
         }
     }
 

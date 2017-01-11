@@ -21,23 +21,32 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.logbulk.io;
+package io.techcode.logbulk.net;
 
-import io.vertx.core.eventbus.impl.codecs.JsonObjectMessageCodec;
-import io.vertx.core.json.JsonObject;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.eventbus.MessageCodec;
 
 /**
- * Fast json object message codec that avoid copy.
+ * Packet codec that avoid copy.
  */
-public class FastJsonObjectMessageCodec extends JsonObjectMessageCodec {
+public class PacketCodec implements MessageCodec<Packet, Packet> {
 
-    @Override public JsonObject transform(JsonObject evt) {
+    @Override public void encodeToWire(Buffer buffer, Packet entries) {
+        // Currently don't support cluster mode
+    }
+
+    @Override public Packet decodeFromWire(int pos, Buffer buffer) {
+        // Currently don't support cluster mode
+        return null;
+    }
+
+    @Override public Packet transform(Packet pkt) {
         // Avoid copy when we use it as event schema
-        return evt;
+        return pkt;
     }
 
     @Override public String name() {
-        return "fastjsonobject";
+        return PacketCodec.class.getSimpleName();
     }
 
     @Override public byte systemCodecID() {

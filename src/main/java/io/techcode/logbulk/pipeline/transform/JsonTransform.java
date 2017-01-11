@@ -24,6 +24,7 @@
 package io.techcode.logbulk.pipeline.transform;
 
 import io.techcode.logbulk.component.BaseComponentVerticle;
+import io.techcode.logbulk.net.Packet;
 import io.vertx.core.json.JsonObject;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -46,13 +47,13 @@ public class JsonTransform extends BaseComponentVerticle {
         resume();
     }
 
-    @Override public void handle(JsonObject msg) {
+    @Override public void handle(Packet packet) {
         // Process
-        JsonObject body = body(msg);
+        JsonObject body = packet.getBody();
         body.mergeIn(new JsonObject(body.getString(field)));
 
         // Send to the next endpoint
-        forwardAndRelease(msg);
+        forwardAndRelease(packet);
     }
 
     @Override protected void checkConfig(JsonObject config) {

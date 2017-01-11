@@ -26,6 +26,7 @@ package io.techcode.logbulk.pipeline.transform;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import io.techcode.logbulk.component.BaseComponentVerticle;
+import io.techcode.logbulk.net.Packet;
 import io.vertx.core.json.JsonObject;
 
 import java.util.List;
@@ -78,12 +79,12 @@ public class DispatchTransform extends BaseComponentVerticle {
         resume();
     }
 
-    @Override public void handle(JsonObject msg) {
+    @Override public void handle(Packet packet) {
         // Process
-        dispatch.forEach(d -> d.dispatch(msg));
+        dispatch.forEach(d -> d.dispatch(packet));
 
         // Send to the next endpoint
-        forwardAndRelease(msg);
+        forwardAndRelease(packet);
     }
 
     @Override public void checkConfig(JsonObject config) {
@@ -96,11 +97,11 @@ public class DispatchTransform extends BaseComponentVerticle {
     private interface Dispatch {
 
         /**
-         * Dispatch the body.
+         * Dispatch the packet.
          *
-         * @param msg message involved.
+         * @param packet packet involved.
          */
-        void dispatch(JsonObject msg);
+        void dispatch(Packet packet);
 
     }
 
@@ -121,8 +122,8 @@ public class DispatchTransform extends BaseComponentVerticle {
             this.route = checkNotNull(route, "The route can't be null");
         }
 
-        @Override public void dispatch(JsonObject msg) {
-            send(updateRoute(msg.copy(), route));
+        @Override public void dispatch(Packet packet) {
+            send(updateRoute(packet.copy(), route));
         }
 
     }
@@ -146,9 +147,9 @@ public class DispatchTransform extends BaseComponentVerticle {
             this.field = checkNotNull(field, "The field can't be null");
         }
 
-        @Override public void dispatch(JsonObject msg) {
-            if (body(msg).containsKey(field) || headers(msg).containsKey(field)) {
-                super.dispatch(msg);
+        @Override public void dispatch(Packet packet) {
+            if (packet.getBody().containsKey(field) || packet.getHeader().containsKey(field)) {
+                super.dispatch(packet);
             }
         }
 
@@ -173,9 +174,9 @@ public class DispatchTransform extends BaseComponentVerticle {
             this.field = checkNotNull(field, "The field can't be null");
         }
 
-        @Override public void dispatch(JsonObject msg) {
-            if (!body(msg).containsKey(field) && !headers(msg).containsKey(field)) {
-                super.dispatch(msg);
+        @Override public void dispatch(Packet packet) {
+            if (!packet.getBody().containsKey(field) && !packet.getHeader().containsKey(field)) {
+                super.dispatch(packet);
             }
         }
 
@@ -206,10 +207,10 @@ public class DispatchTransform extends BaseComponentVerticle {
             this.match = match;
         }
 
-        @Override public void dispatch(JsonObject msg) {
-            String value = body(msg).getString(field);
+        @Override public void dispatch(Packet packet) {
+            String value = packet.getBody().getString(field);
             if (value.startsWith(match)) {
-                super.dispatch(msg);
+                super.dispatch(packet);
             }
         }
     }
@@ -238,10 +239,10 @@ public class DispatchTransform extends BaseComponentVerticle {
             this.match = match;
         }
 
-        @Override public void dispatch(JsonObject msg) {
-            String value = body(msg).getString(field);
+        @Override public void dispatch(Packet packet) {
+            String value = packet.getBody().getString(field);
             if (value.contains(match)) {
-                super.dispatch(msg);
+                super.dispatch(packet);
             }
         }
     }

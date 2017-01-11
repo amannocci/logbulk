@@ -27,6 +27,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
+import io.techcode.logbulk.net.Packet;
 import io.techcode.logbulk.util.ConvertHandler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -53,8 +54,8 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
     private final NavigableSet<Worker> workers = Sets.newTreeSet();
     private final Map<String, Worker> workersJob = Maps.newHashMap();
 
-    // Pending message to process
-    private final Deque<JsonObject> buffer = Queues.newArrayDeque();
+    // Pending packet to process
+    private final Deque<Packet> buffer = Queues.newArrayDeque();
     private boolean fifo;
 
     // Back pressure
@@ -72,7 +73,7 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
         threshold *= componentCount;
 
         // Setup
-        getEventBus().<JsonObject>localConsumer(endpoint).handler(this).exceptionHandler(THROWABLE_HANDLER);
+        getEventBus().<Packet>localConsumer(endpoint).handler(this).exceptionHandler(THROWABLE_HANDLER);
         getEventBus().<JsonArray>localConsumer(endpoint + ".worker").handler(event -> {
             // Isolate body message
             JsonArray body = event.body();
@@ -117,7 +118,7 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
                     .put("idle", idle)
                     .put("threshold", threshold)
                     .put("worker", workerStatus));
-            event.reply(message, DELIVERY_OPTIONS);
+            event.reply(message);
         });
     }
 
@@ -128,32 +129,32 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
                 config.getInteger("instance") > 0, "The instance is required");
     }
 
-    @Override public void handle(JsonObject msg) {
-        handlePressure(msg);
+    @Override public void handle(Packet packet) {
+        handlePressure(packet);
         if (workers.size() > 0) {
             processBuffers();
         }
     }
 
     /**
-     * Add body in buffer and handle back pressure.
+     * Add packet in buffer and handle back pressure.
      *
-     * @param msg message to add in buffer.
+     * @param packet packet to add in buffer.
      */
-    private void handlePressure(JsonObject msg) {
-        buffer.add(msg);
+    private void handlePressure(Packet packet) {
+        buffer.add(packet);
         if (buffer.size() > threshold) {
-            notifyPressure(previousPressure, headers(msg));
+            notifyPressure(previousPressure, packet.getHeader());
         }
     }
 
     /**
-     * Send body to an available worker.
+     * Send packet to an available worker.
      *
-     * @param msg message to process.
+     * @param packet packet to process.
      * @return true if success, otherwise false.
      */
-    private boolean process(JsonObject msg) {
+    private boolean process(Packet packet) {
         // Retrieve a worker
         Worker worker = (workers.isEmpty()) ? null : workers.first();
         if (worker == null) return false;
@@ -166,7 +167,7 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
 
         // Evict if busy & send job
         if (worker.job < threshold) workers.add(worker);
-        getEventBus().send(worker.name, msg, DELIVERY_OPTIONS);
+        getEventBus().send(worker.name, packet);
         return true;
     }
 
@@ -182,12 +183,12 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
      */
     private boolean processBuffer() {
         if (buffer.size() > 0) {
-            JsonObject msg = (fifo) ? buffer.pollFirst() : buffer.pollLast();
-            Optional<String> nextOpt = next(headers(msg));
+            Packet packet = (fifo) ? buffer.pollFirst() : buffer.pollLast();
+            Optional<String> nextOpt = next(packet.getHeader());
             if (nextOpt.isPresent() && nextPressure.contains(nextOpt.get())) {
-                handlePressure(msg);
+                handlePressure(packet);
             } else {
-                if (process(msg)) {
+                if (process(packet)) {
                     // Handle pressure
                     if (buffer.size() < idle && previousPressure.size() > 0) {
                         previousPressure.forEach(this::tooglePressure);
@@ -195,7 +196,7 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
                     }
                     return true;
                 } else {
-                    handlePressure(msg);
+                    handlePressure(packet);
                 }
             }
         }

@@ -21,47 +21,46 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.logbulk.io;
+package io.techcode.logbulk.net;
 
-import io.vertx.core.json.JsonObject;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
 /**
- * Test for fast json object message codec.
+ * Test for packet codec.
  */
-public class FastJsonObjectMessageCodecTest {
+public class PacketCodecTest {
 
     @Test public void testTransform1() {
         // Prepare mocks
-        JsonObject mockedJsonObject = mock(JsonObject.class);
+        Packet mockedPacket = mock(Packet.class);
 
         // Test
-        FastJsonObjectMessageCodec codec = new FastJsonObjectMessageCodec();
-        codec.transform(mockedJsonObject);
-        verify(mockedJsonObject, never()).copy();
+        PacketCodec codec = new PacketCodec();
+        codec.transform(mockedPacket);
+        verify(mockedPacket, never()).copy();
     }
 
     @Test public void testTransform2() {
         // Prepare mocks
-        JsonObject mockedJsonObject = mock(JsonObject.class);
+        Packet mockedPacket = mock(Packet.class);
 
         // Test
-        FastJsonObjectMessageCodec codec = new FastJsonObjectMessageCodec();
-        JsonObject transformed = codec.transform(mockedJsonObject);
-        assertEquals(mockedJsonObject, transformed);
+        PacketCodec codec = new PacketCodec();
+        Packet transformed = codec.transform(mockedPacket);
+        assertEquals(mockedPacket, transformed);
     }
 
     @Test public void testName() {
         // Test
-        assertEquals("fastjsonobject", new FastJsonObjectMessageCodec().name());
+        assertEquals("PacketCodec", new PacketCodec().name());
     }
 
     @Test public void testSystemCodecID() {
         // Test
-        assertEquals(-1, new FastJsonObjectMessageCodec().systemCodecID());
+        assertEquals(-1, new PacketCodec().systemCodecID());
     }
 
 }

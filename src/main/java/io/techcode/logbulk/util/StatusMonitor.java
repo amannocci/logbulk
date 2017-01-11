@@ -31,7 +31,6 @@ import com.englishtown.vertx.promises.impl.DefaultWhenEventBus;
 import com.englishtown.vertx.promises.impl.VertxExecutor;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import io.techcode.logbulk.component.ComponentVerticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonObject;
@@ -73,7 +72,7 @@ public class StatusMonitor {
             vertx.setPeriodic(time, h -> {
                 // Convert mailbox to promise
                 List<Promise<Message<JsonObject>>> promises = Lists.newArrayListWithCapacity(mailboxs.size());
-                mailboxs.forEach(mailbox -> promises.add(eventBus.send(mailbox + ".status", new JsonObject(), ComponentVerticle.DELIVERY_OPTIONS)));
+                mailboxs.forEach(mailbox -> promises.add(eventBus.send(mailbox + ".status", new JsonObject())));
 
                 // Send all promise
                 when.all(promises).then(

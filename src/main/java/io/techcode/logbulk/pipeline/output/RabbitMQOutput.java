@@ -28,6 +28,7 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.MessageProperties;
 import io.techcode.logbulk.component.BaseComponentVerticle;
+import io.techcode.logbulk.net.Packet;
 import io.techcode.logbulk.util.stream.Streams;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
@@ -146,26 +147,26 @@ public class RabbitMQOutput extends BaseComponentVerticle {
         }
     }
 
-    @Override public void handle(JsonObject msg) {
+    @Override public void handle(Packet packet) {
         // Switch over mode
         try {
-            JsonObject headers = headers(msg);
+            Packet.Header headers = packet.getHeader();
             switch (mode) {
                 case PUBLISH: {
-                    rabbit.basicPublish(exchange, routingKey, MessageProperties.PERSISTENT_BASIC, body(msg).encode().getBytes());
+                    rabbit.basicPublish(exchange, routingKey, MessageProperties.PERSISTENT_BASIC, packet.getBody().encode().getBytes());
 
                     // Send to the next endpoint
-                    forwardAndRelease(msg);
+                    forwardAndRelease(packet);
                 }
                 break;
                 case ACK: {
                     String source = headers.getString("_rabbit_source");
                     if (source != null) {
-                        getEventBus().send(source + ".ack", msg, DELIVERY_OPTIONS, (Handler<AsyncResult<Message<Void>>>) e -> {
+                        getEventBus().send(source + ".ack", packet, (Handler<AsyncResult<Message<Void>>>) e -> {
                             if (e.succeeded()) {
-                                forwardAndRelease(msg);
+                                forwardAndRelease(packet);
                             } else {
-                                handleFallback(msg, e.cause());
+                                handleFallback(packet, e.cause());
                             }
                         });
                     }
@@ -174,11 +175,11 @@ public class RabbitMQOutput extends BaseComponentVerticle {
                 case NACK: {
                     String source = headers.getString("_rabbit_source");
                     if (source != null) {
-                        getEventBus().send(source + ".nack", msg, DELIVERY_OPTIONS, (Handler<AsyncResult<Message<Void>>>) e -> {
+                        getEventBus().send(source + ".nack", packet, (Handler<AsyncResult<Message<Void>>>) e -> {
                             if (e.succeeded()) {
-                                forwardAndRelease(msg);
+                                forwardAndRelease(packet);
                             } else {
-                                handleFallback(msg, e.cause());
+                                handleFallback(packet, e.cause());
                             }
                         });
                     }
@@ -186,7 +187,7 @@ public class RabbitMQOutput extends BaseComponentVerticle {
                 break;
             }
         } catch (IOException ex) {
-            handleFallback(msg, ex);
+            handleFallback(packet, ex);
         }
     }
 

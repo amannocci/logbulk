@@ -29,6 +29,7 @@ import com.google.common.collect.Maps;
 import com.google.common.primitives.Floats;
 import com.google.common.primitives.Ints;
 import io.techcode.logbulk.component.BaseComponentVerticle;
+import io.techcode.logbulk.net.Packet;
 import io.techcode.logbulk.util.stream.Streams;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -49,7 +50,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class MutateTransform extends BaseComponentVerticle {
 
     // Pipeline
-    private List<Consumer<JsonObject>> pipeline;
+    private List<Consumer<Packet>> pipeline;
 
     @Override public void start() {
         super.start();
@@ -97,18 +98,18 @@ public class MutateTransform extends BaseComponentVerticle {
         resume();
     }
 
-    @Override public void handle(JsonObject msg) {
+    @Override public void handle(Packet packet) {
         // Process
-        pipeline.forEach(t -> t.accept(msg));
+        pipeline.forEach(t -> t.accept(packet));
 
         // Send to the next endpoint
-        forwardAndRelease(msg);
+        forwardAndRelease(packet);
     }
 
     /**
      * Mask task implementation.
      */
-    private class MaskTask implements Consumer<JsonObject> {
+    private class MaskTask implements Consumer<Packet> {
 
         // Field to mask
         private final String toMask;
@@ -123,14 +124,14 @@ public class MutateTransform extends BaseComponentVerticle {
             toMask = config.getString("mask");
         }
 
-        @Override public void accept(JsonObject msg) {
-            JsonObject headers = headers(msg);
-            JsonObject body = body(msg);
+        @Override public void accept(Packet packet) {
+            Packet.Header headers = packet.getHeader();
+            JsonObject body = packet.getBody();
 
             if (body.containsKey(toMask) && body.getValue(toMask) instanceof JsonObject) {
                 JsonObject mask = body.getJsonObject(toMask);
                 headers.put("_mask", body);
-                msg.put("body", mask);
+                packet.setBody(mask);
             }
         }
 
@@ -139,7 +140,7 @@ public class MutateTransform extends BaseComponentVerticle {
     /**
      * Unmask task implementation.
      */
-    private class UnmaskTask implements Consumer<JsonObject> {
+    private class UnmaskTask implements Consumer<Packet> {
 
         /**
          * Create a new unmask task.
@@ -150,13 +151,13 @@ public class MutateTransform extends BaseComponentVerticle {
             checkNotNull(config, "The configuration can't be null");
         }
 
-        @Override public void accept(JsonObject msg) {
-            JsonObject headers = headers(msg);
+        @Override public void accept(Packet packet) {
+            Packet.Header headers = packet.getHeader();
 
             if (headers.containsKey("_mask")) {
                 JsonObject unmask = headers.getJsonObject("_mask");
                 headers.remove("_mask");
-                msg.put("body", unmask);
+                packet.setBody(unmask);
             }
         }
 
@@ -165,7 +166,7 @@ public class MutateTransform extends BaseComponentVerticle {
     /**
      * Remove task implementation.
      */
-    private class RemoveTask implements Consumer<JsonObject> {
+    private class RemoveTask implements Consumer<Packet> {
 
         // Field to remove
         private final List<String> toRemove;
@@ -181,8 +182,8 @@ public class MutateTransform extends BaseComponentVerticle {
             ((ArrayList) toRemove).trimToSize();
         }
 
-        @Override public void accept(JsonObject msg) {
-            JsonObject body = body(msg);
+        @Override public void accept(Packet packet) {
+            JsonObject body = packet.getBody();
             toRemove.forEach(body::remove);
         }
 
@@ -191,7 +192,7 @@ public class MutateTransform extends BaseComponentVerticle {
     /**
      * Strip task implementation.
      */
-    private class StripTask implements Consumer<JsonObject> {
+    private class StripTask implements Consumer<Packet> {
 
         // Pattern
         private final Pattern pattern = Pattern.compile("\\s+");
@@ -210,8 +211,8 @@ public class MutateTransform extends BaseComponentVerticle {
             ((ArrayList) toStrip).trimToSize();
         }
 
-        @Override public void accept(JsonObject msg) {
-            JsonObject body = body(msg);
+        @Override public void accept(Packet packet) {
+            JsonObject body = packet.getBody();
             toStrip.forEach(key -> {
                 if (body.containsKey(key)) {
                     body.put(key, pattern.matcher(body.getString(key)).replaceAll(" "));
@@ -224,7 +225,7 @@ public class MutateTransform extends BaseComponentVerticle {
     /**
      * Lowercase task implementation.
      */
-    private class LowercaseTask implements Consumer<JsonObject> {
+    private class LowercaseTask implements Consumer<Packet> {
 
         // Field to strip
         private final List<String> toLowercase;
@@ -240,8 +241,8 @@ public class MutateTransform extends BaseComponentVerticle {
             ((ArrayList) toLowercase).trimToSize();
         }
 
-        @Override public void accept(JsonObject msg) {
-            JsonObject body = body(msg);
+        @Override public void accept(Packet packet) {
+            JsonObject body = packet.getBody();
             toLowercase.forEach(key -> {
                 if (body.containsKey(key)) {
                     body.put(key, body.getString(key).toLowerCase());
@@ -254,7 +255,7 @@ public class MutateTransform extends BaseComponentVerticle {
     /**
      * Uppercase task implementation.
      */
-    private class UppercaseTask implements Consumer<JsonObject> {
+    private class UppercaseTask implements Consumer<Packet> {
 
         // Field to strip
         private final List<String> toUppercase;
@@ -270,8 +271,8 @@ public class MutateTransform extends BaseComponentVerticle {
             ((ArrayList) toUppercase).trimToSize();
         }
 
-        @Override public void accept(JsonObject msg) {
-            JsonObject body = body(msg);
+        @Override public void accept(Packet packet) {
+            JsonObject body = packet.getBody();
             toUppercase.forEach(key -> {
                 if (body.containsKey(key)) {
                     body.put(key, body.getString(key).toUpperCase());
@@ -284,7 +285,7 @@ public class MutateTransform extends BaseComponentVerticle {
     /**
      * Update task implementation.
      */
-    private class UpdateTask implements Consumer<JsonObject> {
+    private class UpdateTask implements Consumer<Packet> {
 
         // Element to update
         private final Map<String, String> toUpdate;
@@ -302,8 +303,8 @@ public class MutateTransform extends BaseComponentVerticle {
             }
         }
 
-        @Override public void accept(JsonObject msg) {
-            JsonObject body = body(msg);
+        @Override public void accept(Packet packet) {
+            JsonObject body = packet.getBody();
             toUpdate.keySet().stream().filter(body::containsKey).forEach(key -> {
                 body.put(key, toUpdate.get(key));
             });
@@ -314,7 +315,7 @@ public class MutateTransform extends BaseComponentVerticle {
     /**
      * Gsub task implementation.
      */
-    private class GsubTask implements Consumer<JsonObject> {
+    private class GsubTask implements Consumer<Packet> {
 
         // Element to gsub
         private final Map<String, Pair<String, String>> toGsub = Maps.newTreeMap();
@@ -338,8 +339,8 @@ public class MutateTransform extends BaseComponentVerticle {
             }
         }
 
-        @Override public void accept(JsonObject msg) {
-            JsonObject body = body(msg);
+        @Override public void accept(Packet packet) {
+            JsonObject body = packet.getBody();
             toGsub.keySet().stream().filter(body::containsKey).forEach(key -> {
                 if (body.getValue(key) instanceof String) {
                     Pair<String, String> pair = toGsub.get(key);
@@ -353,7 +354,7 @@ public class MutateTransform extends BaseComponentVerticle {
     /**
      * Join task implementation.
      */
-    private class JoinTask implements Consumer<JsonObject> {
+    private class JoinTask implements Consumer<Packet> {
 
         // Element to join
         private final Map<String, String> toJoin;
@@ -371,8 +372,8 @@ public class MutateTransform extends BaseComponentVerticle {
             }
         }
 
-        @Override public void accept(JsonObject msg) {
-            JsonObject body = body(msg);
+        @Override public void accept(Packet packet) {
+            JsonObject body = packet.getBody();
             toJoin.keySet().stream().filter(body::containsKey).forEach(key -> {
                 Object raw = body.getMap().get(key);
                 if (raw instanceof List) {
@@ -388,7 +389,7 @@ public class MutateTransform extends BaseComponentVerticle {
     /**
      * Rename task implementation.
      */
-    private class RenameTask implements Consumer<JsonObject> {
+    private class RenameTask implements Consumer<Packet> {
 
         // Element to rename
         private final Map<String, String> toRename;
@@ -406,8 +407,8 @@ public class MutateTransform extends BaseComponentVerticle {
             }
         }
 
-        @Override public void accept(JsonObject msg) {
-            JsonObject body = body(msg);
+        @Override public void accept(Packet packet) {
+            JsonObject body = packet.getBody();
             toRename.keySet().stream().filter(body::containsKey).forEach(key -> {
                 body.getMap().put(toRename.get(key), body.getMap().get(key));
                 body.remove(key);
@@ -419,7 +420,7 @@ public class MutateTransform extends BaseComponentVerticle {
     /**
      * Convert task implementation.
      */
-    private class ConvertTask implements Consumer<JsonObject> {
+    private class ConvertTask implements Consumer<Packet> {
 
         // Element to convert
         private final Map<String, Byte> toConvert;
@@ -447,8 +448,8 @@ public class MutateTransform extends BaseComponentVerticle {
             }
         }
 
-        @Override public void accept(JsonObject msg) {
-            JsonObject body = body(msg);
+        @Override public void accept(Packet packet) {
+            JsonObject body = packet.getBody();
             toConvert.keySet().stream().filter(body::containsKey).forEach(key -> {
                 switch (toConvert.get(key)) {
                     case 0:

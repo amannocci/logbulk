@@ -23,38 +23,38 @@
  */
 package io.techcode.logbulk.util;
 
+import io.techcode.logbulk.net.Packet;
 import io.vertx.core.Handler;
 import io.vertx.core.eventbus.Message;
-import io.vertx.core.json.JsonObject;
 
 /**
- * Convert a message to a pair of headers and body.
+ * A little adapter to help handle packet.
  */
-public interface ConvertHandler extends Handler<Message<JsonObject>> {
+public interface ConvertHandler extends Handler<Message<Packet>> {
 
-    @Override default void handle(Message<JsonObject> event) {
-        JsonObject message = event.body();
+    @Override default void handle(Message<Packet> event) {
+        Packet packet = event.body();
         try {
-            handle(message);
+            handle(packet);
         } catch (Throwable th) {
-            handleFallback(message, th);
+            handleFallback(packet, th);
         }
     }
 
     /**
-     * Handle message.
+     * Handle packet.
      *
-     * @param message message involved.
+     * @param packet packet involved.
      */
-    void handle(JsonObject message);
+    void handle(Packet packet);
 
     /**
      * Handle fallback during processing.
      *
-     * @param msg message involved.
+     * @param pkt packet involved.
      * @param th  error throw.
      */
-    default void handleFallback(JsonObject msg, Throwable th) {
+    default void handleFallback(Packet pkt, Throwable th) {
     }
 
 }

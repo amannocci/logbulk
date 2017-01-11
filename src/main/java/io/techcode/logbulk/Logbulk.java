@@ -30,7 +30,8 @@ import io.techcode.logbulk.component.ComponentRegistry;
 import io.techcode.logbulk.component.Mailbox;
 import io.techcode.logbulk.io.AppConfig;
 import io.techcode.logbulk.io.Configuration;
-import io.techcode.logbulk.io.FastJsonObjectMessageCodec;
+import io.techcode.logbulk.net.Packet;
+import io.techcode.logbulk.net.PacketCodec;
 import io.techcode.logbulk.util.StatusMonitor;
 import io.vertx.core.*;
 import io.vertx.core.json.JsonObject;
@@ -74,7 +75,7 @@ public class Logbulk extends AbstractVerticle {
         registry = new ComponentRegistry(this);
 
         // Register custom codecs
-        vertx.eventBus().registerCodec(new FastJsonObjectMessageCodec());
+        vertx.eventBus().registerDefaultCodec(Packet.class, new PacketCodec());
 
         // Setup status monitor
         monitor = new StatusMonitor(vertx, config.settings().getLong("status", -1L));

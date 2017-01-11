@@ -26,6 +26,7 @@ package io.techcode.logbulk.pipeline.output;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Queues;
 import io.techcode.logbulk.component.BaseComponentVerticle;
+import io.techcode.logbulk.net.Packet;
 import io.techcode.logbulk.util.Flusher;
 import io.techcode.logbulk.util.stream.Streams;
 import io.vertx.core.http.HttpClient;
@@ -55,7 +56,7 @@ public class ElasticOutput extends BaseComponentVerticle {
     private Flusher flusher;
 
     // Stuff to build meta and request
-    private Deque<JsonObject> pending = Queues.newArrayDeque();
+    private Deque<Packet> pending = Queues.newArrayDeque();
     private String index;
     private String type;
 
@@ -88,9 +89,9 @@ public class ElasticOutput extends BaseComponentVerticle {
         if (http != null) http.close();
     }
 
-    @Override public void handle(JsonObject msg) {
-        // Add to pending message
-        pending.add(msg);
+    @Override public void handle(Packet packet) {
+        // Add to pending packet
+        pending.add(packet);
 
         // Send if needed
         if (pending.size() >= bulk) {
@@ -114,17 +115,17 @@ public class ElasticOutput extends BaseComponentVerticle {
 
         // If no work needed
         if (pending.size() > 0) {
-            Deque<JsonObject> process = pending;
+            Deque<Packet> process = pending;
             pending = Queues.newArrayDeque();
 
             // Prepare request building
             StringBuilder builder = new StringBuilder();
 
-            // Iterate over each message
-            for (JsonObject msg : process) {
+            // Iterate over each packet
+            for (Packet packet : process) {
                 // Prepare header
                 String idx = index;
-                JsonObject body = body(msg);
+                JsonObject body = packet.getBody();
                 if (body.containsKey("_index")) {
                     idx += body.getString("_index");
                     body.remove("_index");

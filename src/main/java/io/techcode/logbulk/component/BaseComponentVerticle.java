@@ -23,9 +23,9 @@
  */
 package io.techcode.logbulk.component;
 
+import io.techcode.logbulk.net.Packet;
 import io.techcode.logbulk.util.ConvertHandler;
 import io.vertx.core.eventbus.Message;
-import io.vertx.core.json.JsonObject;
 
 /**
  * Transform component verticle helper.
@@ -37,20 +37,20 @@ public abstract class BaseComponentVerticle extends ComponentVerticle implements
 
     @Override public void start() {
         super.start();
-        getEventBus().<JsonObject>localConsumer(endpoint)
+        getEventBus().<Packet>localConsumer(endpoint)
                 .handler(this)
                 .exceptionHandler(THROWABLE_HANDLER);
     }
 
-    @Override public void handle(Message<JsonObject> event) {
-        JsonObject message = event.body();
+    @Override public void handle(Message<Packet> event) {
+        Packet packet = event.body();
         if (pause) {
             refuse(event.body());
         } else {
             try {
-                handle(message);
+                handle(packet);
             } catch (Throwable th) {
-                handleFallback(message, th);
+                handleFallback(packet, th);
             }
         }
     }
@@ -65,7 +65,7 @@ public abstract class BaseComponentVerticle extends ComponentVerticle implements
     }
 
     /**
-     * Resume message handling.
+     * Resume packet handling.
      */
     public void resume() {
         // Update flag
@@ -76,7 +76,7 @@ public abstract class BaseComponentVerticle extends ComponentVerticle implements
     }
 
     /**
-     * Pause message handling.
+     * Pause packet handling.
      */
     public void pause() {
         pause = true;

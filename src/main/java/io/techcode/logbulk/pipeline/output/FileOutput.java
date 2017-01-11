@@ -24,6 +24,7 @@
 package io.techcode.logbulk.pipeline.output;
 
 import io.techcode.logbulk.component.BaseComponentVerticle;
+import io.techcode.logbulk.net.Packet;
 import io.vertx.core.VoidHandler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.file.AsyncFile;
@@ -73,9 +74,9 @@ public class FileOutput extends BaseComponentVerticle {
         resume();
     }
 
-    @Override public void handle(JsonObject msg) {
+    @Override public void handle(Packet packet) {
         // Process the body
-        buf.appendString(body(msg).encode()).appendString(delimiter);
+        buf.appendString(packet.getBody().encode()).appendString(delimiter);
 
         // If send needed
         if (buf.length() > chunkPartition) {
@@ -91,7 +92,7 @@ public class FileOutput extends BaseComponentVerticle {
         }
 
         // Send to the next endpoint
-        forwardAndRelease(msg);
+        forwardAndRelease(packet);
     }
 
     @Override public void stop() {

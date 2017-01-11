@@ -25,6 +25,7 @@ package io.techcode.logbulk.pipeline.transform;
 
 import com.google.common.base.Strings;
 import io.techcode.logbulk.component.BaseComponentVerticle;
+import io.techcode.logbulk.net.Packet;
 import io.vertx.core.json.JsonObject;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
@@ -73,9 +74,9 @@ public class DateTransform extends BaseComponentVerticle {
         resume();
     }
 
-    @Override public void handle(JsonObject msg) {
+    @Override public void handle(Packet packet) {
         // Process
-        JsonObject body = body(msg);
+        JsonObject body = packet.getBody();
         DateTime time = null;
         if (field == null) {
             time = new DateTime(System.currentTimeMillis());
@@ -95,7 +96,7 @@ public class DateTransform extends BaseComponentVerticle {
         }
 
         // Send to the next endpoint
-        forwardAndRelease(msg);
+        forwardAndRelease(packet);
     }
 
     @Override protected void checkConfig(JsonObject config) {

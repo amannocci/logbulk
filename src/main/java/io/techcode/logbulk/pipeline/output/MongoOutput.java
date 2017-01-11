@@ -24,6 +24,7 @@
 package io.techcode.logbulk.pipeline.output;
 
 import io.techcode.logbulk.component.BaseComponentVerticle;
+import io.techcode.logbulk.net.Packet;
 import io.techcode.logbulk.util.Flusher;
 import io.techcode.logbulk.util.stream.Streams;
 import io.vertx.core.json.JsonArray;
@@ -79,9 +80,9 @@ public class MongoOutput extends BaseComponentVerticle {
         resume();
     }
 
-    @Override public void handle(JsonObject msg) {
+    @Override public void handle(Packet packet) {
         // Prepare body
-        JsonObject body = body(msg);
+        JsonObject body = packet.getBody();
         if (dates.size() > 0) {
             dates.stream()
                     .filter(body::containsKey)
@@ -97,7 +98,7 @@ public class MongoOutput extends BaseComponentVerticle {
         }
 
         // Send to the next endpoint
-        forwardAndRelease(msg);
+        forwardAndRelease(packet);
     }
 
     @Override public void stop() {

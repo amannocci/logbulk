@@ -26,6 +26,7 @@ package io.techcode.logbulk.pipeline.transform;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import io.techcode.logbulk.component.BaseComponentVerticle;
+import io.techcode.logbulk.net.Packet;
 import io.techcode.logbulk.util.stream.Streams;
 import io.vertx.core.json.JsonObject;
 
@@ -68,15 +69,15 @@ public class AnonymiseTransform extends BaseComponentVerticle {
         resume();
     }
 
-    @Override public void handle(JsonObject msg) {
+    @Override public void handle(Packet packet) {
         // Process
-        JsonObject body = body(msg);
+        JsonObject body = packet.getBody();
         fields.stream().filter(body::containsKey).forEach(field -> {
             body.put(field, hash.hashString(body.getString(field), StandardCharsets.UTF_8).toString());
         });
 
         // Send to the next endpoint
-        forwardAndRelease(msg);
+        forwardAndRelease(packet);
     }
 
     @Override protected void checkConfig(JsonObject config) {

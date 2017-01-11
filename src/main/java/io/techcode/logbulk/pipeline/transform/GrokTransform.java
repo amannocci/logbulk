@@ -24,6 +24,7 @@
 package io.techcode.logbulk.pipeline.transform;
 
 import io.techcode.logbulk.component.BaseComponentVerticle;
+import io.techcode.logbulk.net.Packet;
 import io.thekraken.grok.api.Grok;
 import io.thekraken.grok.api.Match;
 import io.thekraken.grok.api.exception.GrokException;
@@ -64,23 +65,23 @@ public class GrokTransform extends BaseComponentVerticle {
         }
     }
 
-    @Override public void handle(JsonObject msg) {
+    @Override public void handle(Packet packet) {
         // Process
-        JsonObject body = body(msg);
+        JsonObject body = packet.getBody();
         String field = body.getString(config.getString("field"));
         if (field == null) {
-            forwardAndRelease(msg);
+            forwardAndRelease(packet);
         } else {
             Match matcher = grok.match(field);
             matcher.captures();
             if (matcher.isNull()) {
-                handleFallback(msg);
+                handleFallback(packet);
             } else {
                 // Compose
                 body.mergeIn(new JsonObject(matcher.toMap()));
 
                 // Send to the next endpoint
-                forwardAndRelease(msg);
+                forwardAndRelease(packet);
             }
         }
     }
