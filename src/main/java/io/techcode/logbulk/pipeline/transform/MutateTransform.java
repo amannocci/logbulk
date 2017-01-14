@@ -33,6 +33,7 @@ import io.techcode.logbulk.net.Packet;
 import io.techcode.logbulk.util.stream.Streams;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import lombok.NonNull;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
@@ -41,8 +42,6 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Mutate transformer pipeline component.
@@ -119,8 +118,7 @@ public class MutateTransform extends BaseComponentVerticle {
          *
          * @param config configuration of the task.
          */
-        private MaskTask(JsonObject config) {
-            checkNotNull(config, "The configuration can't be null");
+        private MaskTask(@NonNull JsonObject config) {
             toMask = config.getString("mask");
         }
 
@@ -145,10 +143,9 @@ public class MutateTransform extends BaseComponentVerticle {
         /**
          * Create a new unmask task.
          *
-         * @param config configuration of the task.
+         * @param ignored configuration of the task.
          */
-        private UnmaskTask(JsonObject config) {
-            checkNotNull(config, "The configuration can't be null");
+        private UnmaskTask(JsonObject ignored) {
         }
 
         @Override public void accept(Packet packet) {
@@ -176,8 +173,7 @@ public class MutateTransform extends BaseComponentVerticle {
          *
          * @param config configuration of the task.
          */
-        private RemoveTask(JsonObject config) {
-            checkNotNull(config, "The configuration can't be null");
+        private RemoveTask(@NonNull JsonObject config) {
             toRemove = Streams.to(config.getJsonArray("remove").stream(), String.class).collect(Collectors.toList());
             ((ArrayList) toRemove).trimToSize();
         }
@@ -205,8 +201,7 @@ public class MutateTransform extends BaseComponentVerticle {
          *
          * @param config configuration of the task.
          */
-        public StripTask(JsonObject config) {
-            checkNotNull(config, "The configuration can't be null");
+        public StripTask(@NonNull JsonObject config) {
             toStrip = Streams.to(config.getJsonArray("strip").stream(), String.class).collect(Collectors.toList());
             ((ArrayList) toStrip).trimToSize();
         }
@@ -235,8 +230,7 @@ public class MutateTransform extends BaseComponentVerticle {
          *
          * @param config configuration of the task.
          */
-        public LowercaseTask(JsonObject config) {
-            checkNotNull(config, "The configuration can't be null");
+        public LowercaseTask(@NonNull JsonObject config) {
             toLowercase = Streams.to(config.getJsonArray("lowercase").stream(), String.class).collect(Collectors.toList());
             ((ArrayList) toLowercase).trimToSize();
         }
@@ -265,8 +259,7 @@ public class MutateTransform extends BaseComponentVerticle {
          *
          * @param config configuration of the task.
          */
-        public UppercaseTask(JsonObject config) {
-            checkNotNull(config, "The configuration can't be null");
+        public UppercaseTask(@NonNull JsonObject config) {
             toUppercase = Streams.to(config.getJsonArray("uppercase").stream(), String.class).collect(Collectors.toList());
             ((ArrayList) toUppercase).trimToSize();
         }
@@ -288,16 +281,14 @@ public class MutateTransform extends BaseComponentVerticle {
     private class UpdateTask implements Consumer<Packet> {
 
         // Element to update
-        private final Map<String, String> toUpdate;
+        private final Map<String, String> toUpdate = Maps.newTreeMap();
 
         /**
          * Create a new remame task.
          *
          * @param config configuration of the task.
          */
-        private UpdateTask(JsonObject config) {
-            checkNotNull(config, "The configuration can't be null");
-            toUpdate = Maps.newTreeMap();
+        private UpdateTask(@NonNull JsonObject config) {
             for (Map.Entry<String, Object> entry : config.getJsonObject("update")) {
                 toUpdate.put(entry.getKey(), String.valueOf(entry.getValue()));
             }
@@ -325,8 +316,7 @@ public class MutateTransform extends BaseComponentVerticle {
          *
          * @param config configuration of the task.
          */
-        private GsubTask(JsonObject config) {
-            checkNotNull(config, "The configuration can't be null");
+        private GsubTask(@NonNull JsonObject config) {
             for (Map.Entry<String, Object> entry : config.getJsonObject("gsub")) {
                 if (entry.getValue() instanceof JsonArray) {
                     JsonArray list = (JsonArray) entry.getValue();
@@ -357,16 +347,14 @@ public class MutateTransform extends BaseComponentVerticle {
     private class JoinTask implements Consumer<Packet> {
 
         // Element to join
-        private final Map<String, String> toJoin;
+        private final Map<String, String> toJoin = Maps.newTreeMap();
 
         /**
          * Create a new join task.
          *
          * @param config configuration of the task.
          */
-        private JoinTask(JsonObject config) {
-            checkNotNull(config, "The configuration can't be null");
-            toJoin = Maps.newTreeMap();
+        private JoinTask(@NonNull JsonObject config) {
             for (Map.Entry<String, Object> entry : config.getJsonObject("join")) {
                 toJoin.put(entry.getKey(), String.valueOf(entry.getValue()));
             }
@@ -392,16 +380,14 @@ public class MutateTransform extends BaseComponentVerticle {
     private class RenameTask implements Consumer<Packet> {
 
         // Element to rename
-        private final Map<String, String> toRename;
+        private final Map<String, String> toRename = Maps.newTreeMap();
 
         /**
          * Create a new remame task.
          *
          * @param config configuration of the task.
          */
-        private RenameTask(JsonObject config) {
-            checkNotNull(config, "The configuration can't be null");
-            toRename = Maps.newTreeMap();
+        private RenameTask(@NonNull JsonObject config) {
             for (Map.Entry<String, Object> entry : config.getJsonObject("rename")) {
                 toRename.put(entry.getKey(), String.valueOf(entry.getValue()));
             }
@@ -423,16 +409,14 @@ public class MutateTransform extends BaseComponentVerticle {
     private class ConvertTask implements Consumer<Packet> {
 
         // Element to convert
-        private final Map<String, Byte> toConvert;
+        private final Map<String, Byte> toConvert = Maps.newTreeMap();
 
         /**
          * Create a new remame task.
          *
          * @param config configuration of the task.
          */
-        private ConvertTask(JsonObject config) {
-            checkNotNull(config, "The configuration can't be null");
-            toConvert = Maps.newTreeMap();
+        private ConvertTask(@NonNull JsonObject config) {
             for (Map.Entry<String, Object> entry : config.getJsonObject("convert")) {
                 switch (String.valueOf(entry.getValue())) {
                     case "integer":

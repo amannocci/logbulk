@@ -25,11 +25,11 @@ package io.techcode.logbulk.util;
 
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import lombok.NonNull;
 
 import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Represents a flusher implementation.
@@ -57,9 +57,9 @@ public class Flusher {
      * @param vertx vertx instance.
      * @param time  flush time.
      */
-    public Flusher(Vertx vertx, long time) {
+    public Flusher(@NonNull Vertx vertx, long time) {
         checkArgument(time > 0, "The time can't be inferior to zero");
-        this.vertx = checkNotNull(vertx, "The vertx instance can't be null");
+        this.vertx = vertx;
         this.time = time;
     }
 

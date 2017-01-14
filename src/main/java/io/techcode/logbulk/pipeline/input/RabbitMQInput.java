@@ -32,6 +32,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.streams.ReadStream;
+import lombok.NonNull;
 import net.jodah.lyra.ConnectionOptions;
 import net.jodah.lyra.Connections;
 import net.jodah.lyra.config.Config;
@@ -42,7 +43,6 @@ import net.jodah.lyra.util.Duration;
 import java.io.IOException;
 import java.util.stream.Collectors;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
@@ -173,8 +173,8 @@ public class RabbitMQInput extends BaseComponentVerticle {
          *
          * @param channel rabbitmq channel.
          */
-        public RabbitMQReadStream(Channel channel) {
-            this.rabbit = checkNotNull(channel, "The channel can't be null");
+        public RabbitMQReadStream(@NonNull Channel channel) {
+            this.rabbit = channel;
         }
 
         @Override public ReadStream<Packet> pause() {

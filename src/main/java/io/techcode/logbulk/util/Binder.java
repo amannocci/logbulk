@@ -24,8 +24,7 @@
 package io.techcode.logbulk.util;
 
 import io.vertx.core.json.JsonObject;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import lombok.NonNull;
 
 /**
  * Binder helper for Json Object binding.
@@ -83,8 +82,8 @@ public class Binder<T extends Binder<T>> {
      * @return same object for chaining.
      */
     @SuppressWarnings("unchecked")
-    public T from(JsonObject from) {
-        this.from = checkNotNull(from, "The json object from can't be null");
+    public T from(@NonNull JsonObject from) {
+        this.from = from;
         return (T) this;
     }
 
@@ -95,8 +94,8 @@ public class Binder<T extends Binder<T>> {
      * @return same object for chaining.
      */
     @SuppressWarnings("unchecked")
-    public T to(JsonObject to) {
-        this.to = checkNotNull(to, "The json object to can't be null");
+    public T to(@NonNull JsonObject to) {
+        this.to = to;
         return (T) this;
     }
 

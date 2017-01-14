@@ -39,7 +39,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
@@ -60,7 +59,7 @@ public class ComponentRegistry {
      * Create a new component registry.
      */
     public ComponentRegistry(@NonNull Logbulk verticle) {
-        this.verticle = checkNotNull(verticle, "The verticle can't be null");
+        this.verticle = verticle;
         registerAll();
         analyzeRoutes();
     }

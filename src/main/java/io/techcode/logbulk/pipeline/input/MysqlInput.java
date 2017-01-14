@@ -35,13 +35,15 @@ import io.vertx.ext.asyncsql.AsyncSQLClient;
 import io.vertx.ext.asyncsql.MySQLClient;
 import io.vertx.ext.sql.ResultSet;
 import io.vertx.ext.sql.SQLConnection;
+import lombok.NonNull;
 
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Mysql input pipeline component.
@@ -112,11 +114,10 @@ public class MysqlInput extends ComponentVerticle {
          * @param track      column to track.
          * @param nonEmpty   not empty.
          */
-        public DBReadStream(AsyncSQLClient client, String statement, JsonObject parameters, JsonArray order, String track, boolean nonEmpty) {
+        public DBReadStream(@NonNull AsyncSQLClient client, String statement, @NonNull JsonObject parameters, @NonNull JsonArray order, String track, boolean nonEmpty) {
             checkArgument(!Strings.isNullOrEmpty(statement), "The statement can't be null or empty");
-            checkNotNull(order, "The order can't be null");
-            this.client = checkNotNull(client, "The client can't be null");
-            this.parameters = checkNotNull(parameters, "The parameters can't be null");
+            this.client = client;
+            this.parameters = parameters;
             this.statement = statement;
             this.track = track;
             this.nonEmpty = nonEmpty;

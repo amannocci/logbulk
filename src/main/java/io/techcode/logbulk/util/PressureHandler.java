@@ -29,10 +29,9 @@ import io.vertx.core.eventbus.Message;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.core.streams.ReadStream;
+import lombok.NonNull;
 
 import java.util.Set;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Pressure handler implementation.
@@ -71,8 +70,8 @@ public class PressureHandler implements Handler<Message<String>> {
      * @param endpoint   endpoint name.
      * @param endHandler end handler to call.
      */
-    public PressureHandler(ReadStream stream, String endpoint, Handler<Void> endHandler) {
-        this.stream = checkNotNull(stream, "The stream can't be null");
+    public PressureHandler(@NonNull ReadStream stream, String endpoint, Handler<Void> endHandler) {
+        this.stream = stream;
         stream.endHandler(h -> {
             if (endHandler != null) endHandler.handle(null);
             nextPressure.clear();

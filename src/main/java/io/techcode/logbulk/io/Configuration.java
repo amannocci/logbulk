@@ -31,6 +31,7 @@ import com.google.common.primitives.Longs;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import lombok.NonNull;
 
 import java.time.Instant;
 import java.util.Iterator;
@@ -41,8 +42,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Wrap json configuration to allow proper java properties overrides.
@@ -57,8 +56,8 @@ public class Configuration extends JsonObject {
      *
      * @param config configuration to wrap.
      */
-    public Configuration(JsonObject config) {
-        this.wrapConfig = checkNotNull(config, "The configuration can't be null");
+    public Configuration(@NonNull JsonObject config) {
+        this.wrapConfig = config;
     }
 
     /**

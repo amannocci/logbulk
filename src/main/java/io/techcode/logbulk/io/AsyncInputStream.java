@@ -29,6 +29,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.streams.ReadStream;
 import lombok.Getter;
+import lombok.NonNull;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.Closeable;
@@ -39,7 +40,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * This class is able to convert an IO stream to a NIO stream.
@@ -86,9 +88,7 @@ public class AsyncInputStream implements ReadStream<Buffer> {
      * @param in        IO input stream.
      * @param chunkSize chunk size.
      */
-    public AsyncInputStream(Vertx vertx, ExecutorService executor, InputStream in, int chunkSize) {
-        checkNotNull(in, "The input stream can't be null");
-        checkNotNull(vertx, "The vertx can't be null");
+    public AsyncInputStream(@NonNull Vertx vertx, ExecutorService executor, @NonNull InputStream in, int chunkSize) {
         checkArgument(chunkSize > 0, "chunkSize: " + chunkSize + " (expected: a positive integer)");
         this.vertx = vertx;
         if (in instanceof PushbackInputStream) {
@@ -107,7 +107,7 @@ public class AsyncInputStream implements ReadStream<Buffer> {
     }
 
     @Override public AsyncInputStream handler(Handler<Buffer> handler) {
-        dataHandler = checkNotNull(handler, "The handler can't be null");
+        dataHandler = handler;
         doRead();
         return this;
     }

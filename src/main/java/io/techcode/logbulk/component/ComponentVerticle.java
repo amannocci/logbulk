@@ -42,6 +42,7 @@ import io.vertx.core.logging.LoggerFactory;
 import io.vertx.core.parsetools.RecordParser;
 import io.vertx.core.streams.ReadStream;
 import lombok.Getter;
+import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
@@ -49,7 +50,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
@@ -138,8 +138,7 @@ public class ComponentVerticle extends AbstractVerticle {
      * @param packet packet involved.
      * @param th     error throw.
      */
-    public void handleFallback(Packet packet, Throwable th) {
-        checkNotNull(packet, "The packet can't be null");
+    public void handleFallback(@NonNull Packet packet, Throwable th) {
         Packet.Header headers = packet.getHeader();
         JsonObject body = packet.getBody();
         if (th != null) {
@@ -164,9 +163,7 @@ public class ComponentVerticle extends AbstractVerticle {
      * @param headers headers of the body.
      * @return previous component processor for this body.
      */
-    public Optional<String> previous(Packet.Header headers) {
-        checkNotNull(headers, "Headers can't be null");
-
+    public Optional<String> previous(@NonNull Packet.Header headers) {
         // Gets some stuff
         int previous = headers.getPrevious();
 
@@ -188,11 +185,7 @@ public class ComponentVerticle extends AbstractVerticle {
      * @return next component processor for this packet.
      */
     public Optional<String> next(Packet.Header headers) {
-        checkNotNull(headers, "Headers can't be null");
-
-        // Gets some stuff
-        int current = headers.getCurrent();
-        return next(headers, current);
+        return next(headers, headers.getCurrent());
     }
 
     /**
@@ -201,9 +194,7 @@ public class ComponentVerticle extends AbstractVerticle {
      * @param headers headers of the body.
      * @return next component processor for this body.
      */
-    private Optional<String> next(Packet.Header headers, int current) {
-        checkNotNull(headers, "Headers can't be null");
-
+    private Optional<String> next(@NonNull Packet.Header headers, int current) {
         // Gets some stuff
         int next = current + 1;
 
@@ -224,9 +215,7 @@ public class ComponentVerticle extends AbstractVerticle {
      *
      * @param packet packet to forward.
      */
-    public void send(Packet packet) {
-        checkNotNull(packet, "The packet to forward can't be null");
-
+    public void send(@NonNull Packet packet) {
         // Gets some stuff
         Packet.Header headers = packet.getHeader();
         int current = headers.getCurrent();
@@ -256,9 +245,7 @@ public class ComponentVerticle extends AbstractVerticle {
      *
      * @param packet packet to forward.
      */
-    public void forward(Packet packet) {
-        checkNotNull(packet, "The packet to forward can't be null");
-
+    public void forward(@NonNull Packet packet) {
         // Don't forget to release
         if (hasMailbox) toRelease += 1;
 
@@ -430,8 +417,7 @@ public class ComponentVerticle extends AbstractVerticle {
      *
      * @param config configuration.
      */
-    public void endpoint(JsonObject config) {
-        checkNotNull(config, "The configuration can't be null");
+    public void endpoint(@NonNull JsonObject config) {
         parentEndpoint = config.getString("endpoint");
 
         if (config.getBoolean("hasMailbox", true)) {

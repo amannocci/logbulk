@@ -28,11 +28,11 @@ import com.google.common.collect.Sets;
 import io.techcode.logbulk.component.BaseComponentVerticle;
 import io.techcode.logbulk.net.Packet;
 import io.vertx.core.json.JsonObject;
+import lombok.NonNull;
 
 import java.util.List;
 import java.util.Set;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
@@ -118,8 +118,8 @@ public class DispatchTransform extends BaseComponentVerticle {
          *
          * @param route route dispatching.
          */
-        public SimpleDispatch(String route) {
-            this.route = checkNotNull(route, "The route can't be null");
+        public SimpleDispatch(@NonNull String route) {
+            this.route = route;
         }
 
         @Override public void dispatch(Packet packet) {
@@ -142,9 +142,9 @@ public class DispatchTransform extends BaseComponentVerticle {
          * @param field field to match.
          * @param route route dispatch.
          */
-        public PresentDispatch(String field, String route) {
+        public PresentDispatch(@NonNull String field, String route) {
             super(route);
-            this.field = checkNotNull(field, "The field can't be null");
+            this.field = field;
         }
 
         @Override public void dispatch(Packet packet) {
@@ -169,9 +169,9 @@ public class DispatchTransform extends BaseComponentVerticle {
          * @param field field to match.
          * @param route route dispatch.
          */
-        public AbsentDispatch(String field, String route) {
+        public AbsentDispatch(@NonNull String field, String route) {
             super(route);
-            this.field = checkNotNull(field, "The field can't be null");
+            this.field = field;
         }
 
         @Override public void dispatch(Packet packet) {
