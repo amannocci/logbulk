@@ -56,8 +56,9 @@ public class RabbitMQInput extends BaseComponentVerticle {
     // Vertx context
     private Context ctx;
 
-    // Queue
+    // Queue & Qos
     private String queue;
+    private int qos;
 
     // Auto ack
     private boolean autoAck;
@@ -68,6 +69,7 @@ public class RabbitMQInput extends BaseComponentVerticle {
         // Setup processing task
         queue = config.getString("queue");
         autoAck = config.getBoolean("autoAck", false);
+        qos = config.getInteger("qos", 0);
         int interval = config.getInteger("interval", 1);
         int intervalMax = config.getInteger("intervalMax", 60);
         int maxAttempts = config.getInteger("maxAttempts", -1);
@@ -193,6 +195,7 @@ public class RabbitMQInput extends BaseComponentVerticle {
             if (paused) {
                 this.paused = false;
                 try {
+                    if (qos > 0) rabbit.basicQos(qos, true);
                     rabbit.basicConsume(queue, autoAck, uuid, new DefaultConsumer(rabbit) {
                         @Override public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
                             Packet packet = generateEvent(new String(body));
