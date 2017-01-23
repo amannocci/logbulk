@@ -185,22 +185,42 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
         if (buffer.size() > 0) {
             Packet packet = (fifo) ? buffer.pollFirst() : buffer.pollLast();
             Optional<String> nextOpt = next(packet.getHeader());
-            if (nextOpt.isPresent() && nextPressure.contains(nextOpt.get())) {
-                handlePressure(packet);
+
+            if (nextOpt.isPresent()) {
+                if (nextPressure.contains(nextOpt.get())) {
+                    handlePressure(packet);
+                } else {
+                    return sendWorker(packet);
+                }
             } else {
-                if (process(packet)) {
-                    // Handle pressure
-                    if (buffer.size() < idle && previousPressure.size() > 0) {
-                        previousPressure.forEach(this::tooglePressure);
-                        previousPressure.clear();
-                    }
-                    return true;
+                if (nextPressure.isEmpty()) {
+                    return sendWorker(packet);
                 } else {
                     handlePressure(packet);
                 }
             }
         }
         return false;
+    }
+
+    /**
+     * Send the packet to the worker.
+     *
+     * @param packet packet to process.
+     * @return true if success, otherwise false.
+     */
+    private boolean sendWorker(Packet packet) {
+        if (process(packet)) {
+            // Handle pressure
+            if (buffer.size() < idle && previousPressure.size() > 0) {
+                previousPressure.forEach(this::tooglePressure);
+                previousPressure.clear();
+            }
+            return true;
+        } else {
+            handlePressure(packet);
+            return false;
+        }
     }
 
     /**
