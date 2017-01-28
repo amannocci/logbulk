@@ -67,6 +67,11 @@
       <version>${grok.version}</version>
     </dependency>
     <dependency>
+      <groupId>com.zaxxer</groupId>
+      <artifactId>nuprocess</artifactId>
+      <version>${nuprocess.version}</version>
+    </dependency>
+    <dependency>
       <groupId>com.rabbitmq</groupId>
       <artifactId>amqp-client</artifactId>
       <version>${rabbitmq.version}</version>
