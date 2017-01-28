@@ -3,7 +3,7 @@ Logbulk is a tool for managing events and logs. You can use it to collect logs, 
 It is fully free and fully open source. The license is MIT, meaning you are pretty much free to use it however you want in whatever way.
 * [Source](https://github.com/amannocci/logbulk)
 * [Issues](https://github.com/amannocci/logbulk/issues)
-* [Documentation](https://github.com/amannocci/logbulk/wiki)
+* [Documentation](https://amannocci.gitbooks.io/logbulk/content/)
 * [Contact](mailto:adrien.mannocci@gmail.com)
 
 ## Prerequisites
