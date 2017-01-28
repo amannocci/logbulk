@@ -15,4 +15,4 @@ cache:
     - '$HOME/.m2/repository'
     - '$HOME/.sonar/cache'
 notifications:
-jdk:
+  email: false
