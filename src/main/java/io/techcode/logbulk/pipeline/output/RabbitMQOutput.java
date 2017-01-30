@@ -192,8 +192,8 @@ public class RabbitMQOutput extends BaseComponentVerticle {
     }
 
     @Override protected void checkConfig(JsonObject config) {
-        Mode.valueOf(config.getString("mode", "publish").toUpperCase());
-        if (!config.getString("mode", "publish").equalsIgnoreCase("publish")) {
+        Mode mode = Mode.valueOf(config.getString("mode", "publish").toUpperCase());
+        if (mode == Mode.PUBLISH) {
             checkState(config.getString("exchange") != null, "The exchange is required");
             checkState(config.getString("routingKey") != null, "The routingKey is required");
         }
