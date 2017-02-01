@@ -96,7 +96,8 @@ public class RabbitMQOutput extends BaseComponentVerticle {
                     .withChannelRetryPolicy(retryPolicy)
                     .withChannelRecoveryPolicy(recoveryPolicy)
                     .withConnectionRetryPolicy(retryPolicy)
-                    .withConnectionRecoveryPolicy(recoveryPolicy);
+                    .withConnectionRecoveryPolicy(recoveryPolicy)
+                    .withConsumerRecovery(true);
 
             // Prepare hosts params
             String[] hosts = Streams.to(config.getJsonArray("hosts", new JsonArray().add("localhost")).stream(), String.class)
