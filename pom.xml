@@ -30,7 +30,7 @@
   <repositories>
     <repository>
       <id>nexus.techcode.io</id>
-      <url>http://nexus.techcode.io/repository/maven-public/</url>
+      <url>https://nexus.techcode.io/repository/maven-public/</url>
     </repository>
   </repositories>
 
