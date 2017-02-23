@@ -24,7 +24,6 @@ fi
 # Plugins list
 declare -a plugins=(
   "std"
-  "std"
 )
 
 # Create plugins dir
