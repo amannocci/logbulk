@@ -63,5 +63,7 @@ buildNumber.properties
 
 # Custom runtime
 runtime/
+plugins/
 foobar
 run.sh
+.vertx/

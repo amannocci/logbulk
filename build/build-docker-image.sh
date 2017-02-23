@@ -3,6 +3,7 @@
 # Correct path
 cd "$(dirname "$0")"
 BASE_DIR=$PWD
+BASE_PROJECT=$(dirname "$BASE_DIR")
 
 # Load common
 source ${BASE_DIR}/common.sh
@@ -21,11 +22,12 @@ then
 fi
 
 # Extract version
+cd ${BASE_PROJECT}
 VERSION=$(grep -oP "<version>(.*)</version>" pom.xml | head -1 | sed 's/\(<version>\|<\/version>\)//g')
 info "version=$VERSION"
 
 # Build logbulk before anything
-mvn clean package
+mvn clean install package
 
 # Build all plugins
 ${BASE_DIR}/build-plugins.sh
