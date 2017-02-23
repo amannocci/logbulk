@@ -84,7 +84,6 @@ public class ComponentRegistryTest {
     }
 
     @Parameters({
-            "input.stdin",
             "input.file",
             "input.tcp",
             "input.exec",
@@ -102,7 +101,6 @@ public class ComponentRegistryTest {
             "transform.anonymise",
             "transform.csv",
             "output.file",
-            "output.stdout",
             "output.elasticsearch",
             "output.rabbitmq",
             "output.mongo"

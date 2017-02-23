@@ -21,6 +21,12 @@ VOLUME ["/usr/logbulk/conf", "/usr/logbulk/log", "/usr/logbulk/lib"]
 
 # Copy logbulk fat jar to the container
 COPY target/$LOGBULK_FILE $LOGBULK_LIB/$LOGBULK_FILE
+
+# Compile & add plugins
+RUN ./build/build-plugins.sh
+COPY plugins/ $LOGBULK_LIB/
+
+# Add entrypoint
 COPY ./docker-entrypoint.sh /
 RUN chmod +x /docker-entrypoint.sh
 

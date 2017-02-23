@@ -26,6 +26,7 @@ package io.techcode.logbulk.util.concurrent;
 import io.vertx.core.Context;
 import io.vertx.core.Vertx;
 import lombok.NonNull;
+import lombok.SneakyThrows;
 import lombok.Value;
 import net.jodah.failsafe.util.concurrent.DefaultScheduledFuture;
 import net.jodah.failsafe.util.concurrent.Scheduler;
