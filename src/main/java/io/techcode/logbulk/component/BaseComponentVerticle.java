@@ -58,7 +58,7 @@ public abstract class BaseComponentVerticle extends ComponentVerticle implements
     /**
      * Returns true if the component is paused.
      *
-     * @return true if teh component is paused, otherwise false.
+     * @return true if the component is paused, otherwise false.
      */
     public boolean isPause() {
         return pause;

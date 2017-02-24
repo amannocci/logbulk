@@ -25,6 +25,7 @@ fi
 declare -a plugins=(
   "std"
   "file"
+  "anonymise"
 )
 
 # Create plugins dir
