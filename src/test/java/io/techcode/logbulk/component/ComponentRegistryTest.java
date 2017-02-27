@@ -97,7 +97,6 @@ public class ComponentRegistryTest {
             "transform.metric",
             "transform.limiter",
             "transform.regex",
-            "transform.csv",
             "output.elasticsearch",
             "output.rabbitmq",
             "output.mongo"

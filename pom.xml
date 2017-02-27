@@ -15,7 +15,6 @@
     <config.version>1.3.1</config.version>
     <lombok.version>1.16.14</lombok.version>
     <nuprocess.version>1.1.0</nuprocess.version>
-    <csv.version>2.3.0</csv.version>
     <lyra.version>0.5.3</lyra.version>
     <rabbitmq.version>4.0.1</rabbitmq.version>
     <failsafe.version>1.0.1</failsafe.version>
@@ -100,11 +99,6 @@
       <groupId>com.typesafe</groupId>
       <artifactId>config</artifactId>
       <version>${config.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.univocity</groupId>
-      <artifactId>univocity-parsers</artifactId>
-      <version>${csv.version}</version>
     </dependency>
 
     <!-- GENERATOR -->

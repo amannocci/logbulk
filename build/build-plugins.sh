@@ -26,6 +26,7 @@ declare -a plugins=(
   "std"
   "file"
   "anonymise"
+  "csv"
 )
 
 # Create plugins dir
