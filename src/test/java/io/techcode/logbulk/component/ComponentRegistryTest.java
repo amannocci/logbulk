@@ -89,7 +89,6 @@ public class ComponentRegistryTest {
             "input.mysql",
             "input.heartbeat",
             "input.rabbitmq",
-            "transform.dispatch",
             "transform.grok",
             "transform.json",
             "transform.mutate",

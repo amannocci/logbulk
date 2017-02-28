@@ -28,6 +28,7 @@ declare -a plugins=(
   "anonymise"
   "csv"
   "date"
+  "dispatch"
 )
 
 # Create plugins dir
