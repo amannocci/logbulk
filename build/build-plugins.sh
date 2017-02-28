@@ -32,6 +32,7 @@ declare -a plugins=(
   "elasticsearch"
   "exec"
   "grok"
+  "json"
 )
 
 # Create plugins dir
