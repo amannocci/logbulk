@@ -29,6 +29,7 @@ declare -a plugins=(
   "csv"
   "date"
   "dispatch"
+  "elasticsearch"
 )
 
 # Create plugins dir
