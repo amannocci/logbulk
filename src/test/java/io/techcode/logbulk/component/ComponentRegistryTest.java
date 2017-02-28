@@ -85,7 +85,6 @@ public class ComponentRegistryTest {
 
     @Parameters({
             "input.tcp",
-            "input.exec",
             "input.mysql",
             "input.heartbeat",
             "input.rabbitmq",

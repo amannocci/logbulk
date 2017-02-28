@@ -30,6 +30,7 @@ declare -a plugins=(
   "date"
   "dispatch"
   "elasticsearch"
+  "exec"
 )
 
 # Create plugins dir
