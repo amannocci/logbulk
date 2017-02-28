@@ -31,6 +31,7 @@ declare -a plugins=(
   "dispatch"
   "elasticsearch"
   "exec"
+  "grok"
 )
 
 # Create plugins dir
