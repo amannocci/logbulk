@@ -91,7 +91,6 @@ public class ComponentRegistryTest {
             "input.rabbitmq",
             "transform.dispatch",
             "transform.grok",
-            "transform.date",
             "transform.json",
             "transform.mutate",
             "transform.metric",
