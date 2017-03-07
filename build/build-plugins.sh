@@ -39,7 +39,8 @@ declare -a plugins=(
   #"regex"
   #"tcp"
   #"mongodb"
-  "mysql"
+  #"mysql"
+  "rabbitmq"
 )
 
 # Create plugins dir

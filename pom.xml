@@ -13,8 +13,6 @@
     <config.version>1.3.1</config.version>
     <common-lang3.version>3.5</common-lang3.version>
     <lombok.version>1.16.14</lombok.version>
-    <lyra.version>0.5.3</lyra.version>
-    <rabbitmq.version>4.0.1</rabbitmq.version>
     <failsafe.version>1.0.1</failsafe.version>
     <junit.version>4.12</junit.version>
     <junit.params.version>1.0.5</junit.params.version>
@@ -54,19 +52,9 @@
       <version>${vertx.when.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.rabbitmq</groupId>
-      <artifactId>amqp-client</artifactId>
-      <version>${rabbitmq.version}</version>
-    </dependency>
-    <dependency>
       <groupId>net.jodah</groupId>
       <artifactId>failsafe</artifactId>
       <version>${failsafe.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>net.jodah</groupId>
-      <artifactId>lyra</artifactId>
-      <version>${lyra.version}</version>
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>

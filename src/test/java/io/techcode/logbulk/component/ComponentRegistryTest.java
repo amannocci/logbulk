@@ -84,9 +84,7 @@ public class ComponentRegistryTest {
     }
 
     @Parameters({
-            "input.heartbeat",
-            "input.rabbitmq",
-            "output.rabbitmq"
+            "input.heartbeat"
     })
     @Test public void testGetComponent1(String component) {
         testGetComponent(component);
