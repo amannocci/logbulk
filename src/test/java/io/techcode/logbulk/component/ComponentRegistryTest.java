@@ -89,7 +89,6 @@ public class ComponentRegistryTest {
             "input.heartbeat",
             "input.rabbitmq",
             "transform.mutate",
-            "transform.metric",
             "transform.regex",
             "output.rabbitmq",
             "output.mongo"

@@ -23,17 +23,18 @@ fi
 
 # Plugins list
 declare -a plugins=(
-  "std"
-  "file"
-  "anonymise"
-  "csv"
-  "date"
-  "dispatch"
-  "elasticsearch"
-  "exec"
-  "grok"
-  "json"
-  "limiter"
+  #"std"
+  #"file"
+  #"anonymise"
+  #"csv"
+  #"date"
+  #"dispatch"
+  #"elasticsearch"
+  #"exec"
+  #"grok"
+  #"json"
+  #"limiter"
+  "metric"
 )
 
 # Create plugins dir
