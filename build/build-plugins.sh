@@ -34,7 +34,8 @@ declare -a plugins=(
   #"grok"
   #"json"
   #"limiter"
-  "metric"
+  #"metric"
+  "mutate"
 )
 
 # Create plugins dir
