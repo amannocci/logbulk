@@ -88,7 +88,6 @@ public class ComponentRegistryTest {
             "input.mysql",
             "input.heartbeat",
             "input.rabbitmq",
-            "transform.regex",
             "output.rabbitmq",
             "output.mongo"
     })

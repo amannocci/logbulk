@@ -35,7 +35,8 @@ declare -a plugins=(
   #"json"
   #"limiter"
   #"metric"
-  "mutate"
+  #"mutate"
+  "regex"
 )
 
 # Create plugins dir
