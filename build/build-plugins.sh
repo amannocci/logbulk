@@ -38,7 +38,8 @@ declare -a plugins=(
   #"mutate"
   #"regex"
   #"tcp"
-  "mongodb"
+  #"mongodb"
+  "mysql"
 )
 
 # Create plugins dir
