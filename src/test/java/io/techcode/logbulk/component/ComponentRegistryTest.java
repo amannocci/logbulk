@@ -72,7 +72,9 @@ public class ComponentRegistryTest {
         verify(mockedConfig).routes();
     }
 
-    private void testGetComponent(String component) {
+    @Parameters({"not.exist"})
+    @Test(expected = IllegalStateException.class)
+    public void testGetComponent(String component) {
         // Prepare mocks
         Logbulk mockedVerticle = mock(Logbulk.class);
         when(mockedVerticle.getConfig()).thenReturn(new AppConfig());
@@ -81,19 +83,6 @@ public class ComponentRegistryTest {
         ComponentRegistry registry = new ComponentRegistry(mockedVerticle);
         registry.registerAll();
         assertNotNull(registry.getComponent(component));
-    }
-
-    @Parameters({
-            "input.heartbeat"
-    })
-    @Test public void testGetComponent1(String component) {
-        testGetComponent(component);
-    }
-
-    @Parameters({"not.exist"})
-    @Test(expected = IllegalStateException.class)
-    public void testGetComponent2(String component) {
-        testGetComponent(component);
     }
 
 }

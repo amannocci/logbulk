@@ -40,7 +40,8 @@ declare -a plugins=(
   #"tcp"
   #"mongodb"
   #"mysql"
-  "rabbitmq"
+  #"rabbitmq"
+  "heartbeat"
 )
 
 # Create plugins dir
