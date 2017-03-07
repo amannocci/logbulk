@@ -33,6 +33,7 @@ declare -a plugins=(
   "exec"
   "grok"
   "json"
+  "limiter"
 )
 
 # Create plugins dir

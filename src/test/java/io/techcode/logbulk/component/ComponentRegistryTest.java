@@ -90,7 +90,6 @@ public class ComponentRegistryTest {
             "input.rabbitmq",
             "transform.mutate",
             "transform.metric",
-            "transform.limiter",
             "transform.regex",
             "output.rabbitmq",
             "output.mongo"
