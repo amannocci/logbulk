@@ -36,7 +36,8 @@ declare -a plugins=(
   #"limiter"
   #"metric"
   #"mutate"
-  "regex"
+  #"regex"
+  "tcp"
 )
 
 # Create plugins dir
