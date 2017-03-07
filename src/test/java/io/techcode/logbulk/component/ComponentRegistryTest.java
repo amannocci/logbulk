@@ -87,8 +87,7 @@ public class ComponentRegistryTest {
             "input.mysql",
             "input.heartbeat",
             "input.rabbitmq",
-            "output.rabbitmq",
-            "output.mongo"
+            "output.rabbitmq"
     })
     @Test public void testGetComponent1(String component) {
         testGetComponent(component);

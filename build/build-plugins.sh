@@ -37,7 +37,8 @@ declare -a plugins=(
   #"metric"
   #"mutate"
   #"regex"
-  "tcp"
+  #"tcp"
+  "mongodb"
 )
 
 # Create plugins dir

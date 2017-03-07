@@ -44,11 +44,6 @@
       <version>${vertx.version}</version>
     </dependency>
     <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-mongo-client</artifactId>
-      <version>${vertx.version}</version>
-    </dependency>
-    <dependency>
       <groupId>io.techcode.vertx</groupId>
       <artifactId>vertx-logging</artifactId>
       <version>${vertx.logging.version}</version>
