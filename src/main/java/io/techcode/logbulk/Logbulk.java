@@ -62,11 +62,7 @@ public class Logbulk extends AbstractVerticle {
 
     @Override public void start(Future<Void> startFuture) {
         // Ensure error are handle correctly
-        vertx.exceptionHandler(th -> {
-            if (!(th instanceof IllegalStateException) || !"Result is already complete: succeeded".equals(th.getMessage())) {
-                log.error(th);
-            }
-        });
+        vertx.exceptionHandler(log::error);
 
         // Load configuration
         config = new AppConfig();

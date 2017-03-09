@@ -1,48 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    <!-- Stdout appender -->
-    <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
-            <layout class="io.techcode.vertx.logging.JsonLayout">
-                <pretty>false</pretty>
-            </layout>
-        </encoder>
-    </appender>
+  <!-- Stdout appender -->
+  <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+      <layout class="io.techcode.logbulk.util.logging.JsonLayout">
+        <pretty>false</pretty>
+        <stringify>false</stringify>
+      </layout>
+    </encoder>
+  </appender>
 
-    <!-- File appender -->
-    <appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>log/logbulk.log</file>
-        <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
-            <layout class="io.techcode.vertx.logging.JsonLayout">
-                <pretty>false</pretty>
-                <stringify>false</stringify>
-            </layout>
-        </encoder>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>log/logbulk-%d{yyyy-MM-dd}-%i.zip</fileNamePattern>
-            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
-                <maxFileSize>128MB</maxFileSize>
-            </timeBasedFileNamingAndTriggeringPolicy>
-            <maxHistory>7</maxHistory>
-            <totalSizeCap>3GB</totalSizeCap>
-            <cleanHistoryOnStart>true</cleanHistoryOnStart>
-        </rollingPolicy>
-    </appender>
+  <!-- File appender -->
+  <appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>log/logbulk.log</file>
+    <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+      <layout class="io.techcode.logbulk.util.logging.JsonLayout">
+        <pretty>false</pretty>
+        <stringify>false</stringify>
+      </layout>
+    </encoder>
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+      <fileNamePattern>log/logbulk-%d{yyyy-MM-dd}-%i.zip</fileNamePattern>
+      <maxFileSize>128MB</maxFileSize>
+      <maxHistory>7</maxHistory>
+      <totalSizeCap>3GB</totalSizeCap>
+      <cleanHistoryOnStart>true</cleanHistoryOnStart>
+    </rollingPolicy>
+  </appender>
 
-    <!-- Async appenders -->
-    <appender name="async-file" class="ch.qos.logback.classic.AsyncAppender">
-        <appender-ref ref="file"/>
-    </appender>
-    <appender name="async-console" class="ch.qos.logback.classic.AsyncAppender">
-        <appender-ref ref="stdout"/>
-    </appender>
+  <!-- Async appenders -->
+  <appender name="async-file" class="ch.qos.logback.classic.AsyncAppender">
+    <appender-ref ref="file"/>
+  </appender>
+  <appender name="async-console" class="ch.qos.logback.classic.AsyncAppender">
+    <appender-ref ref="stdout"/>
+  </appender>
 
-    <!-- Disable loggers -->
-    <logger name="net.jodah.lyra" level="WARN"/>
+  <!-- Disable loggers -->
+  <logger name="net.jodah.lyra" level="WARN"/>
 
-    <!-- Root -->
-    <root level="info">
-        <appender-ref ref="async-console"/>
-        <appender-ref ref="async-file"/>
-    </root>
+  <!-- Root -->
+  <root level="info">
+    <appender-ref ref="async-console"/>
+    <appender-ref ref="async-file"/>
+  </root>
 </configuration>
