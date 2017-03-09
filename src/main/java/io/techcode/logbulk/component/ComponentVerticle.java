@@ -350,7 +350,14 @@ public class ComponentVerticle extends AbstractVerticle {
         if (!hasMailbox) {
             String dispatch = config.getString("dispatch");
             headers.route(dispatch);
-            headers.source(routing.get(dispatch).get(1));
+
+            // Add source
+            List<String> route = routing.get(dispatch);
+            if (route.size() > 1) {
+                headers.source(route.get(1));
+            } else{
+                headers.source(route.get(0));
+            }
         }
 
         // Generate
