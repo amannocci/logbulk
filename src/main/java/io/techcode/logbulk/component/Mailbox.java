@@ -44,7 +44,7 @@ import static com.google.common.base.Preconditions.checkState;
 public class Mailbox extends ComponentVerticle implements ConvertHandler {
 
     // Default threshold
-    public final static int DEFAULT_THRESHOLD = 1000;
+    public static final int DEFAULT_THRESHOLD = 1000;
 
     // Threshold
     private int threshold;
@@ -156,7 +156,7 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
      */
     private boolean process(Packet packet) {
         // Retrieve a worker
-        Worker worker = (workers.isEmpty()) ? null : workers.first();
+        Worker worker = workers.isEmpty() ? null : workers.first();
         if (worker == null) return false;
 
         // Remove from set before anything
@@ -183,7 +183,7 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
      */
     private boolean processBuffer() {
         if (!buffer.isEmpty()) {
-            Packet packet = (fifo) ? buffer.pollFirst() : buffer.pollLast();
+            Packet packet = fifo ? buffer.pollFirst() : buffer.pollLast();
             Optional<String> nextOpt = next(packet.getHeader());
 
             if (nextOpt.isPresent()) {

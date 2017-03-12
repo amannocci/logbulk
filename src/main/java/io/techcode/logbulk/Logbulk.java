@@ -51,6 +51,7 @@ public class Logbulk extends AbstractVerticle {
     // Some constants
     private static final String CONF_INPUT = "input";
     private static final String CONF_HAS_MAILBOX = "hasMailbox";
+    private static final String CONF_ROUTE = "route";
 
     // Logging
     private final Logger log = LoggerFactory.getLogger(getClass());
@@ -121,7 +122,7 @@ public class Logbulk extends AbstractVerticle {
             conf.put("endpoint", endpoint);
             conf.put(CONF_HAS_MAILBOX, !CONF_INPUT.equals(section));
             conf.put("settings", config.settings());
-            conf.put("route", config.routes());
+            conf.put(CONF_ROUTE, config.routes());
             if (!CONF_INPUT.equals(section)) {
                 deployment.setInstances(instance);
             }
@@ -156,7 +157,7 @@ public class Logbulk extends AbstractVerticle {
 
                 // Create configuration and deploy
                 JsonObject mailboxConf = new JsonObject();
-                mailboxConf.put("route", conf.getJsonObject("route"));
+                mailboxConf.put(CONF_ROUTE, conf.getJsonObject(CONF_ROUTE));
                 mailboxConf.put("instance", instance);
                 mailboxConf.put("endpoint", endpoint);
                 mailboxConf.put(CONF_HAS_MAILBOX, false);

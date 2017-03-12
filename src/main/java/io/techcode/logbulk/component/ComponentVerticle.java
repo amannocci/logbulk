@@ -58,10 +58,10 @@ import static com.google.common.base.Preconditions.checkState;
 public class ComponentVerticle extends AbstractVerticle {
 
     // Logging
-    protected final Logger log = LoggerFactory.getLogger(getClass().getName());
+    protected static final Logger log = LoggerFactory.getLogger(ComponentVerticle.class);
 
     // Delivery options
-    protected final Handler<Throwable> THROWABLE_HANDLER = log::error;
+    protected static final Handler<Throwable> THROWABLE_HANDLER = log::error;
 
     // UUID of the component
     protected final String uuid = UUID.randomUUID().toString();
@@ -169,8 +169,12 @@ public class ComponentVerticle extends AbstractVerticle {
 
         // Possible previous component
         if (previous >= 0) {
+            // Base on previous or current one
             String route = headers.getOldRoute();
-            if (route == null) route = headers.getRoute();
+            if (route == null) {
+                route = headers.getRoute();
+            }
+
             List<String> endpoints = this.routing.get(route);
             return Optional.of(endpoints.get(previous));
         } else {
@@ -223,8 +227,12 @@ public class ComponentVerticle extends AbstractVerticle {
         // Determine next stage
         Optional<String> nextOpt = next(headers, current);
         if (nextOpt.isPresent()) {
-            if (current > -1) headers.setPrevious(current);
-            if (current == 0) headers.setOldRoute(null);
+            if (current > -1) {
+                headers.setPrevious(current);
+            }
+            if (current == 0) {
+                headers.setOldRoute(null);
+            }
             headers.setCurrent(current + 1);
 
             // Add trace
@@ -247,7 +255,9 @@ public class ComponentVerticle extends AbstractVerticle {
      */
     public void forward(@NonNull Packet packet) {
         // Don't forget to release
-        if (hasMailbox) toRelease += 1;
+        if (hasMailbox) {
+            toRelease += 1;
+        }
 
         // Send to next endpoint
         send(packet);
@@ -280,7 +290,9 @@ public class ComponentVerticle extends AbstractVerticle {
     public void release() {
         if (hasMailbox && toRelease > 0) {
             JsonArray msg = new JsonArray().add(endpoint);
-            if (toRelease > 1) msg.add(toRelease);
+            if (toRelease > 1) {
+                msg.add(toRelease);
+            }
             eventBus.send(parentEndpoint + ".worker", msg);
             toRelease = 0;
         }
@@ -318,9 +330,9 @@ public class ComponentVerticle extends AbstractVerticle {
      * @param endHandler end handler to call.
      */
     public void handlePressure(ReadStream stream, Handler<Void> endHandler) {
-        String endpoint = config.getString("endpoint");
-        eventBus.<String>consumer(endpoint + ".pressure")
-                .handler(new PressureHandler(stream, endpoint, endHandler));
+        String target = config.getString("endpoint");
+        eventBus.<String>consumer(target + ".pressure")
+                .handler(new PressureHandler(stream, target, endHandler));
     }
 
     /**

@@ -191,9 +191,9 @@ public class AsyncInputStream implements ReadStream<Buffer> {
      * Returns true if the end of stream has been reach.
      *
      * @return true if the end of stream has been reach.
-     * @throws Exception something wrong.
+     * @throws IOException something wrong.
      */
-    public boolean isEndOfInput() throws Exception {
+    public boolean isEndOfInput() throws IOException {
         int b = in.read();
         if (b < 0) {
             return true;
@@ -211,7 +211,9 @@ public class AsyncInputStream implements ReadStream<Buffer> {
      */
     private byte[] readChunk() throws Exception {
         // End of stream
-        if (isEndOfInput()) return ArrayUtils.EMPTY_BYTE_ARRAY;
+        if (isEndOfInput()) {
+            return ArrayUtils.EMPTY_BYTE_ARRAY;
+        }
 
         // Number of readable bytes
         final int availableBytes = in.available();
@@ -236,7 +238,7 @@ public class AsyncInputStream implements ReadStream<Buffer> {
             buffer = tmp;
             offset += tmp.length;
             return buffer;
-        } catch (IOException e) {
+        } catch (IOException ignored) {
             closeQuietly(in);
             return ArrayUtils.EMPTY_BYTE_ARRAY;
         }
