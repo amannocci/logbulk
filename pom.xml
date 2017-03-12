@@ -134,7 +134,7 @@
         <version>${surefire.version}</version>
         <configuration>
           <argLine>
-            -Dvertx.logger-delegate-factory-class-name=io.vertx.core.logging.SLF4JLogDelegateFactory
+            ${argLine} -Dvertx.logger-delegate-factory-class-name=io.vertx.core.logging.SLF4JLogDelegateFactory
           </argLine>
         </configuration>
       </plugin>
