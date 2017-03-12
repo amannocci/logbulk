@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2016
+ * Copyright (c) 2016-2017
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -49,8 +49,8 @@ public abstract class BaseComponentVerticle extends ComponentVerticle implements
         } else {
             try {
                 handle(packet);
-            } catch (Throwable th) {
-                handleFallback(packet, th);
+            } catch (Exception ex) {
+                handleFallback(packet, ex);
             }
         }
     }

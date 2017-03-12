@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2016
+ * Copyright (c) 2016-2017
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -48,8 +48,12 @@ import java.util.Set;
  */
 public class Logbulk extends AbstractVerticle {
 
+    // Some constants
+    private static final String CONF_INPUT = "input";
+    private static final String CONF_HAS_MAILBOX = "hasMailbox";
+
     // Logging
-    private final Logger log = LoggerFactory.getLogger(getClass().getName());
+    private final Logger log = LoggerFactory.getLogger(getClass());
 
     // Application configuration
     @Getter private AppConfig config;
@@ -81,7 +85,7 @@ public class Logbulk extends AbstractVerticle {
                 setups("output", config.outputs()),
                 setups("transform", config.transforms())
         ).setHandler(h ->
-                setups("input", config.inputs()).setHandler(e -> {
+                setups(CONF_INPUT, config.inputs()).setHandler(e -> {
                     // Release monitor if uneeded
                     monitor = null;
 
@@ -115,13 +119,17 @@ public class Logbulk extends AbstractVerticle {
 
             // Handle special case
             conf.put("endpoint", endpoint);
-            if (!"input".equals(section)) deployment.setInstances(instance);
-            conf.put("hasMailbox", !"input".equals(section));
+            conf.put(CONF_HAS_MAILBOX, !CONF_INPUT.equals(section));
             conf.put("settings", config.settings());
             conf.put("route", config.routes());
+            if (!CONF_INPUT.equals(section)) {
+                deployment.setInstances(instance);
+            }
 
             // Handle generic case
-            if (conf.getBoolean("worker", false)) deployment.setWorker(true);
+            if (conf.getBoolean("worker", false)) {
+                deployment.setWorker(true);
+            }
 
             // Map configuration & deploy
             Future completion = Future.future();
@@ -140,16 +148,18 @@ public class Logbulk extends AbstractVerticle {
             };
 
             // Deploy mailbox first
-            if (conf.getBoolean("hasMailbox")) {
+            if (conf.getBoolean(CONF_HAS_MAILBOX)) {
                 // Add to monitoring if needed
-                if (monitor.isEnable()) monitor.addMailbox(endpoint);
+                if (monitor.isEnable()) {
+                    monitor.addMailbox(endpoint);
+                }
 
                 // Create configuration and deploy
                 JsonObject mailboxConf = new JsonObject();
                 mailboxConf.put("route", conf.getJsonObject("route"));
                 mailboxConf.put("instance", instance);
                 mailboxConf.put("endpoint", endpoint);
-                mailboxConf.put("hasMailbox", false);
+                mailboxConf.put(CONF_HAS_MAILBOX, false);
                 mailboxConf.put("fifo", conf.getBoolean("fifo", true));
                 mailboxConf.put("mailbox", conf.getInteger("mailbox", Mailbox.DEFAULT_THRESHOLD));
                 vertx.deployVerticle(Mailbox.class.getName(), new DeploymentOptions().setConfig(mailboxConf), deploy);

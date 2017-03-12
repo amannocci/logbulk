@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2016-2017
+ * Copyright (c) 2016-2017-2017
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -36,6 +36,9 @@ import io.vertx.core.json.JsonObject;
  */
 public class JsonLayout extends LayoutBase<ILoggingEvent> {
 
+    // Some constant
+    private static final String LOG_STACKTRACE = "stacktrace";
+
     // Joiner
     private static final Joiner JOINER = Joiner.on('\n').skipNulls();
 
@@ -65,17 +68,26 @@ public class JsonLayout extends LayoutBase<ILoggingEvent> {
             // Handle internal vert.x stacktrace
             IThrowableProxy th = event.getThrowableProxy();
             if (th != null) {
-                JsonArray stacktrace = ExceptionUtils.getStackTrace(log.getJsonArray("stacktrace"), th);
-                if (stringify) {
-                    log.put("stacktrace", JOINER.join(stacktrace));
-                } else {
-                    log.put("stacktrace", stacktrace);
-                }
+                addStacktrace(log, ExceptionUtils.getStackTrace(log.getJsonArray(LOG_STACKTRACE), th));
             }
-        } catch (Throwable th) {
-            th.printStackTrace();
+        } catch (Exception ex) {
+            addStacktrace(log, ExceptionUtils.getStackTrace(log.getJsonArray(LOG_STACKTRACE), ex));
         }
-        return ((pretty) ? log.encodePrettily() : log.encode()) + CoreConstants.LINE_SEPARATOR;
+        return (pretty ? log.encodePrettily() : log.encode()) + CoreConstants.LINE_SEPARATOR;
+    }
+
+    /**
+     * Add stacktrace to log entry.
+     *
+     * @param log        log entry involved.
+     * @param stacktrace stacktrace to add.
+     */
+    private void addStacktrace(JsonObject log, JsonArray stacktrace) {
+        if (stringify) {
+            log.put(LOG_STACKTRACE, JOINER.join(stacktrace));
+        } else {
+            log.put(LOG_STACKTRACE, stacktrace);
+        }
     }
 
 }

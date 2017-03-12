@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2016
+ * Copyright (c) 2016-2017
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -57,7 +57,7 @@ public class Packet {
             protected int current = 0;
         }
 
-        public Header copy() {
+        @Override public Header copy() {
             Header cpy = Header.builder()
                     .source(source)
                     .route(route)

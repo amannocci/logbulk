@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p/>
- * Copyright (c) 2016
+ * Copyright (c) 2016-2017
  * <p/>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -36,8 +36,8 @@ public interface ConvertHandler extends Handler<Message<Packet>> {
         Packet packet = event.body();
         try {
             handle(packet);
-        } catch (Throwable th) {
-            handleFallback(packet, th);
+        } catch (Exception ex) {
+            handleFallback(packet, ex);
         }
     }
 
@@ -52,9 +52,9 @@ public interface ConvertHandler extends Handler<Message<Packet>> {
      * Handle fallback during processing.
      *
      * @param pkt packet involved.
-     * @param th  error throw.
+     * @param ex  error throw.
      */
-    default void handleFallback(Packet pkt, Throwable th) {
+    default void handleFallback(Packet pkt, Exception ex) {
     }
 
 }

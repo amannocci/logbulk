@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2016-2017
+ * Copyright (c) 2016-2017-2017
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,6 +34,10 @@ import lombok.NonNull;
  */
 public final class ExceptionUtils {
 
+    // Block constructor
+    private ExceptionUtils() {
+    }
+
     /**
      * Gets the stack trace from a Throwable as a JsonArray of String.
      *
@@ -42,22 +46,22 @@ public final class ExceptionUtils {
      * @return The stack trace.
      */
     public static JsonArray getStackTrace(JsonArray stacktrace, @NonNull Throwable th) {
-        if (stacktrace == null) stacktrace = new JsonArray();
+        JsonArray stack = stacktrace != null ? stacktrace : new JsonArray();
 
         // Add exceptions
-        extractStacktrace(stacktrace, th);
+        extractStacktrace(stack, th);
 
         // Add suppressed exceptions, if any
         for (Throwable se : th.getSuppressed()) {
-            extractStacktrace(stacktrace, se);
+            extractStacktrace(stack, se);
         }
 
         // Add cause, if any
         Throwable cause = th.getCause();
         if (cause != null) {
-            extractStacktrace(stacktrace, cause);
+            extractStacktrace(stack, cause);
         }
-        return stacktrace;
+        return stack;
     }
 
     /**
@@ -68,22 +72,22 @@ public final class ExceptionUtils {
      * @return The stack trace.
      */
     public static JsonArray getStackTrace(JsonArray stacktrace, @NonNull IThrowableProxy th) {
-        if (stacktrace == null) stacktrace = new JsonArray();
+        JsonArray stack = stacktrace != null ? stacktrace : new JsonArray();
 
         // Add exceptions
-        extractStacktrace(stacktrace, th);
+        extractStacktrace(stack, th);
 
         // Add suppressed exceptions, if any
         for (IThrowableProxy se : th.getSuppressed()) {
-            extractStacktrace(stacktrace, se);
+            extractStacktrace(stack, se);
         }
 
         // Add cause, if any
         IThrowableProxy cause = th.getCause();
         if (cause != null) {
-            extractStacktrace(stacktrace, cause);
+            extractStacktrace(stack, cause);
         }
-        return stacktrace;
+        return stack;
     }
 
     /**
@@ -103,8 +107,13 @@ public final class ExceptionUtils {
      * @param th         throwable to process.
      */
     private static void extractStacktrace(JsonArray stacktrace, Throwable th) {
+        // Add message if present
         String message = th.getMessage();
-        if (!Strings.isNullOrEmpty(message)) stacktrace.add(message);
+        if (!Strings.isNullOrEmpty(message)) {
+            stacktrace.add(message);
+        }
+
+        // Handle stacktrace entries
         StackTraceElement[] trace = th.getStackTrace();
         if (trace != null) {
             for (StackTraceElement el : trace) {
@@ -120,8 +129,13 @@ public final class ExceptionUtils {
      * @param th         throwable to process.
      */
     private static void extractStacktrace(JsonArray stacktrace, IThrowableProxy th) {
+        // Add message if present
         String message = th.getMessage();
-        if (!Strings.isNullOrEmpty(message)) stacktrace.add(message);
+        if (!Strings.isNullOrEmpty(message)) {
+            stacktrace.add(message);
+        }
+
+        // Handle stacktrace entries
         StackTraceElementProxy[] trace = th.getStackTraceElementProxyArray();
         if (trace != null) {
             for (StackTraceElementProxy el : trace) {

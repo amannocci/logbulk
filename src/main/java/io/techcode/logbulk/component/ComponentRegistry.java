@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p/>
- * Copyright (c) 2016
+ * Copyright (c) 2016-2017
  * <p/>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -74,7 +74,7 @@ public class ComponentRegistry {
                     Class.forName(el.getValue().unwrapped().toString());
                     registry.put(el.getKey(), el.getValue().unwrapped().toString());
                 } catch (ClassNotFoundException e) {
-                    log.error("Unknown component: " + el.getKey() + " / " + el.getValue().unwrapped());
+                    log.error("Unknown component: " + el.getKey() + " / " + el.getValue().unwrapped(), e);
                     verticle.getVertx().close();
                     return;
                 }
@@ -106,7 +106,7 @@ public class ComponentRegistry {
                 .collect(Collectors.toList());
 
         // Print
-        if (unknowns.size() > 0) {
+        if (!unknowns.isEmpty()) {
             unknowns.forEach(c -> log.error("The component '" + c + "' isn't defined"));
             verticle.getVertx().close();
         }
@@ -120,7 +120,7 @@ public class ComponentRegistry {
      */
     public String getComponent(String key) {
         String component = registry.get(key);
-        checkState(component != null, "Unknown component: " + key);
+        checkState(component != null, "Unknown component: %s", key);
         return component;
     }
 

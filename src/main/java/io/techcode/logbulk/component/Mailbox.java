@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p/>
- * Copyright (c) 2016
+ * Copyright (c) 2016-2017
  * <p/>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -131,7 +131,7 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
 
     @Override public void handle(Packet packet) {
         handlePressure(packet);
-        if (workers.size() > 0) {
+        if (!workers.isEmpty()) {
             processBuffers();
         }
     }
@@ -182,7 +182,7 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
      * Attempt to process an body in the buffer.
      */
     private boolean processBuffer() {
-        if (buffer.size() > 0) {
+        if (!buffer.isEmpty()) {
             Packet packet = (fifo) ? buffer.pollFirst() : buffer.pollLast();
             Optional<String> nextOpt = next(packet.getHeader());
 
@@ -212,7 +212,7 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
     private boolean sendWorker(Packet packet) {
         if (process(packet)) {
             // Handle pressure
-            if (buffer.size() < idle && previousPressure.size() > 0) {
+            if (buffer.size() < idle && !previousPressure.isEmpty()) {
                 previousPressure.forEach(this::tooglePressure);
                 previousPressure.clear();
             }

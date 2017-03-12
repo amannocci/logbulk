@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2016
+ * Copyright (c) 2016-2017
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -136,13 +136,13 @@ public class ComponentVerticle extends AbstractVerticle {
      * Handle fallback during processing.
      *
      * @param packet packet involved.
-     * @param th     error throw.
+     * @param ex     error throw.
      */
-    public void handleFallback(@NonNull Packet packet, Throwable th) {
+    public void handleFallback(@NonNull Packet packet, Exception ex) {
         Packet.Header headers = packet.getHeader();
         JsonObject body = packet.getBody();
-        if (th != null) {
-            JsonArray stacktrace = ExceptionUtils.getStackTrace(th);
+        if (ex != null) {
+            JsonArray stacktrace = ExceptionUtils.getStackTrace(ex);
             headers.put("_stacktrace", stacktrace);
             body.put("stacktrace", stacktrace);
             headers.put("_level", LogLevel.ERROR);
@@ -355,7 +355,7 @@ public class ComponentVerticle extends AbstractVerticle {
             List<String> route = routing.get(dispatch);
             if (route.size() > 1) {
                 headers.source(route.get(1));
-            } else{
+            } else {
                 headers.source(route.get(0));
             }
         }
