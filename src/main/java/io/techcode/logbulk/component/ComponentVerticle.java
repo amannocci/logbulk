@@ -136,13 +136,13 @@ public class ComponentVerticle extends AbstractVerticle {
      * Handle fallback during processing.
      *
      * @param packet packet involved.
-     * @param ex     error throw.
+     * @param th     error throw.
      */
-    public void handleFallback(@NonNull Packet packet, Exception ex) {
+    public void handleFallback(@NonNull Packet packet, Throwable th) {
         Packet.Header headers = packet.getHeader();
         JsonObject body = packet.getBody();
-        if (ex != null) {
-            JsonArray stacktrace = ExceptionUtils.getStackTrace(ex);
+        if (th != null) {
+            JsonArray stacktrace = ExceptionUtils.getStackTrace(th);
             headers.put("_stacktrace", stacktrace);
             body.put("stacktrace", stacktrace);
             headers.put("_level", LogLevel.ERROR);

@@ -52,9 +52,9 @@ public interface ConvertHandler extends Handler<Message<Packet>> {
      * Handle fallback during processing.
      *
      * @param pkt packet involved.
-     * @param ex  error throw.
+     * @param th  error throw.
      */
-    default void handleFallback(Packet pkt, Exception ex) {
+    default void handleFallback(Packet pkt, Throwable th) {
     }
 
 }
