@@ -151,6 +151,7 @@ public class ComponentVerticle extends AbstractVerticle {
         if (Strings.isNullOrEmpty(fallback)) {
             // Log info if no fallback
             log.info(packet.getBody().encode());
+            release();
         } else {
             // Otherwise send to fallback
             forwardAndRelease(updateRoute(packet, fallback));
