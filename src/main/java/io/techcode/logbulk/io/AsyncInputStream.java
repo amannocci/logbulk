@@ -89,7 +89,7 @@ public class AsyncInputStream implements ReadStream<Buffer> {
      * @param chunkSize chunk size.
      */
     public AsyncInputStream(@NonNull Vertx vertx, ExecutorService executor, @NonNull InputStream in, int chunkSize) {
-        checkArgument(chunkSize > 0, "chunkSize: " + chunkSize + " (expected: a positive integer)");
+        checkArgument(chunkSize > 0, "chunkSize: %d (expected: a positive integer)", chunkSize);
         this.vertx = vertx;
         if (in instanceof PushbackInputStream) {
             this.in = (PushbackInputStream) in;
@@ -138,34 +138,55 @@ public class AsyncInputStream implements ReadStream<Buffer> {
      */
     private void doRead() {
         if (status == STATUS_ACTIVE) {
-            final Handler<Buffer> dataHandler = this.dataHandler;
-            final Handler<Void> closeHandler = this.closeHandler;
             executor.execute(() -> {
                 try {
                     final byte[] bytes = readChunk();
                     if (bytes.length == 0) {
                         status = STATUS_CLOSED;
-                        vertx.runOnContext(event -> {
-                            if (closeHandler != null) {
-                                closeHandler.handle(null);
-                            }
-                        });
+                        vertx.runOnContext(e -> fireClose());
                     } else {
-                        vertx.runOnContext(event -> {
-                            dataHandler.handle(Buffer.buffer(bytes));
+                        vertx.runOnContext(e -> {
+                            fireData(Buffer.buffer(bytes));
                             doRead();
                         });
                     }
-                } catch (final Exception e) {
+                } catch (final Exception ex) {
                     status = STATUS_CLOSED;
                     closeQuietly(in);
-                    vertx.runOnContext(event -> {
-                        if (failureHandler != null) {
-                            failureHandler.handle(e);
-                        }
-                    });
+                    vertx.runOnContext(e -> fireException(ex));
                 }
             });
+        }
+    }
+
+    /**
+     * Fire a close event if handler defined.
+     */
+    private void fireClose() {
+        if (closeHandler != null) {
+            closeHandler.handle(null);
+        }
+    }
+
+    /**
+     * Fire a data event if handler defined.
+     *
+     * @param buf data involved.
+     */
+    private void fireData(Buffer buf) {
+        if (dataHandler != null) {
+            dataHandler.handle(buf);
+        }
+    }
+
+    /**
+     * Fire an exception event if handler defined.
+     *
+     * @param ex exception involved.
+     */
+    private void fireException(Exception ex) {
+        if (failureHandler != null) {
+            failureHandler.handle(ex);
         }
     }
 
@@ -207,9 +228,9 @@ public class AsyncInputStream implements ReadStream<Buffer> {
      * Attempt to read a full chunk.
      *
      * @return chunk readed.
-     * @throws Exception something is wrong.
+     * @throws IOException something is wrong.
      */
-    private byte[] readChunk() throws Exception {
+    private byte[] readChunk() throws IOException {
         // End of stream
         if (isEndOfInput()) {
             return ArrayUtils.EMPTY_BYTE_ARRAY;
@@ -218,19 +239,19 @@ public class AsyncInputStream implements ReadStream<Buffer> {
         // Number of readable bytes
         final int availableBytes = in.available();
 
-        // Chunk size
-        final int chunkSize;
+        // Partition size
+        final int partitionSize;
         if (availableBytes <= 0) {
-            chunkSize = this.chunkSize;
+            partitionSize = this.chunkSize;
         } else {
-            chunkSize = Math.min(this.chunkSize, in.available());
+            partitionSize = Math.min(this.chunkSize, availableBytes);
         }
 
         // Some buffer stuff
         byte[] buffer;
         try {
             // Transfer to buffer
-            byte[] tmp = new byte[chunkSize];
+            byte[] tmp = new byte[partitionSize];
             int readBytes = in.read(tmp);
             if (readBytes <= 0) {
                 return ArrayUtils.EMPTY_BYTE_ARRAY;
