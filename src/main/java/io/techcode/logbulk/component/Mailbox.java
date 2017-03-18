@@ -27,6 +27,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
+import io.techcode.logbulk.io.AppConfig;
 import io.techcode.logbulk.net.Packet;
 import io.techcode.logbulk.util.ConvertHandler;
 import io.vertx.core.json.JsonArray;
@@ -42,14 +43,6 @@ import static com.google.common.base.Preconditions.checkState;
  * Mailbox implementation.
  */
 public class Mailbox extends ComponentVerticle implements ConvertHandler {
-
-    // Some constants
-    private static final String CONF_MAILBOX = "mailbox";
-    private static final String CONF_FIFO = "fifo";
-    private static final String CONF_INSTANCE = "instance";
-    private static final String CONF_WORKER = "worker";
-    private static final String CONF_IDLE = "idle";
-    private static final String CONF_THRESHOLD = "threshold";
 
     // Default threshold
     public static final int DEFAULT_THRESHOLD = 1000;
@@ -74,10 +67,10 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
         super.start();
 
         // Retrieve configuration settings
-        threshold = config.getInteger(CONF_MAILBOX);
-        fifo = config.getBoolean(CONF_FIFO, true);
+        threshold = config.getInteger(AppConfig.MAILBOX);
+        fifo = config.getBoolean(AppConfig.FIFO, true);
         idle = Math.max(1, threshold / 2);
-        int componentCount = config.getInteger(CONF_INSTANCE);
+        int componentCount = config.getInteger(AppConfig.INSTANCE);
         threshold *= componentCount;
 
         // Setup
@@ -122,19 +115,19 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
 
             JsonObject message = event.body();
             message.put(endpoint, new JsonObject()
-                    .put(CONF_MAILBOX, buffer.size())
-                    .put(CONF_IDLE, idle)
-                    .put(CONF_THRESHOLD, threshold)
-                    .put(CONF_WORKER, workerStatus));
+                    .put(AppConfig.MAILBOX, buffer.size())
+                    .put(AppConfig.IDLE, idle)
+                    .put(AppConfig.THRESHOLD, threshold)
+                    .put(AppConfig.WORKER, workerStatus));
             event.reply(message);
         });
     }
 
     @Override protected void checkConfig(JsonObject config) {
-        checkState(config.getInteger(CONF_MAILBOX) != null &&
-                config.getInteger(CONF_MAILBOX) > 0, "The mailbox is required");
-        checkState(config.getInteger(CONF_INSTANCE) != null &&
-                config.getInteger(CONF_INSTANCE) > 0, "The instance is required");
+        checkState(config.getInteger(AppConfig.MAILBOX) != null &&
+                config.getInteger(AppConfig.MAILBOX) > 0, "The mailbox is required");
+        checkState(config.getInteger(AppConfig.INSTANCE) != null &&
+                config.getInteger(AppConfig.INSTANCE) > 0, "The instance is required");
     }
 
     @Override public void handle(Packet packet) {

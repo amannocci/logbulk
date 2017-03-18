@@ -41,12 +41,22 @@ public class AppConfig {
     public static final Config REFERENCE = ConfigFactory.defaultReference();
 
     // All configuration keys
-    private static final String SETTING = "setting";
-    private static final String COMPONENT = "component";
-    private static final String INPUT = "input";
-    private static final String OUTPUT = "output";
-    private static final String TRANSFORM = "transform";
-    private static final String ROUTE = "route";
+    public static final String INPUT = "input";
+    public static final String OUTPUT = "output";
+    public static final String TRANSFORM = "transform";
+    public static final String HAS_MAILBOX = "hasMailbox";
+    public static final String MAILBOX = "mailbox";
+    public static final String ROUTE = "route";
+    public static final String ENDPOINT = "endpoint";
+    public static final String FIFO = "fifo";
+    public static final String INSTANCE = "instance";
+    public static final String SETTINGS = "settings";
+    public static final String WORKER = "worker";
+    public static final String STATUS = "status";
+    public static final String SETTING = "setting";
+    public static final String COMPONENT = "component";
+    public static final String IDLE = "idle";
+    public static final String THRESHOLD = "threshold";
 
     // Configuration wrapped
     private final Config config;

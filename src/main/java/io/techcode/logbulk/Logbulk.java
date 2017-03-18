@@ -49,11 +49,6 @@ import java.util.Set;
  */
 public class Logbulk extends AbstractVerticle {
 
-    // Some constants
-    private static final String CONF_INPUT = "input";
-    private static final String CONF_HAS_MAILBOX = "hasMailbox";
-    private static final String CONF_ROUTE = "route";
-
     // Logging
     private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -80,14 +75,14 @@ public class Logbulk extends AbstractVerticle {
         vertx.eventBus().registerDefaultCodec(Packet.class, new PacketCodec());
 
         // Setup status monitor
-        monitor = new StatusMonitor(vertx, config.settings().getLong("status", -1L));
+        monitor = new StatusMonitor(vertx, config.settings().getLong(AppConfig.STATUS, -1L));
 
         // Deploy all outputs & transforms components and input
         CompositeFuture.all(
-                setups("output", config.outputs()),
-                setups("transform", config.transforms())
+                setups(AppConfig.OUTPUT, config.outputs()),
+                setups(AppConfig.TRANSFORM, config.transforms())
         ).setHandler(h ->
-                setups(CONF_INPUT, config.inputs()).setHandler(e -> {
+                setups(AppConfig.INPUT, config.inputs()).setHandler(e -> {
                     // Release monitor if uneeded
                     monitor = null;
 
@@ -116,20 +111,20 @@ public class Logbulk extends AbstractVerticle {
             // Extract json configuration
             DeploymentOptions deployment = new DeploymentOptions();
             Configuration conf = new Configuration(el.getValue().render(ConfigRenderOptions.concise().setJson(true)));
-            int instance = conf.getInteger("instance", 1);
+            int instance = conf.getInteger(AppConfig.INSTANCE, 1);
             String endpoint = el.getKey();
 
             // Handle special case
-            conf.put("endpoint", endpoint);
-            conf.put(CONF_HAS_MAILBOX, !CONF_INPUT.equals(section));
-            conf.put("settings", config.settings());
-            conf.put(CONF_ROUTE, config.routes());
-            if (!CONF_INPUT.equals(section)) {
+            conf.put(AppConfig.ENDPOINT, endpoint);
+            conf.put(AppConfig.HAS_MAILBOX, !AppConfig.INPUT.equals(section));
+            conf.put(AppConfig.SETTINGS, config.settings());
+            conf.put(AppConfig.ROUTE, config.routes());
+            if (!AppConfig.INPUT.equals(section)) {
                 deployment.setInstances(instance);
             }
 
             // Handle generic case
-            if (conf.getBoolean("worker", false)) {
+            if (conf.getBoolean(AppConfig.WORKER, false)) {
                 deployment.setWorker(true);
             }
 
@@ -139,7 +134,7 @@ public class Logbulk extends AbstractVerticle {
             Handler<AsyncResult<String>> deploy = new ComponentDeployment(deployment, endpoint, completion, section, conf);
 
             // Deploy mailbox first
-            if (conf.getBoolean(CONF_HAS_MAILBOX)) {
+            if (conf.getBoolean(AppConfig.HAS_MAILBOX)) {
                 // Add to monitoring if needed
                 if (monitor.isEnable()) {
                     monitor.addMailbox(endpoint);
@@ -147,12 +142,12 @@ public class Logbulk extends AbstractVerticle {
 
                 // Create configuration and deploy
                 JsonObject mailboxConf = new JsonObject();
-                mailboxConf.put(CONF_ROUTE, conf.getJsonObject(CONF_ROUTE));
-                mailboxConf.put("instance", instance);
-                mailboxConf.put("endpoint", endpoint);
-                mailboxConf.put(CONF_HAS_MAILBOX, false);
-                mailboxConf.put("fifo", conf.getBoolean("fifo", true));
-                mailboxConf.put("mailbox", conf.getInteger("mailbox", Mailbox.DEFAULT_THRESHOLD));
+                mailboxConf.put(AppConfig.ROUTE, conf.getJsonObject(AppConfig.ROUTE));
+                mailboxConf.put(AppConfig.INSTANCE, instance);
+                mailboxConf.put(AppConfig.ENDPOINT, endpoint);
+                mailboxConf.put(AppConfig.HAS_MAILBOX, false);
+                mailboxConf.put(AppConfig.FIFO, conf.getBoolean(AppConfig.FIFO, true));
+                mailboxConf.put(AppConfig.MAILBOX, conf.getInteger(AppConfig.MAILBOX, Mailbox.DEFAULT_THRESHOLD));
                 vertx.deployVerticle(Mailbox.class.getName(), new DeploymentOptions().setConfig(mailboxConf), deploy);
             } else {
                 deploy.handle(null);
@@ -187,17 +182,17 @@ public class Logbulk extends AbstractVerticle {
                 }
             });
         }
-    }
 
-    /**
-     * Gets the type of the component.
-     *
-     * @param component component id.
-     * @return type of the component.
-     */
-    private String type(String component) {
-        int idx = component.indexOf('/');
-        return (idx != -1) ? component.substring(0, idx) : component;
+        /**
+         * Gets the type of the component.
+         *
+         * @param component component id.
+         * @return type of the component.
+         */
+        private String type(String component) {
+            int idx = component.indexOf('/');
+            return (idx != -1) ? component.substring(0, idx) : component;
+        }
     }
 
 }
