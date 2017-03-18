@@ -37,6 +37,7 @@ import io.vertx.core.*;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.util.List;
@@ -135,18 +136,7 @@ public class Logbulk extends AbstractVerticle {
             // Map configuration & deploy
             Future completion = Future.future();
             completions.add(completion);
-            Handler<AsyncResult<String>> deploy = event -> {
-                deployment.setConfig(conf);
-                String type = type(endpoint);
-                vertx.deployVerticle(registry.getComponent(section + '.' + type), deployment, h -> {
-                    if (h.failed()) {
-                        log.error("Error during component setup:", h.cause());
-                        vertx.close();
-                    } else {
-                        completion.complete();
-                    }
-                });
-            };
+            Handler<AsyncResult<String>> deploy = new ComponentDeployment(deployment, endpoint, completion, section, conf);
 
             // Deploy mailbox first
             if (conf.getBoolean(CONF_HAS_MAILBOX)) {
@@ -171,6 +161,32 @@ public class Logbulk extends AbstractVerticle {
 
         // Compose all futures
         return CompositeFuture.all(completions);
+    }
+
+    /**
+     * Component deployement implementation.
+     */
+    @AllArgsConstructor
+    private class ComponentDeployment implements Handler<AsyncResult<String>> {
+
+        private DeploymentOptions deployment;
+        private String endpoint;
+        private Future completion;
+        private String section;
+        private JsonObject conf;
+
+        @Override public void handle(AsyncResult<String> result) {
+            deployment.setConfig(conf);
+            String type = type(endpoint);
+            vertx.deployVerticle(registry.getComponent(section + '.' + type), deployment, h -> {
+                if (h.failed()) {
+                    log.error("Error during component setup:", h.cause());
+                    vertx.close();
+                } else {
+                    completion.complete();
+                }
+            });
+        }
     }
 
     /**

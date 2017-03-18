@@ -399,8 +399,7 @@ public class ComponentVerticle extends AbstractVerticle {
     public void notifyPressure(List<String> previousPressure, Packet.Header headers) {
         // Always return a previous in mailbox context
         Optional<String> previousOpt = previous(headers);
-        if (previousOpt.isPresent()) {
-
+        previousOpt.ifPresent(e -> {
             // Handle pressure
             String previous = previousOpt.get();
             if (!previousPressure.contains(previous)) {
@@ -418,9 +417,7 @@ public class ComponentVerticle extends AbstractVerticle {
                     }
                 }
             }
-        } else {
-            checkState(previousOpt.isPresent(), "There is always a previous component");
-        }
+        });
     }
 
     /**
