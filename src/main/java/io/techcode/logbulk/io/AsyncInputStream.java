@@ -49,7 +49,9 @@ import static com.google.common.base.Preconditions.checkState;
 public class AsyncInputStream implements ReadStream<Buffer> {
 
     // Some constants
-    public static final int STATUS_PAUSED = 0, STATUS_ACTIVE = 1, STATUS_CLOSED = 2;
+    public static final int STATUS_PAUSED = 0;
+    public static final int STATUS_ACTIVE = 1;
+    public static final int STATUS_CLOSED = 2;
     static final int DEFAULT_CHUNK_SIZE = 8192;
 
     // Some stuff

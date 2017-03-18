@@ -23,7 +23,6 @@
  */
 package io.techcode.logbulk.io;
 
-import com.google.common.base.Objects;
 import com.google.common.primitives.Doubles;
 import com.google.common.primitives.Floats;
 import com.google.common.primitives.Ints;
@@ -31,6 +30,7 @@ import com.google.common.primitives.Longs;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 
 import java.time.Instant;
@@ -46,6 +46,7 @@ import java.util.stream.Stream;
 /**
  * Wrap json configuration to allow proper java properties overrides.
  */
+@EqualsAndHashCode(of = {"wrapConfig"}, callSuper = false)
 public class Configuration extends JsonObject {
 
     // Wrap configuration
@@ -295,18 +296,6 @@ public class Configuration extends JsonObject {
 
     @Override public String toString() {
         return wrapConfig.toString();
-    }
-
-    @Override public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
-        Configuration entries = (Configuration) o;
-        return Objects.equal(wrapConfig, entries.wrapConfig);
-    }
-
-    @Override public int hashCode() {
-        return wrapConfig.hashCode();
     }
 
     @Override public void writeToBuffer(Buffer buffer) {

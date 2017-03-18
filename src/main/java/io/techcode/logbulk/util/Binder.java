@@ -32,41 +32,41 @@ import lombok.NonNull;
 public class Binder<T extends Binder<T>> {
 
     // Some functions
-    public static final Function IDENTITY = (from, to, fieldFrom, fieldTo) -> {
-        Object value = from.getValue(fieldFrom);
-        if (value != null) to.put(fieldTo, value);
+    public static final Function IDENTITY = (dataFrom, dataTo, fieldFrom, fieldTo) -> {
+        Object value = dataFrom.getValue(fieldFrom);
+        if (value != null) dataTo.put(fieldTo, value);
     };
-    public static final Function ANY_TO_STRING = (from, to, fieldFrom, fieldTo) -> {
-        Object value = from.getValue(fieldFrom);
-        if (value != null) to.put(fieldTo, String.valueOf(value));
+    public static final Function ANY_TO_STRING = (dataFrom, dataTo, fieldFrom, fieldTo) -> {
+        Object value = dataFrom.getValue(fieldFrom);
+        if (value != null) dataTo.put(fieldTo, String.valueOf(value));
     };
-    public static final Function STRING_TO_INT = (from, to, fieldFrom, fieldTo) -> {
-        String value = from.getString(fieldFrom);
-        if (value != null) to.put(fieldTo, Integer.parseInt(value));
+    public static final Function STRING_TO_INT = (dataFrom, dataTo, fieldFrom, fieldTo) -> {
+        String value = dataFrom.getString(fieldFrom);
+        if (value != null) dataTo.put(fieldTo, Integer.parseInt(value));
     };
-    public static final Function STRING_TO_LONG = (from, to, fieldFrom, fieldTo) -> {
-        String value = from.getString(fieldFrom);
-        if (value != null) to.put(fieldTo, Long.parseLong(value));
+    public static final Function STRING_TO_LONG = (dataFrom, dataTo, fieldFrom, fieldTo) -> {
+        String value = dataFrom.getString(fieldFrom);
+        if (value != null) dataTo.put(fieldTo, Long.parseLong(value));
     };
-    public static final Function STRING_TO_FLOAT = (from, to, fieldFrom, fieldTo) -> {
-        String value = from.getString(fieldFrom);
-        if (value != null) to.put(fieldTo, Float.parseFloat(value));
+    public static final Function STRING_TO_FLOAT = (dataFrom, dataTo, fieldFrom, fieldTo) -> {
+        String value = dataFrom.getString(fieldFrom);
+        if (value != null) dataTo.put(fieldTo, Float.parseFloat(value));
     };
-    public static final Function STRING_TO_DOUBLE = (from, to, fieldFrom, fieldTo) -> {
-        String value = from.getString(fieldFrom);
-        if (value != null) to.put(fieldTo, Double.parseDouble(value));
+    public static final Function STRING_TO_DOUBLE = (dataFrom, dataTo, fieldFrom, fieldTo) -> {
+        String value = dataFrom.getString(fieldFrom);
+        if (value != null) dataTo.put(fieldTo, Double.parseDouble(value));
     };
-    public static final Function STRING_TO_BOOLEAN = (from, to, fieldFrom, fieldTo) -> {
-        String value = from.getString(fieldFrom);
-        if (value != null) to.put(fieldTo, Boolean.parseBoolean(value));
+    public static final Function STRING_TO_BOOLEAN = (dataFrom, dataTo, fieldFrom, fieldTo) -> {
+        String value = dataFrom.getString(fieldFrom);
+        if (value != null) dataTo.put(fieldTo, Boolean.parseBoolean(value));
     };
-    public static final Function INT_TO_BOOLEAN = (from, to, fieldFrom, fieldTo) -> {
-        Integer value = from.getInteger(fieldFrom);
-        if (value != null) to.put(fieldTo, value != 0);
+    public static final Function INT_TO_BOOLEAN = (dataFrom, dataTo, fieldFrom, fieldTo) -> {
+        Integer value = dataFrom.getInteger(fieldFrom);
+        if (value != null) dataTo.put(fieldTo, value != 0);
     };
-    public static final Function LONG_TO_BOOLEAN = (from, to, fieldFrom, fieldTo) -> {
-        Long value = from.getLong(fieldFrom);
-        if (value != null) to.put(fieldTo, value != 0);
+    public static final Function LONG_TO_BOOLEAN = (dataFrom, dataTo, fieldFrom, fieldTo) -> {
+        Long value = dataFrom.getLong(fieldFrom);
+        if (value != null) dataTo.put(fieldTo, value != 0);
     };
 
     // From object
@@ -124,7 +124,9 @@ public class Binder<T extends Binder<T>> {
     @SuppressWarnings("unchecked")
     public T bindOrNull(String from, String to, Function function) {
         bind(from, to, function);
-        if (!this.to.containsKey(to)) this.to.putNull(to);
+        if (!this.to.containsKey(to)) {
+            this.to.putNull(to);
+        }
         return (T) this;
     }
 

@@ -43,6 +43,14 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public class Mailbox extends ComponentVerticle implements ConvertHandler {
 
+    // Some constants
+    private static final String CONF_MAILBOX = "mailbox";
+    private static final String CONF_FIFO = "fifo";
+    private static final String CONF_INSTANCE = "instance";
+    private static final String CONF_WORKER = "worker";
+    private static final String CONF_IDLE = "idle";
+    private static final String CONF_THRESHOLD = "threshold";
+
     // Default threshold
     public static final int DEFAULT_THRESHOLD = 1000;
 
@@ -66,10 +74,10 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
         super.start();
 
         // Retrieve configuration settings
-        threshold = config.getInteger("mailbox");
-        fifo = config.getBoolean("fifo", true);
+        threshold = config.getInteger(CONF_MAILBOX);
+        fifo = config.getBoolean(CONF_FIFO, true);
         idle = Math.max(1, threshold / 2);
-        int componentCount = config.getInteger("instance");
+        int componentCount = config.getInteger(CONF_INSTANCE);
         threshold *= componentCount;
 
         // Setup
@@ -114,19 +122,19 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
 
             JsonObject message = event.body();
             message.put(endpoint, new JsonObject()
-                    .put("mailbox", buffer.size())
-                    .put("idle", idle)
-                    .put("threshold", threshold)
-                    .put("worker", workerStatus));
+                    .put(CONF_MAILBOX, buffer.size())
+                    .put(CONF_IDLE, idle)
+                    .put(CONF_THRESHOLD, threshold)
+                    .put(CONF_WORKER, workerStatus));
             event.reply(message);
         });
     }
 
     @Override protected void checkConfig(JsonObject config) {
-        checkState(config.getInteger("mailbox") != null &&
-                config.getInteger("mailbox") > 0, "The mailbox is required");
-        checkState(config.getInteger("instance") != null &&
-                config.getInteger("instance") > 0, "The instance is required");
+        checkState(config.getInteger(CONF_MAILBOX) != null &&
+                config.getInteger(CONF_MAILBOX) > 0, "The mailbox is required");
+        checkState(config.getInteger(CONF_INSTANCE) != null &&
+                config.getInteger(CONF_INSTANCE) > 0, "The instance is required");
     }
 
     @Override public void handle(Packet packet) {
@@ -157,7 +165,9 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
     private boolean process(Packet packet) {
         // Retrieve a worker
         Worker worker = workers.isEmpty() ? null : workers.first();
-        if (worker == null) return false;
+        if (worker == null) {
+            return false;
+        }
 
         // Remove from set before anything
         workers.remove(worker);
@@ -166,7 +176,9 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
         worker.job++;
 
         // Evict if busy & send job
-        if (worker.job < threshold) workers.add(worker);
+        if (worker.job < threshold) {
+            workers.add(worker);
+        }
         getEventBus().send(worker.name, packet);
         return true;
     }

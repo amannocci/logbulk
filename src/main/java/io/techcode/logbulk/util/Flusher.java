@@ -101,7 +101,9 @@ public class Flusher {
      * Explictly flush.
      */
     public void flush() {
-        if (handler != null) handler.handle(null);
+        if (handler != null) {
+            handler.handle(null);
+        }
         flushed();
     }
 
