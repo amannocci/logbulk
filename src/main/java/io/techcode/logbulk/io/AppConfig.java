@@ -50,7 +50,6 @@ public class AppConfig {
     public static final String ENDPOINT = "endpoint";
     public static final String FIFO = "fifo";
     public static final String INSTANCE = "instance";
-    public static final String SETTINGS = "settings";
     public static final String WORKER = "worker";
     public static final String STATUS = "status";
     public static final String SETTING = "setting";

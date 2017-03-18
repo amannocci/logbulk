@@ -27,6 +27,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ListMultimap;
 import io.netty.handler.logging.LogLevel;
+import io.techcode.logbulk.io.AppConfig;
 import io.techcode.logbulk.io.Configuration;
 import io.techcode.logbulk.net.Packet;
 import io.techcode.logbulk.util.PressureHandler;
@@ -92,11 +93,11 @@ public class ComponentVerticle extends AbstractVerticle {
         endpoint(config);
 
         // Settings
-        JsonObject settings = new Configuration(config.getJsonObject("settings", new JsonObject()));
+        JsonObject settings = new Configuration(config.getJsonObject(AppConfig.SETTING, new JsonObject()));
         tracing = settings.getBoolean("tracing", false);
 
         // Generate routing
-        JsonObject routes = config.getJsonObject("route");
+        JsonObject routes = config.getJsonObject(AppConfig.ROUTE);
         ImmutableListMultimap.Builder<String, String> builder = ImmutableListMultimap.builder();
         for (String route : routes.fieldNames()) {
             builder.putAll(route, Streams.to(routes.getJsonArray(route).stream(), String.class)
@@ -435,9 +436,9 @@ public class ComponentVerticle extends AbstractVerticle {
      * @param config configuration.
      */
     public void endpoint(@NonNull JsonObject config) {
-        parentEndpoint = config.getString("endpoint");
+        parentEndpoint = config.getString(AppConfig.ENDPOINT);
 
-        if (config.getBoolean("hasMailbox", true)) {
+        if (config.getBoolean(AppConfig.HAS_MAILBOX, true)) {
             endpoint = parentEndpoint + ".worker." + uuid;
             eventBus.send(parentEndpoint + ".worker", new JsonArray().add(endpoint).add(0));
         } else {
