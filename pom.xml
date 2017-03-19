@@ -6,7 +6,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <main.verticle>io.techcode.logbulk.Logbulk</main.verticle>
-    <vertx.version>3.4.0</vertx.version>
+    <vertx.version>3.4.1</vertx.version>
     <slf4j.version>1.7.24</slf4j.version>
     <logback.version>1.2.1</logback.version>
     <vertx.when.version>4.2.0</vertx.when.version>
