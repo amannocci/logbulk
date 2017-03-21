@@ -11,3 +11,8 @@ is_install() {
   check=$(which $1 ; echo $?)
   echo $check;
 }
+
+get_version() {
+  VERSION=$(grep -oP "<version>(.*)</version>" pom.xml | head -1 | sed 's/\(<version>\|<\/version>\)//g')
+  info "version=$VERSION"
+}

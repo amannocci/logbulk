@@ -23,8 +23,7 @@ fi
 
 # Extract version
 cd ${BASE_PROJECT}
-VERSION=$(grep -oP "<version>(.*)</version>" pom.xml | head -1 | sed 's/\(<version>\|<\/version>\)//g')
-info "version=$VERSION"
+get_version
 
 # Build logbulk before anything
 mvn clean install package
