@@ -1,6 +1,10 @@
-# Logbulk [![Build Status](https://travis-ci.org/amannocci/logbulk.svg?branch=master)](https://travis-ci.org/amannocci/logbulk) [![Quality Gate](https://sonarqube.com/api/badges/gate?key=io.techcode.logbulk%3Alogbulk)](https://sonarqube.com/dashboard/index/io.techcode.logbulk%3Alogbulk)
-Logbulk is a tool for managing events and logs. You can use it to collect logs, parse them, and store them for later use.
-It is fully free and fully open source. The license is MIT, meaning you are pretty much free to use it however you want in whatever way.
+# Logbulk
+[![Build Status](https://travis-ci.org/amannocci/logbulk.svg?branch=master)](https://travis-ci.org/amannocci/logbulk)
+[![Quality Gate](https://sonarqube.com/api/badges/gate?key=io.techcode.logbulk%3Alogbulk)](https://sonarqube.com/dashboard/index/io.techcode.logbulk%3Alogbulk)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+*Logbulk is a tool for managing events and logs. You can use it to collect logs, parse them, and store them for later use.
+It is fully free and fully open source. The license is MIT, meaning you are pretty much free to use it however you want in whatever way.*
 * [Source](https://github.com/amannocci/logbulk)
 * [Issues](https://github.com/amannocci/logbulk/issues)
 * [Documentation](https://amannocci.gitbooks.io/logbulk/content/)
