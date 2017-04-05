@@ -21,4 +21,5 @@ declare -a plugins=(
   "mysql"
   "rabbitmq"
   "heartbeat"
+  "syslog"
 )
