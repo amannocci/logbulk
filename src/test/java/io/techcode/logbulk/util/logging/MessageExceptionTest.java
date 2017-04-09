@@ -1,18 +1,18 @@
 /*
  * The MIT License (MIT)
- * <p>
+ * <p/>
  * Copyright (c) 2016-2017
- * <p>
+ * <p/>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * <p>
+ * <p/>
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * <p>
+ * <p/>
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -23,32 +23,36 @@
  */
 package io.techcode.logbulk.util.logging;
 
-import lombok.NonNull;
+import org.junit.Test;
+
+import static io.techcode.logbulk.util.Binder.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
- * Simple message exception that contains only a message.
- * Useful to speed up exception handling in some case.
+ * Test for MessageException.
  */
-public class MessageException extends Exception {
+public class MessageExceptionTest {
 
-    // A shared value for an empty stack
-    private static final StackTraceElement[] UNASSIGNED_STACK = new StackTraceElement[0];
-
-    // Message
-    private final String message;
-
-    /**
-     * Create a simple message exception.
-     *
-     * @param message message exception.
-     */
-    public MessageException(@NonNull String message) {
-        setStackTrace(UNASSIGNED_STACK);
-        this.message = message;
+    @Test(expected = NullPointerException.class)
+    public void testConstructor1() throws Exception {
+        throw new MessageException(null);
     }
 
-    @Override public String getMessage() {
-        return message;
+    @Test(expected = MessageException.class)
+    public void testConstructor2() throws Exception {
+        throw new MessageException("foobar");
+    }
+
+    @Test public void testGetMessage() throws Exception {
+        MessageException exception = new MessageException("foobar");
+        assertEquals("foobar", exception.getMessage());
+    }
+
+    @Test public void testGetStackTrace() throws Exception {
+        MessageException exception = new MessageException("foobar");
+        assertEquals(0, exception.getStackTrace().length);
     }
 
 }
