@@ -24,6 +24,7 @@
 package io.techcode.logbulk.io;
 
 import com.google.common.util.concurrent.MoreExecutors;
+import io.vertx.core.Context;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
@@ -55,7 +56,7 @@ public class AsyncInputStream implements ReadStream<Buffer> {
     static final int DEFAULT_CHUNK_SIZE = 8192;
 
     // Some stuff
-    private final Vertx vertx;
+    private final Context ctx;
     private final Executor executor;
     private final PushbackInputStream in;
     private final int chunkSize;
@@ -92,7 +93,7 @@ public class AsyncInputStream implements ReadStream<Buffer> {
      */
     public AsyncInputStream(@NonNull Vertx vertx, ExecutorService executor, @NonNull InputStream in, int chunkSize) {
         checkArgument(chunkSize > 0, "chunkSize: %d (expected: a positive integer)", chunkSize);
-        this.vertx = vertx;
+        this.ctx = vertx.getOrCreateContext();
         if (in instanceof PushbackInputStream) {
             this.in = (PushbackInputStream) in;
         } else {
@@ -108,7 +109,7 @@ public class AsyncInputStream implements ReadStream<Buffer> {
         return this;
     }
 
-    @Override public AsyncInputStream handler(Handler<Buffer> handler) {
+    @Override public AsyncInputStream handler(@NonNull Handler<Buffer> handler) {
         dataHandler = handler;
         doRead();
         return this;
@@ -145,9 +146,9 @@ public class AsyncInputStream implements ReadStream<Buffer> {
                     final byte[] bytes = readChunk();
                     if (bytes.length == 0) {
                         status = STATUS_CLOSED;
-                        vertx.runOnContext(e -> fireClose());
+                        ctx.runOnContext(e -> fireClose());
                     } else {
-                        vertx.runOnContext(e -> {
+                        ctx.runOnContext(e -> {
                             fireData(Buffer.buffer(bytes));
                             doRead();
                         });
@@ -155,7 +156,7 @@ public class AsyncInputStream implements ReadStream<Buffer> {
                 } catch (final Exception ex) {
                     status = STATUS_CLOSED;
                     closeQuietly(in);
-                    vertx.runOnContext(e -> fireException(ex));
+                    ctx.runOnContext(e -> fireException(ex));
                 }
             });
         }
@@ -244,9 +245,9 @@ public class AsyncInputStream implements ReadStream<Buffer> {
         // Partition size
         final int partitionSize;
         if (availableBytes <= 0) {
-            partitionSize = this.chunkSize;
+            partitionSize = chunkSize;
         } else {
-            partitionSize = Math.min(this.chunkSize, availableBytes);
+            partitionSize = Math.min(chunkSize, availableBytes);
         }
 
         // Some buffer stuff

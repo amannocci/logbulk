@@ -23,7 +23,6 @@
  */
 package io.techcode.logbulk.util.stream;
 
-import io.techcode.logbulk.util.stream.Streams;
 import org.junit.Before;
 import org.junit.Test;
 
