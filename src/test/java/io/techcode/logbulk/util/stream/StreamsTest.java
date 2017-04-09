@@ -44,6 +44,10 @@ public class StreamsTest {
         untypedStream = Stream.of("foo", 1, 2L, 2.0F, "bar");
     }
 
+    @Test(expected = IllegalAccessException.class) public void testConstructor() throws Exception {
+        Streams.class.newInstance();
+    }
+
     @Test public void testTo1() throws Exception {
         List<String> typed = Streams.to(untypedStream, String.class).collect(Collectors.toList());
         assertEquals(2, typed.size());
