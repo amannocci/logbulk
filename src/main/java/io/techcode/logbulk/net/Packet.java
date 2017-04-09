@@ -24,15 +24,13 @@
 package io.techcode.logbulk.net;
 
 import io.vertx.core.json.JsonObject;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NonNull;
+import lombok.*;
 
 /**
  * EventBus packet message.
  */
 @Data
+@Generated
 @Builder
 public class Packet {
 
