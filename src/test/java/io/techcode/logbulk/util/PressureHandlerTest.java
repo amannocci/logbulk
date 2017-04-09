@@ -100,6 +100,41 @@ public class PressureHandlerTest {
         assertTrue(called.get());
     }
 
+
+    @Test public void testHandle5() {
+        // Prepare mocks
+        ReadStream mockedStream = mock(ReadStream.class);
+        Message<String> mockedMessage1 = mock(Message.class);
+        when(mockedMessage1.body()).thenReturn("next-endpoint-1");
+        Message<String> mockedMessage2 = mock(Message.class);
+        when(mockedMessage2.body()).thenReturn("next-endpoint-2");
+
+        // Test
+        PressureHandler handler = new PressureHandler(mockedStream, "test-endpoint");
+        handler.handle(mockedMessage1);
+        handler.handle(mockedMessage2);
+        verify(mockedStream).pause();
+    }
+
+
+    @Test public void testHandle6() {
+        // Prepare mocks
+        ReadStream mockedStream = mock(ReadStream.class);
+        Message<String> mockedMessage1 = mock(Message.class);
+        when(mockedMessage1.body()).thenReturn("next-endpoint-1");
+        Message<String> mockedMessage2 = mock(Message.class);
+        when(mockedMessage2.body()).thenReturn("next-endpoint-2");
+
+        // Test
+        PressureHandler handler = new PressureHandler(mockedStream, "test-endpoint");
+        handler.handle(mockedMessage1);
+        handler.handle(mockedMessage2);
+        handler.handle(mockedMessage2);
+        handler.handle(mockedMessage1);
+        verify(mockedStream).pause();
+        verify(mockedStream).resume();
+    }
+
     private class EndedReadStream<T> implements ReadStream<T> {
 
         private Handler<Void> endHandler;
