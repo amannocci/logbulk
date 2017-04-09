@@ -76,6 +76,11 @@ public class AppConfigTest {
         assertTrue(config.isEmpty());
     }
 
+    @Test public void testSettings() {
+        JsonObject config = new AppConfig().routes();
+        assertTrue(config.isEmpty());
+    }
+
     @Test public void testToString() {
         String config = new AppConfig().toString();
         assertTrue(config.contains("setting{}"));
