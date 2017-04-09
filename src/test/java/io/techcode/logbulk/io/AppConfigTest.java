@@ -77,7 +77,7 @@ public class AppConfigTest {
     }
 
     @Test public void testSettings() {
-        JsonObject config = new AppConfig().routes();
+        JsonObject config = new AppConfig().settings();
         assertTrue(config.isEmpty());
     }
 
