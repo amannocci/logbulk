@@ -23,9 +23,11 @@
  */
 package io.techcode.logbulk.net;
 
+import io.vertx.core.buffer.Buffer;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.*;
 
 /**
@@ -51,6 +53,23 @@ public class PacketCodecTest {
         PacketCodec codec = new PacketCodec();
         Packet transformed = codec.transform(mockedPacket);
         assertEquals(mockedPacket, transformed);
+    }
+
+    @Test public void testDecode() {
+        PacketCodec codec = new PacketCodec();
+        codec.decodeFromWire(0, Buffer.buffer());
+        assertNull(codec.decodeFromWire(0, Buffer.buffer()));
+    }
+
+    @Test public void testEncode() {
+        // Prepare mocks
+        Packet mockedPacket = mock(Packet.class);
+
+        // Test
+        PacketCodec codec = new PacketCodec();
+        Buffer buf = Buffer.buffer();
+        codec.encodeToWire(buf, mockedPacket);
+        assertEquals(0, buf.length());
     }
 
     @Test public void testName() {
