@@ -33,6 +33,7 @@ import org.junit.runner.RunWith;
 import java.util.Map;
 import java.util.Set;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -73,6 +74,15 @@ public class AppConfigTest {
     @Test public void testRoutes() {
         JsonObject config = new AppConfig().routes();
         assertTrue(config.isEmpty());
+    }
+
+    @Test public void testToString() {
+        String config = new AppConfig().toString();
+        assertTrue(config.contains("setting{}"));
+        assertTrue(config.contains("input{}"));
+        assertTrue(config.contains("output{}"));
+        assertTrue(config.contains("transform{}"));
+        assertTrue(config.contains("component{input{},output{},transform{}}"));
     }
 
 }
