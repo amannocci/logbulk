@@ -26,12 +26,15 @@ package io.techcode.logbulk.util.stream;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Test for Streams.
@@ -44,8 +47,11 @@ public class StreamsTest {
         untypedStream = Stream.of("foo", 1, 2L, 2.0F, "bar");
     }
 
-    @Test(expected = IllegalAccessException.class) public void testConstructor() throws Exception {
-        Streams.class.newInstance();
+    @Test public void testConstructor() throws Exception {
+        Constructor<Streams> constructor = Streams.class.getDeclaredConstructor();
+        assertTrue(Modifier.isPrivate(constructor.getModifiers()));
+        constructor.setAccessible(true);
+        constructor.newInstance();
     }
 
     @Test public void testTo1() throws Exception {
