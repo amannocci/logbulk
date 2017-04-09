@@ -23,16 +23,13 @@
  */
 package io.techcode.logbulk.util.logging;
 
-import io.techcode.logbulk.util.stream.Streams;
 import io.vertx.core.json.JsonArray;
 import org.junit.Test;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Test for ExceptionUtils.
@@ -40,7 +37,7 @@ import static org.junit.Assert.assertTrue;
 public class ExceptionUtilsTest {
 
     @Test public void testConstructor() throws Exception {
-        Constructor<Streams> constructor = Streams.class.getDeclaredConstructor();
+        Constructor<ExceptionUtils> constructor = ExceptionUtils.class.getDeclaredConstructor();
         assertTrue(Modifier.isPrivate(constructor.getModifiers()));
         constructor.setAccessible(true);
         constructor.newInstance();
