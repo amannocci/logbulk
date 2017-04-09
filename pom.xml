@@ -144,6 +144,9 @@
         <version>0.7.9</version>
         <configuration>
           <append>true</append>
+          <excludes>
+            <exclude>LOMBOK.DATA</exclude>
+          </excludes>
         </configuration>
         <executions>
           <execution>
