@@ -3,9 +3,7 @@
   <!-- Stdout appender -->
   <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
     <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
-      <layout class="io.techcode.logbulk.util.logging.JsonLayout">
-        <pretty>false</pretty>
-        <stringify>false</stringify>
+      <layout class="io.techcode.logback.contrib.JsonLayout">
       </layout>
     </encoder>
   </appender>
@@ -14,9 +12,7 @@
   <appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <file>log/logbulk.log</file>
     <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
-      <layout class="io.techcode.logbulk.util.logging.JsonLayout">
-        <pretty>false</pretty>
-        <stringify>false</stringify>
+      <layout class="io.techcode.logback.contrib.JsonLayout">
       </layout>
     </encoder>
     <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">

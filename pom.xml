@@ -51,6 +51,11 @@
       <version>${slf4j.version}</version>
     </dependency>
     <dependency>
+      <groupId>io.techcode.logback.contrib</groupId>
+      <artifactId>logback-json-layout</artifactId>
+      <version>0.1.0</version>
+    </dependency>
+    <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
       <version>${logback.version}</version>

@@ -31,7 +31,6 @@ import io.techcode.logbulk.io.AppConfig;
 import io.techcode.logbulk.io.Configuration;
 import io.techcode.logbulk.net.Packet;
 import io.techcode.logbulk.util.PressureHandler;
-import io.techcode.logbulk.util.logging.ExceptionUtils;
 import io.techcode.logbulk.util.stream.Streams;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Handler;
@@ -45,13 +44,12 @@ import io.vertx.core.streams.ReadStream;
 import lombok.Getter;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
-import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Component verticle helper.
@@ -143,7 +141,7 @@ public class ComponentVerticle extends AbstractVerticle {
         Packet.Header headers = packet.getHeader();
         JsonObject body = packet.getBody();
         if (th != null) {
-            JsonArray stacktrace = ExceptionUtils.getStackTrace(th);
+            String stacktrace = ExceptionUtils.getStackTrace(th);
             headers.put("_stacktrace", stacktrace);
             body.put("stacktrace", stacktrace);
             headers.put("_level", LogLevel.ERROR);
@@ -151,7 +149,7 @@ public class ComponentVerticle extends AbstractVerticle {
         }
         if (Strings.isNullOrEmpty(fallback)) {
             // Log info if no fallback
-            log.info(packet.getBody().encode());
+            log.info(packet.getBody());
             release();
         } else {
             // Otherwise send to fallback
