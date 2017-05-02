@@ -24,6 +24,7 @@
 package io.techcode.logbulk.util;
 
 import io.techcode.logbulk.net.Packet;
+import io.techcode.logbulk.util.logging.MessageException;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonObject;
 import org.junit.Test;
@@ -54,8 +55,7 @@ public class ConvertHandlerTest {
             .body(new JsonObject())
             .build();
 
-    @Test
-    public void testHandle1() throws Exception {
+    @Test public void testHandle1() throws Exception {
         Message<Packet> mockedMessage = mock(Message.class);
         when(mockedMessage.body()).thenReturn(VALID_PACKET);
         Impl impl = new Impl();
@@ -63,13 +63,18 @@ public class ConvertHandlerTest {
         assertFalse(impl.fallbackCalled);
     }
 
-    @Test
-    public void testHandle2() throws Exception {
+    @Test public void testHandle2() throws Exception {
         Message<Packet> mockedMessage = mock(Message.class);
         when(mockedMessage.body()).thenReturn(INVALID_PACKET);
         Impl impl = new Impl();
         impl.handle(mockedMessage);
         assertTrue(impl.fallbackCalled);
+    }
+
+    @Test public void testHandleFallback() throws Exception {
+        ConvertHandler handler = packet -> {
+        };
+        handler.handleFallback(VALID_PACKET, new MessageException("foobar"));
     }
 
     private class Impl implements ConvertHandler {
