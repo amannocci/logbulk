@@ -50,6 +50,16 @@ public class BinderTest {
         binder = new Binder();
     }
 
+    @Test(expected = NullPointerException.class)
+    public void testTo() throws Exception {
+        binder.to(null);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testFrom() throws Exception {
+        binder.from(null);
+    }
+
     @Test public void testIdentityFunction1() throws Exception {
         // Prepare for test
         Boolean excepted = true;
@@ -110,6 +120,28 @@ public class BinderTest {
         assertEquals(excepted, to.getString("obj"));
     }
 
+    @Test public void testIdentityFunction7() throws Exception {
+        // Test
+        binder.from(from).to(to).bindOrNull("object", "obj", IDENTITY);
+        assertNull(to.getString("obj"));
+    }
+
+    @Test public void testIdentityFunction8() throws Exception {
+        // Prepare for test
+        String excepted = "foobar";
+        from.put("object", excepted);
+
+        // Test
+        binder.from(from).to(to).bindOrNull("object", "obj", IDENTITY);
+        assertEquals(excepted, to.getString("obj"));
+    }
+
+    @Test public void testIdentityFunction9() throws Exception {
+        // Test
+        binder.from(from).to(to).bind("object", "obj", IDENTITY);
+        assertFalse(to.containsKey("obj"));
+    }
+
     @Test public void testAnyToStringFunction1() throws Exception {
         // Prepare for test
         from.put("object", true);
@@ -137,7 +169,13 @@ public class BinderTest {
         assertEquals("0.0", to.getString("obj"));
     }
 
-    @Test public void testStringToIntFunction() throws Exception {
+    @Test public void testAnyToStringFunction4() throws Exception {
+        // Test
+        binder.from(from).to(to).bind("object", "obj", ANY_TO_STRING);
+        assertFalse(to.containsKey("obj"));
+    }
+
+    @Test public void testStringToIntFunction1() throws Exception {
         // Prepare for test
         from.put("object", "1");
 
@@ -146,7 +184,13 @@ public class BinderTest {
         assertTrue(1 == to.getInteger("obj"));
     }
 
-    @Test public void testStringToLongFunction() throws Exception {
+    @Test public void testStringToIntFunction2() throws Exception {
+        // Test
+        binder.from(from).to(to).bind("object", "obj", STRING_TO_INT);
+        assertFalse(to.containsKey("obj"));
+    }
+
+    @Test public void testStringToLongFunction1() throws Exception {
         // Prepare for test
         from.put("object", "1");
 
@@ -155,7 +199,13 @@ public class BinderTest {
         assertTrue(1 == to.getLong("obj"));
     }
 
-    @Test public void testStringToFloatFunction() throws Exception {
+    @Test public void testStringToLongFunction2() throws Exception {
+        // Test
+        binder.from(from).to(to).bind("object", "obj", STRING_TO_LONG);
+        assertFalse(to.containsKey("obj"));
+    }
+
+    @Test public void testStringToFloatFunction1() throws Exception {
         // Prepare for test
         from.put("object", "0.0");
 
@@ -164,13 +214,25 @@ public class BinderTest {
         assertEquals(0.0, to.getFloat("obj"), 0.001F);
     }
 
-    @Test public void testStringToDoubleFunction() throws Exception {
+    @Test public void testStringToFloatFunction2() throws Exception {
+        // Test
+        binder.from(from).to(to).bind("object", "obj", STRING_TO_FLOAT);
+        assertFalse(to.containsKey("obj"));
+    }
+
+    @Test public void testStringToDoubleFunction1() throws Exception {
         // Prepare for test
         from.put("object", "0.0");
 
         // Test
         binder.from(from).to(to).bind("object", "obj", STRING_TO_DOUBLE);
         assertEquals(0.0, to.getDouble("obj"), 0.001F);
+    }
+
+    @Test public void testStringToDoubleFunction2() throws Exception {
+        // Test
+        binder.from(from).to(to).bind("object", "obj", STRING_TO_DOUBLE);
+        assertFalse(to.containsKey("obj"));
     }
 
     @Test public void testStringToBooleanFunction1() throws Exception {
@@ -191,6 +253,12 @@ public class BinderTest {
         assertFalse(to.getBoolean("obj"));
     }
 
+    @Test public void testStringToBooleanFunction3() throws Exception {
+        // Test
+        binder.from(from).to(to).bind("object", "obj", STRING_TO_BOOLEAN);
+        assertFalse(to.containsKey("obj"));
+    }
+
     @Test public void testIntToBooleanFunction1() throws Exception {
         // Prepare for test
         from.put("object", 0);
@@ -209,6 +277,12 @@ public class BinderTest {
         assertTrue(to.getBoolean("obj"));
     }
 
+    @Test public void testIntToBooleanFunction3() throws Exception {
+        // Test
+        binder.from(from).to(to).bind("object", "obj", INT_TO_BOOLEAN);
+        assertFalse(to.containsKey("obj"));
+    }
+
     @Test public void testLongToBooleanFunction1() throws Exception {
         // Prepare for test
         from.put("object", 0L);
@@ -225,6 +299,12 @@ public class BinderTest {
         // Test
         binder.from(from).to(to).bind("object", "obj", LONG_TO_BOOLEAN);
         assertTrue(to.getBoolean("obj"));
+    }
+
+    @Test public void testLongToBooleanFunction3() throws Exception {
+        // Test
+        binder.from(from).to(to).bind("object", "obj", LONG_TO_BOOLEAN);
+        assertFalse(to.containsKey("obj"));
     }
 
 }
