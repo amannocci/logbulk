@@ -22,4 +22,5 @@ declare -a plugins=(
   "rabbitmq"
   "heartbeat"
   "syslog"
+  "enclose"
 )
