@@ -56,6 +56,8 @@ public class AppConfig {
     public static final String COMPONENT = "component";
     public static final String IDLE = "idle";
     public static final String THRESHOLD = "threshold";
+    public static final String FALLBACK = "fallback";
+    public static final String TRACING = "tracing";
 
     // Configuration wrapped
     private final Config config;

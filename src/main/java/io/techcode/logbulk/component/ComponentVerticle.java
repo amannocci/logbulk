@@ -26,7 +26,6 @@ package io.techcode.logbulk.component;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ListMultimap;
-import io.netty.handler.logging.LogLevel;
 import io.techcode.logbulk.io.AppConfig;
 import io.techcode.logbulk.io.Configuration;
 import io.techcode.logbulk.net.Packet;
@@ -56,6 +55,13 @@ import java.util.stream.Collectors;
  */
 public class ComponentVerticle extends AbstractVerticle {
 
+    // Some constants
+    private static final String MESSAGE = "message";
+    private static final String STACKTRACE = "stacktrace";
+    private static final String TRACES = "_traces";
+    private static final String DISPATCH = "dispatch";
+    private static final String DELIMITER = "delimiter";
+
     // Logging
     protected static final Logger log = LoggerFactory.getLogger(ComponentVerticle.class);
 
@@ -67,6 +73,7 @@ public class ComponentVerticle extends AbstractVerticle {
 
     // Endpoint of the component
     protected String parentEndpoint;
+    protected String parentWorkerEndpoint;
     protected String endpoint;
 
     // Routing
@@ -87,12 +94,12 @@ public class ComponentVerticle extends AbstractVerticle {
     @Override public void start() {
         this.config = config();
         eventBus = vertx.eventBus();
-        fallback = config.getString("fallback", StringUtils.EMPTY);
+        fallback = config.getString(AppConfig.FALLBACK, StringUtils.EMPTY);
         endpoint(config);
 
         // Settings
         JsonObject settings = new Configuration(config.getJsonObject(AppConfig.SETTING, new JsonObject()));
-        tracing = settings.getBoolean("tracing", false);
+        tracing = settings.getBoolean(AppConfig.TRACING, false);
 
         // Generate routing
         JsonObject routes = config.getJsonObject(AppConfig.ROUTE);
@@ -138,18 +145,13 @@ public class ComponentVerticle extends AbstractVerticle {
      * @param th     error throw.
      */
     public void handleFallback(@NonNull Packet packet, Throwable th) {
-        Packet.Header headers = packet.getHeader();
         JsonObject body = packet.getBody();
         if (th != null) {
-            String stacktrace = ExceptionUtils.getStackTrace(th);
-            headers.put("_stacktrace", stacktrace);
-            body.put("stacktrace", stacktrace);
-            headers.put("_level", LogLevel.ERROR);
-            body.put("level", LogLevel.ERROR);
+            body.put(STACKTRACE, ExceptionUtils.getStackTrace(th));
         }
         if (Strings.isNullOrEmpty(fallback)) {
             // Log info if no fallback
-            log.info(packet.getBody());
+            log.error(packet.getBody());
             release();
         } else {
             // Otherwise send to fallback
@@ -237,10 +239,10 @@ public class ComponentVerticle extends AbstractVerticle {
 
             // Add trace
             if (tracing) {
-                JsonArray traces = headers.getJsonArray("_traces");
+                JsonArray traces = headers.getJsonArray(TRACES);
                 if (traces == null) {
                     traces = new JsonArray();
-                    headers.put("_traces", traces);
+                    headers.put(TRACES, traces);
                 }
                 traces.add(endpoint);
             }
@@ -293,7 +295,7 @@ public class ComponentVerticle extends AbstractVerticle {
             if (toRelease > 1) {
                 msg.add(toRelease);
             }
-            eventBus.send(parentEndpoint + ".worker", msg);
+            eventBus.send(parentWorkerEndpoint, msg);
             toRelease = 0;
         }
     }
@@ -330,9 +332,8 @@ public class ComponentVerticle extends AbstractVerticle {
      * @param endHandler end handler to call.
      */
     public void handlePressure(ReadStream stream, Handler<Void> endHandler) {
-        String target = config.getString("endpoint");
-        eventBus.<String>consumer(target + ".pressure")
-                .handler(new PressureHandler(stream, target, endHandler));
+        eventBus.<String>consumer(parentEndpoint + ".pressure")
+                .handler(new PressureHandler(stream, parentEndpoint, endHandler));
     }
 
     /**
@@ -342,7 +343,7 @@ public class ComponentVerticle extends AbstractVerticle {
      * @return new input parser.
      */
     public RecordParser inputParser(JsonObject config) {
-        return RecordParser.newDelimited(config.getString("delimiter", "\n"), buf -> createEvent(buf.toString()));
+        return RecordParser.newDelimited(config.getString(DELIMITER, "\n"), buf -> createEvent(buf.toString()));
     }
 
     /**
@@ -355,12 +356,12 @@ public class ComponentVerticle extends AbstractVerticle {
         Packet.Header.HeaderBuilder headers = Packet.Header.builder();
         JsonObject body = new JsonObject();
         if (!Strings.isNullOrEmpty(message)) {
-            body.put("message", message);
+            body.put(MESSAGE, message);
         }
 
         // Options
         if (!hasMailbox) {
-            String dispatch = config.getString("dispatch");
+            String dispatch = config.getString(DISPATCH);
             headers.route(dispatch);
 
             // Add source
@@ -435,10 +436,11 @@ public class ComponentVerticle extends AbstractVerticle {
      */
     public void endpoint(@NonNull JsonObject config) {
         parentEndpoint = config.getString(AppConfig.ENDPOINT);
+        parentWorkerEndpoint = parentEndpoint + ".worker";
 
         if (config.getBoolean(AppConfig.HAS_MAILBOX, true)) {
-            endpoint = parentEndpoint + ".worker." + uuid;
-            eventBus.send(parentEndpoint + ".worker", new JsonArray().add(endpoint).add(0));
+            endpoint = parentWorkerEndpoint + '.' + uuid;
+            eventBus.send(parentWorkerEndpoint, new JsonArray().add(endpoint).add(0));
         } else {
             endpoint = parentEndpoint;
             hasMailbox = false;

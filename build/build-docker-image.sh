@@ -32,4 +32,4 @@ mvn clean install package
 ${BASE_DIR}/build-plugins.sh
 
 # Build logbulk
-docker build -t amannocci/logbulk:$VERSION .
+docker build -t amannocci/logbulk:${VERSION} .
