@@ -33,6 +33,7 @@ import io.techcode.logbulk.util.PressureHandler;
 import io.techcode.logbulk.util.stream.Streams;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Handler;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -61,6 +62,7 @@ public class ComponentVerticle extends AbstractVerticle {
     private static final String TRACES = "_traces";
     private static final String DISPATCH = "dispatch";
     private static final String DELIMITER = "delimiter";
+    private static final String JSON = "json";
 
     // Logging
     protected static final Logger log = LoggerFactory.getLogger(ComponentVerticle.class);
@@ -343,21 +345,38 @@ public class ComponentVerticle extends AbstractVerticle {
      * @return new input parser.
      */
     public RecordParser inputParser(JsonObject config) {
-        return RecordParser.newDelimited(config.getString(DELIMITER, "\n"), buf -> createEvent(buf.toString()));
+        boolean json = config.getBoolean(JSON, false);
+        Handler<Buffer> handler = (json) ? buf -> {
+            JsonObject message = buf.toJsonObject();
+            if (!message.isEmpty()) {
+                createEvent(message);
+            }
+        } : buf -> {
+            String message = buf.toString();
+            if (!Strings.isNullOrEmpty(message)) {
+                createEvent(message);
+            }
+        };
+        return RecordParser.newDelimited(config.getString(DELIMITER, "\n"), handler);
     }
 
     /**
      * Create a new packet.
      *
-     * @param message message data.
+     * @param body message data.
      */
-    protected final Packet generateEvent(String message) {
+    protected final Packet generateEvent(String body) {
+        return generateEvent(new JsonObject().put(MESSAGE, body));
+    }
+
+    /**
+     * Create a new packet.
+     *
+     * @param body message data.
+     */
+    protected final Packet generateEvent(JsonObject body) {
         // Create a new body
         Packet.Header.HeaderBuilder headers = Packet.Header.builder();
-        JsonObject body = new JsonObject();
-        if (!Strings.isNullOrEmpty(message)) {
-            body.put(MESSAGE, message);
-        }
 
         // Options
         if (!hasMailbox) {
@@ -383,11 +402,20 @@ public class ComponentVerticle extends AbstractVerticle {
     /**
      * Create a new body and forwardAndRelease to next endpoint.
      *
-     * @param message message data.
+     * @param body message data.
      */
-    protected final void createEvent(String message) {
+    protected final void createEvent(JsonObject body) {
         // Send to the next endpoint
-        forwardAndRelease(generateEvent(message));
+        forwardAndRelease(generateEvent(body));
+    }
+
+    /**
+     * Create a new body and forwardAndRelease to next endpoint.
+     *
+     * @param body message data.
+     */
+    protected final void createEvent(String body) {
+        createEvent(new JsonObject().put(MESSAGE, body));
     }
 
     /**
