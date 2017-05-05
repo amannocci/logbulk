@@ -352,7 +352,7 @@ public class ComponentVerticle extends AbstractVerticle {
      */
     public RecordParser inputParser(JsonObject config) {
         boolean json = config.getBoolean(JSON, false);
-        Handler<Buffer> handler = (json) ? buf -> {
+        Handler<Buffer> handler = json ? buf -> {
             JsonObject message = buf.toJsonObject();
             if (!message.isEmpty()) {
                 createEvent(message);
