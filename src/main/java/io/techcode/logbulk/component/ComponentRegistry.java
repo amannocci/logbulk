@@ -102,7 +102,6 @@ public class ComponentRegistry {
                 .flatMap(route -> Streams.to(routes.getJsonArray(route).stream(), String.class))
                 .distinct()
                 .filter(c -> !components.contains(c))
-                .distinct()
                 .collect(Collectors.toList());
 
         // Print

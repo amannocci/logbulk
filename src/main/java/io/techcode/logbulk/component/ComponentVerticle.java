@@ -248,7 +248,7 @@ public class ComponentVerticle extends AbstractVerticle {
                 }
                 traces.add(endpoint);
             }
-            eventBus.send(nextOpt.get(), packet);
+            eventBus.publish(nextOpt.get(), packet);
         }
     }
 
@@ -297,7 +297,7 @@ public class ComponentVerticle extends AbstractVerticle {
             if (toRelease > 1) {
                 msg.add(toRelease);
             }
-            eventBus.send(parentWorkerEndpoint, msg);
+            eventBus.publish(parentWorkerEndpoint, msg);
             toRelease = 0;
         }
     }
@@ -454,7 +454,7 @@ public class ComponentVerticle extends AbstractVerticle {
      * @param endpoint endpoint to notify.
      */
     public void tooglePressure(String endpoint) {
-        eventBus.send(endpoint + ".pressure", parentEndpoint);
+        eventBus.publish(endpoint + ".pressure", parentEndpoint);
     }
 
     /**
@@ -468,7 +468,7 @@ public class ComponentVerticle extends AbstractVerticle {
 
         if (config.getBoolean(AppConfig.HAS_MAILBOX, true)) {
             endpoint = parentWorkerEndpoint + '.' + uuid;
-            eventBus.send(parentWorkerEndpoint, new JsonArray().add(endpoint).add(0));
+            eventBus.publish(parentWorkerEndpoint, new JsonArray().add(endpoint).add(0));
         } else {
             endpoint = parentEndpoint;
             hasMailbox = false;
