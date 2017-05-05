@@ -211,6 +211,7 @@
             </goals>
             <configuration>
               <verbose>true</verbose>
+              <skip>true</skip>
               <snapshotExpand>true</snapshotExpand>
               <!-- expand "SNAPSHOT" to what is in the "USER" env variable -->
               <snapshotEnv>USER</snapshotEnv>
