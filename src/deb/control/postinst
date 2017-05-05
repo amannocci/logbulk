@@ -1,0 +1,3 @@
+#!/bin/sh
+chmod +x /etc/init.d/logbulk
+chmod +x /opt/run/logbulk/run.sh

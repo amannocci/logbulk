@@ -1,0 +1,5 @@
+#!/bin/sh
+echo "Create logbulk group"
+adduser --group logbulk
+echo "Create logbulk user"
+adduser --system --ingroup logbulk logbulk

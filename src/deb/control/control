@@ -1,0 +1,8 @@
+Package: logbulk
+Version: 0.1.0-dev
+Section: misc
+Priority: low
+Architecture: all
+Description: Logbulk Deb
+Maintainer: Adrien Mannocci <adrien.mannocci@gmail.com>
+Depends: openjdk-8-jre | oracle-java8-installer
