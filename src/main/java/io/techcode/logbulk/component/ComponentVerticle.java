@@ -35,6 +35,7 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.EventBus;
+import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -334,8 +335,13 @@ public class ComponentVerticle extends AbstractVerticle {
      * @param endHandler end handler to call.
      */
     public void handlePressure(ReadStream stream, Handler<Void> endHandler) {
-        eventBus.<String>consumer(parentEndpoint + ".pressure")
-                .handler(new PressureHandler(stream, parentEndpoint, endHandler));
+        MessageConsumer<String> consumer = eventBus.consumer(parentEndpoint + ".pressure");
+        consumer.handler(new PressureHandler(stream, parentEndpoint, h -> {
+            if (endHandler != null) {
+                endHandler.handle(null);
+            }
+            consumer.unregister();
+        }));
     }
 
     /**
