@@ -37,9 +37,7 @@ public abstract class BaseComponentVerticle extends ComponentVerticle implements
 
     @Override public void start() {
         super.start();
-        getEventBus().<Packet>localConsumer(endpoint)
-                .handler(this)
-                .exceptionHandler(THROWABLE_HANDLER);
+        getEventBus().<Packet>localConsumer(endpoint).handler(this);
     }
 
     @Override public void handle(Message<Packet> event) {

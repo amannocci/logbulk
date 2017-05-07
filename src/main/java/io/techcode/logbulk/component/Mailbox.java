@@ -30,6 +30,7 @@ import com.google.common.collect.Sets;
 import io.techcode.logbulk.io.AppConfig;
 import io.techcode.logbulk.net.Packet;
 import io.techcode.logbulk.util.ConvertHandler;
+import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
@@ -74,53 +75,10 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
         threshold *= componentCount;
 
         // Setup
-        getEventBus().<Packet>localConsumer(endpoint).handler(this).exceptionHandler(THROWABLE_HANDLER);
-        getEventBus().<JsonArray>localConsumer(endpoint + ".worker").handler(event -> {
-            // Isolate body message
-            JsonArray body = event.body();
-
-            // Retrieve worker
-            String workerName = body.getString(0);
-            Worker worker = getOrCreate(workerName);
-
-            // Remove from set before anything
-            workers.remove(worker);
-
-            // Decrease job
-            worker.job -= (body.size() == 2) ? body.getInteger(1) : 1;
-            workersJob.put(workerName, worker);
-
-            // Check idle
-            if (worker.job < idle) workers.add(worker);
-
-            // Check if there is work to be done
-            processBuffers();
-        }).exceptionHandler(THROWABLE_HANDLER);
-        getEventBus().<String>localConsumer(endpoint + ".pressure").handler(event -> {
-            String component = event.body();
-            if (nextPressure.contains(component)) {
-                nextPressure.remove(component);
-                if (nextPressure.isEmpty()) {
-                    processBuffers();
-                }
-            } else {
-                nextPressure.add(component);
-            }
-        }).exceptionHandler(THROWABLE_HANDLER);
-        getEventBus().<JsonObject>localConsumer(endpoint + ".status").handler(event -> {
-            JsonObject workerStatus = new JsonObject();
-            for (Worker worker : workers) {
-                workerStatus.put(worker.name.substring(worker.name.length() - 36), worker.job);
-            }
-
-            JsonObject message = event.body();
-            message.put(endpoint, new JsonObject()
-                    .put(AppConfig.MAILBOX, buffer.size())
-                    .put(AppConfig.IDLE, idle)
-                    .put(AppConfig.THRESHOLD, threshold)
-                    .put(AppConfig.WORKER, workerStatus));
-            event.reply(message);
-        });
+        getEventBus().<Packet>localConsumer(endpoint).handler(this);
+        getEventBus().<JsonArray>localConsumer(endpoint + ".worker").handler(this::handleWorker);
+        getEventBus().<String>localConsumer(endpoint + ".pressure").handler(this::handlePressure);
+        getEventBus().<JsonObject>localConsumer(endpoint + ".status").handler(this::handleStatus);
     }
 
     @Override protected void checkConfig(JsonObject config) {
@@ -135,6 +93,70 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
         if (!workers.isEmpty()) {
             processBuffers();
         }
+    }
+
+    /**
+     * Handle worker event.
+     *
+     * @param event event involved.
+     */
+    private void handleWorker(Message<JsonArray> event) {
+        // Isolate body message
+        JsonArray body = event.body();
+
+        // Retrieve worker
+        String workerName = body.getString(0);
+        Worker worker = getOrCreate(workerName);
+
+        // Remove from set before anything
+        workers.remove(worker);
+
+        // Decrease job
+        worker.job -= (body.size() == 2) ? body.getInteger(1) : 1;
+        workersJob.put(workerName, worker);
+
+        // Check idle
+        if (worker.job < idle) workers.add(worker);
+
+        // Check if there is work to be done
+        processBuffers();
+    }
+
+    /**
+     * Handle pressure event.
+     *
+     * @param event event involved.
+     */
+    private void handlePressure(Message<String> event) {
+        String component = event.body();
+        if (nextPressure.contains(component)) {
+            nextPressure.remove(component);
+            if (nextPressure.isEmpty()) {
+                processBuffers();
+            }
+        } else {
+            nextPressure.add(component);
+        }
+    }
+
+    /**
+     * Handle status event.
+     *
+     * @param event event involved.
+     */
+    private void handleStatus(Message<JsonObject> event) {
+        JsonObject workerStatus = new JsonObject();
+        for (Worker worker : workers) {
+            workerStatus.put(worker.name.substring(worker.name.length() - 36), worker.job);
+        }
+
+        JsonObject message = event.body();
+        message.put(endpoint, new JsonObject()
+                .put(AppConfig.MAILBOX, buffer.size())
+                .put(AppConfig.IDLE, idle)
+                .put(AppConfig.THRESHOLD, threshold)
+                .put(AppConfig.WORKER, workerStatus));
+        event.reply(message);
     }
 
     /**
@@ -172,7 +194,7 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
         if (worker.job < threshold) {
             workers.add(worker);
         }
-        getEventBus().send(worker.name, packet);
+        getEventBus().publish(worker.name, packet);
         return true;
     }
 
@@ -235,7 +257,12 @@ public class Mailbox extends ComponentVerticle implements ConvertHandler {
      * @return a worker.
      */
     private Worker getOrCreate(String workerName) {
-        return Optional.ofNullable(workersJob.get(workerName)).orElseGet(() -> new Worker(workerName, 0));
+        Worker worker = workersJob.get(workerName);
+        if (worker != null) {
+            return worker;
+        } else {
+            return new Worker(workerName, 0);
+        }
     }
 
     /**

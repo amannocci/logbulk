@@ -23,15 +23,14 @@
  */
 package io.techcode.logbulk.util;
 
-import com.englishtown.promises.Promise;
-import com.englishtown.promises.When;
-import com.englishtown.promises.WhenFactory;
-import com.englishtown.vertx.promises.WhenEventBus;
-import com.englishtown.vertx.promises.impl.DefaultWhenEventBus;
-import com.englishtown.vertx.promises.impl.VertxExecutor;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import io.advantageous.reakt.promise.Promise;
+import io.advantageous.reakt.promise.Promises;
+import io.techcode.logbulk.net.FastJsonObjectCodec;
 import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.DeliveryOptions;
+import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -40,6 +39,8 @@ import io.vertx.core.logging.LoggerFactory;
 import java.util.List;
 import java.util.Set;
 
+import static io.advantageous.reakt.vertx.ReaktVertx.convertPromise;
+
 /**
  * Status monitor implementation.
  */
@@ -47,6 +48,9 @@ public class StatusMonitor {
 
     // Logger
     private static final Logger log = LoggerFactory.getLogger(StatusMonitor.class);
+
+    // Delivery options
+    private static final DeliveryOptions DELIVERY_OPTIONS = new DeliveryOptions().setCodecName(FastJsonObjectCodec.NAME);
 
     // Mailboxs
     private Set<String> mailboxs = Sets.newTreeSet();
@@ -64,28 +68,26 @@ public class StatusMonitor {
         this.time = time;
         if (isEnable()) {
             // Create a promise event bus
-            VertxExecutor executor = new VertxExecutor(vertx);
-            When when = WhenFactory.createFor(() -> executor);
-            WhenEventBus eventBus = new DefaultWhenEventBus(vertx, when);
+            EventBus eventBus = vertx.eventBus();
 
             // Setup periodic task
             vertx.setPeriodic(time, h -> {
                 // Convert mailbox to promise
                 List<Promise<Message<JsonObject>>> promises = Lists.newArrayListWithCapacity(mailboxs.size());
-                mailboxs.forEach(mailbox -> promises.add(eventBus.send(mailbox + ".status", new JsonObject())));
+                mailboxs.forEach(mailbox -> {
+                    Promise<Message<JsonObject>> promise = Promises.promise();
+                    promises.add(promise);
+                    eventBus.send(mailbox + ".status", new JsonObject(), DELIVERY_OPTIONS, convertPromise(promise));
+                });
 
                 // Send all promise
-                when.all(promises).then(
-                        replies -> {
+                Promises.all(promises)
+                        .then(nil -> {
                             JsonObject status = new JsonObject();
-                            replies.forEach(r -> status.mergeIn(r.body()));
+                            promises.forEach(r -> status.mergeIn(r.get().body()));
                             log.info(status.put("type", "monitor"));
-                            return null;
-                        },
-                        err -> {
-                            log.error("Can't handle status:", err);
-                            return null;
-                        });
+                        })
+                        .catchError(err -> log.error("Can't handle status:", err));
             });
         }
     }

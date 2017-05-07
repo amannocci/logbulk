@@ -1,18 +1,18 @@
 /*
  * The MIT License (MIT)
- * <p/>
+ * <p>
  * Copyright (c) 2016-2017
- * <p/>
+ * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * <p/>
+ * <p>
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * <p/>
+ * <p>
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -21,41 +21,48 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.logbulk;
+package io.techcode.logbulk.net;
 
-import io.techcode.logbulk.net.FastJsonArrayCodec;
-import io.techcode.logbulk.net.FastJsonObjectCodec;
-import io.techcode.logbulk.net.Packet;
-import io.techcode.logbulk.net.PacketCodec;
-import io.vertx.core.Vertx;
-import io.vertx.ext.unit.TestContext;
-import org.junit.After;
-import org.junit.Before;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.*;
 
 /**
- * Vertx test base.
+ * Test for json object codec.
  */
-public abstract class VertxTestBase {
+public class FastJsonObjectCodecTest {
 
-    // Defautl ref
-    protected Vertx vertx;
+    @Test public void testTransform1() {
+        // Prepare mocks
+        JsonObject mock = mock(JsonObject.class);
 
-    @Before public void before(TestContext ctx) {
-        // Create base vertx
-        vertx = Vertx.vertx();
-
-        // Register the context exception handler
-        vertx.exceptionHandler(h -> ctx.exceptionHandler());
-
-        // Register vertx codec
-        vertx.eventBus()
-                .registerDefaultCodec(Packet.class, new PacketCodec())
-                .registerCodec(new FastJsonObjectCodec())
-                .registerCodec(new FastJsonArrayCodec());
+        // Test
+        FastJsonObjectCodec codec = new FastJsonObjectCodec();
+        codec.transform(mock);
+        verify(mock, never()).copy();
     }
 
-    @After public void after(TestContext ctx) {
-        vertx.close(ctx.asyncAssertSuccess());
+    @Test public void testTransform2() {
+        // Prepare mocks
+        JsonObject mock = mock(JsonObject.class);
+
+        // Test
+        FastJsonObjectCodec codec = new FastJsonObjectCodec();
+        JsonObject transformed = codec.transform(mock);
+        assertEquals(mock, transformed);
+    }
+
+    @Test public void testName() {
+        // Test
+        assertEquals("fastjsonobject", new FastJsonObjectCodec().name());
+    }
+
+    @Test public void testSystemCodecID() {
+        // Test
+        assertEquals(-1, new FastJsonObjectCodec().systemCodecID());
     }
 
 }

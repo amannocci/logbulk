@@ -28,12 +28,14 @@ import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ListMultimap;
 import io.techcode.logbulk.io.AppConfig;
 import io.techcode.logbulk.io.Configuration;
+import io.techcode.logbulk.net.FastJsonArrayCodec;
 import io.techcode.logbulk.net.Packet;
 import io.techcode.logbulk.util.PressureHandler;
 import io.techcode.logbulk.util.stream.Streams;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.json.JsonArray;
@@ -64,6 +66,9 @@ public class ComponentVerticle extends AbstractVerticle {
     private static final String DISPATCH = "dispatch";
     private static final String DELIMITER = "delimiter";
     private static final String JSON = "json";
+
+    // Fast json array
+    private static final DeliveryOptions DELIVERY_OPTIONS = new DeliveryOptions().setCodecName(FastJsonArrayCodec.NAME);
 
     // Logging
     protected static final Logger log = LoggerFactory.getLogger(ComponentVerticle.class);
@@ -298,7 +303,7 @@ public class ComponentVerticle extends AbstractVerticle {
             if (toRelease > 1) {
                 msg.add(toRelease);
             }
-            eventBus.publish(parentWorkerEndpoint, msg);
+            eventBus.publish(parentWorkerEndpoint, msg, DELIVERY_OPTIONS);
             toRelease = 0;
         }
     }
@@ -474,7 +479,7 @@ public class ComponentVerticle extends AbstractVerticle {
 
         if (config.getBoolean(AppConfig.HAS_MAILBOX, true)) {
             endpoint = parentWorkerEndpoint + '.' + uuid;
-            eventBus.publish(parentWorkerEndpoint, new JsonArray().add(endpoint).add(0));
+            eventBus.publish(parentWorkerEndpoint, new JsonArray().add(endpoint).add(0), DELIVERY_OPTIONS);
         } else {
             endpoint = parentEndpoint;
             hasMailbox = false;
