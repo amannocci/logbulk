@@ -26,6 +26,7 @@ package io.techcode.logbulk.component;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ListMultimap;
+import io.netty.buffer.ByteBufInputStream;
 import io.techcode.logbulk.io.AppConfig;
 import io.techcode.logbulk.io.Configuration;
 import io.techcode.logbulk.net.FastJsonArrayCodec;
@@ -38,6 +39,8 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.MessageConsumer;
+import io.vertx.core.json.DecodeException;
+import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -50,6 +53,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -358,7 +362,7 @@ public class ComponentVerticle extends AbstractVerticle {
     public RecordParser inputParser(JsonObject config) {
         boolean json = config.getBoolean(JSON, false);
         Handler<Buffer> handler = json ? buf -> {
-            JsonObject message = buf.toJsonObject();
+            JsonObject message = decode(buf);
             if (!message.isEmpty()) {
                 createEvent(message);
             }
@@ -485,6 +489,21 @@ public class ComponentVerticle extends AbstractVerticle {
             hasMailbox = false;
         }
         log.info("Endpoint: " + endpoint);
+    }
+
+    /**
+     * Decode a buffer into a json object.
+     *
+     * @param buf buffer involved.
+     * @return json object.
+     */
+    private JsonObject decode(Buffer buf) throws DecodeException {
+        ByteBufInputStream stream = new ByteBufInputStream(buf.getByteBuf());
+        try {
+            return new JsonObject((Map<String, Object>) Json.mapper.readValue(stream, Map.class));
+        } catch (Exception e) {
+            throw new DecodeException("Failed to decode:" + e.getMessage(), e);
+        }
     }
 
 }
