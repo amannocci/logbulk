@@ -31,9 +31,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 /**
  * Test for Flusher.
@@ -85,16 +83,12 @@ public class FlusherTest extends VertxTestBase {
         vertx.setTimer(200, h -> ctx.assertFalse(called[0]));
     }
 
-    @Test public void testFlush5(TestContext ctx) throws Exception {
+    @Test public void testFlush5() throws Exception {
         Flusher flusher = new Flusher(vertx, 100);
         Handler<Void> handler = mock(Handler.class);
-        flusher.handler(handler);
         flusher.handler(null);
-        flusher.start();
-        vertx.setTimer(200, h -> {
-            verify(handler, never()).handle(null);
-            ctx.assertTrue(true);
-        });
+        flusher.flush();
+        verify(handler, never()).handle(null);
     }
 
 }
