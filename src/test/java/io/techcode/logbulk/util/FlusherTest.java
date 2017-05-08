@@ -86,6 +86,7 @@ public class FlusherTest extends VertxTestBase {
     @Test public void testFlush5() throws Exception {
         Flusher flusher = new Flusher(vertx, 100);
         Handler<Void> handler = mock(Handler.class);
+        flusher.handler(handler);
         flusher.handler(null);
         flusher.flush();
         verify(handler, never()).handle(null);
