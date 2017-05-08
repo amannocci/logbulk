@@ -8,7 +8,7 @@ import io.vertx.core.json.JsonObject;
  */
 public class FastJsonObjectCodec extends JsonObjectMessageCodec {
 
-    public static final String NAME = "fastjsonobject";
+    public static final String CODEC_NAME = FastJsonObjectCodec.class.getSimpleName();
 
     @Override public JsonObject transform(JsonObject evt) {
         // Avoid copy when we use it as event schema
@@ -16,7 +16,7 @@ public class FastJsonObjectCodec extends JsonObjectMessageCodec {
     }
 
     @Override public String name() {
-        return NAME;
+        return CODEC_NAME;
     }
 
     @Override public byte systemCodecID() {

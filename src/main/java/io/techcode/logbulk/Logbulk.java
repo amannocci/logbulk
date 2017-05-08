@@ -36,7 +36,6 @@ import io.techcode.logbulk.net.Packet;
 import io.techcode.logbulk.net.PacketCodec;
 import io.techcode.logbulk.util.StatusMonitor;
 import io.vertx.core.*;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;

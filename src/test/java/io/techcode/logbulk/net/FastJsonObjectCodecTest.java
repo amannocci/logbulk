@@ -23,7 +23,6 @@
  */
 package io.techcode.logbulk.net;
 
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.junit.Test;
 
@@ -57,7 +56,7 @@ public class FastJsonObjectCodecTest {
 
     @Test public void testName() {
         // Test
-        assertEquals("fastjsonobject", new FastJsonObjectCodec().name());
+        assertEquals(FastJsonObjectCodec.CODEC_NAME, new FastJsonObjectCodec().name());
     }
 
     @Test public void testSystemCodecID() {

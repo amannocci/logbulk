@@ -68,7 +68,7 @@ public class ComponentVerticle extends AbstractVerticle {
     private static final String JSON = "json";
 
     // Fast json array
-    private static final DeliveryOptions DELIVERY_OPTIONS = new DeliveryOptions().setCodecName(FastJsonArrayCodec.NAME);
+    private static final DeliveryOptions DELIVERY_OPTIONS = new DeliveryOptions().setCodecName(FastJsonArrayCodec.CODEC_NAME);
 
     // Logging
     protected static final Logger log = LoggerFactory.getLogger(ComponentVerticle.class);

@@ -56,7 +56,7 @@ public class FastJsonArrayCodecTest {
 
     @Test public void testName() {
         // Test
-        assertEquals("fastjsonarray", new FastJsonArrayCodec().name());
+        assertEquals(FastJsonArrayCodec.CODEC_NAME, new FastJsonArrayCodec().name());
     }
 
     @Test public void testSystemCodecID() {

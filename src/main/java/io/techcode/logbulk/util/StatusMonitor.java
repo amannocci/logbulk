@@ -50,7 +50,7 @@ public class StatusMonitor {
     private static final Logger log = LoggerFactory.getLogger(StatusMonitor.class);
 
     // Delivery options
-    private static final DeliveryOptions DELIVERY_OPTIONS = new DeliveryOptions().setCodecName(FastJsonObjectCodec.NAME);
+    private static final DeliveryOptions DELIVERY_OPTIONS = new DeliveryOptions().setCodecName(FastJsonObjectCodec.CODEC_NAME);
 
     // Mailboxs
     private Set<String> mailboxs = Sets.newTreeSet();
