@@ -87,7 +87,7 @@ public class AppConfigTest {
         assertTrue(config.contains("input{}"));
         assertTrue(config.contains("output{}"));
         assertTrue(config.contains("transform{}"));
-        assertTrue(config.contains("component{input{},output{},transform{}}"));
+        assertTrue(config.contains("component{input{},output{},transform{test=\"io.techcode.logbulk.Logbulk\"}}"));
     }
 
 }

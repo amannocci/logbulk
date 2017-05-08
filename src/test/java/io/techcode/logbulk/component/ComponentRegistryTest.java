@@ -28,7 +28,6 @@ import io.techcode.logbulk.Logbulk;
 import io.techcode.logbulk.io.AppConfig;
 import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -72,9 +71,16 @@ public class ComponentRegistryTest {
         verify(mockedConfig).routes();
     }
 
-    @Parameters({"not.exist"})
     @Test(expected = IllegalStateException.class)
-    public void testGetComponent(String component) {
+    public void testGetComponent1() {
+        testGetComponent("not.exist");
+    }
+
+    @Test public void testGetComponent2() {
+        testGetComponent("transform.test");
+    }
+
+    private void testGetComponent(String component) {
         // Prepare mocks
         Logbulk mockedVerticle = mock(Logbulk.class);
         when(mockedVerticle.getConfig()).thenReturn(new AppConfig());
