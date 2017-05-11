@@ -40,8 +40,10 @@ case "$1" in
     log_end_msg $?
     ;;
   restart)
+    log_daemon_msg "Restarting ${NAME} service"
     stop
     start
+    log_end_msg $?
     ;;
   *)
     echo "Usage: "$1" {start|stop|restart}"
