@@ -46,7 +46,7 @@ do
   git clone https://github.com/amannocci/logbulk-plugin-${plugin} ./plugins/logbulk-plugin-${plugin}
   cd ./plugins/logbulk-plugin-${plugin}
   info "Compile ${plugin} plugin"
-  mvn clean package
+  mvn clean package install
 
   if [ "$?" == "0" ]
   then
