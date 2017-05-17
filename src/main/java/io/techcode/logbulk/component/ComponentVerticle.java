@@ -493,11 +493,12 @@ public class ComponentVerticle extends AbstractVerticle {
 
     /**
      * Decode a buffer into a json object.
+     * Needed until vert.x 3.4.2 #1975
      *
      * @param buf buffer involved.
      * @return json object.
      */
-    private JsonObject decode(Buffer buf) throws DecodeException {
+    private JsonObject decode(Buffer buf) {
         ByteBufInputStream stream = new ByteBufInputStream(buf.getByteBuf());
         try {
             return new JsonObject((Map<String, Object>) Json.mapper.readValue(stream, Map.class));
