@@ -7,5 +7,5 @@ exec java -XX:+UseG1GC -Xmx${MEM} \
   -XX:+HeapDumpOnOutOfMemoryError \
   -XX:HeapDumpPath=conf/heapdump.hprof \
   -Dvertx.logger-delegate-factory-class-name=io.vertx.core.logging.SLF4JLogDelegateFactory \
-  -Dconfig.file=conf/app.conf ${CONF} \
+  -Dconfig.file=conf/application.conf ${CONF} \
   -server -cp ${CLASSPATH} io.vertx.core.Launcher --nodaemon

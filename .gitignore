@@ -65,5 +65,5 @@ buildNumber.properties
 runtime/
 plugins/
 foobar
-run.sh
+/run.sh
 .vertx/
