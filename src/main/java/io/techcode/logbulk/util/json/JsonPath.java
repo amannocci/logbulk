@@ -31,7 +31,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 /**
  * Json path implementation.
  */
-public abstract class JsonPath {
+public interface JsonPath {
 
     /**
      * Create a new json path.
@@ -39,7 +39,7 @@ public abstract class JsonPath {
      * @param path json path.
      * @return new json path.
      */
-    public static JsonPath create(String path) {
+    static JsonPath create(String path) {
         checkArgument(!Strings.isNullOrEmpty(path), "The json path must be valid");
         if (path.startsWith("$")) {
             return new CompiledJsonPath(path);
@@ -55,7 +55,7 @@ public abstract class JsonPath {
      * @param <T> type of value.
      * @return value if possible, otherwise false.
      */
-    public abstract <T> T get(@NonNull Object doc);
+    <T> T get(@NonNull Object doc);
 
     /**
      * Put a value based on json path.
@@ -63,13 +63,13 @@ public abstract class JsonPath {
      * @param doc   json document.
      * @param value value to put.
      */
-    public abstract void put(@NonNull Object doc, @NonNull Object value);
+    void put(@NonNull Object doc, @NonNull Object value);
 
     /**
      * Remove a value based on json path.
      *
      * @param doc json document.
      */
-    public abstract void remove(@NonNull Object doc);
+    void remove(@NonNull Object doc);
 
 }

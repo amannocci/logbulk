@@ -39,7 +39,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 /**
  * Compiled json path implementation.
  */
-public class CompiledJsonPath extends JsonPath {
+public class CompiledJsonPath implements JsonPath {
 
     // Pattern to validate json path
     private static final Pattern VALID_JSON_PATH = Pattern.compile("\\$((\\.[a-zA-Z]+)|(\\[[0-9]+\\]))*");

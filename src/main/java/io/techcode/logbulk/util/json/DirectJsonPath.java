@@ -29,7 +29,7 @@ import lombok.NonNull;
 /**
  * Direct json path implementation.
  */
-public class DirectJsonPath extends JsonPath {
+public class DirectJsonPath implements JsonPath {
 
     // Target field
     private String field;
