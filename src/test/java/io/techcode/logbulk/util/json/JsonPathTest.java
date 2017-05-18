@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.logbulk.util;
+package io.techcode.logbulk.util.json;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -36,44 +36,44 @@ import static org.junit.Assert.assertNull;
 public class JsonPathTest {
 
     @Test public void testGet1() {
-        JsonPath path = new JsonPath("$.test");
+        JsonPath path = JsonPath.create("$.test");
         assertEquals("test", path.get(new JsonObject().put("test", "test")));
     }
 
     @Test public void testGet2() {
-        JsonPath path = new JsonPath("$");
+        JsonPath path = JsonPath.create("$");
         assertEquals(new JsonObject(), path.get(new JsonObject()));
     }
 
     @Test public void testGet3() {
-        JsonPath path = new JsonPath("$[0]");
+        JsonPath path = JsonPath.create("$[0]");
         assertEquals(new JsonObject(), path.get(new JsonArray().add(new JsonObject())));
     }
 
     @Test public void testGet4() {
-        JsonPath path = new JsonPath("$[1]");
+        JsonPath path = JsonPath.create("$[1]");
         assertNull(path.get(new JsonArray().add(new JsonObject())));
     }
 
     @Test public void testGet5() {
-        JsonPath path = new JsonPath("$.test");
+        JsonPath path = JsonPath.create("$.test");
         assertEquals(new JsonArray(), path.get(new JsonObject().put("test", new JsonArray())));
     }
 
     @Test public void testGet6() {
-        JsonPath path = new JsonPath("$.test[0].name");
+        JsonPath path = JsonPath.create("$.test[0].name");
         assertEquals("test", path.get(new JsonObject().put("test", new JsonArray().add(new JsonObject().put("name", "test")))));
     }
 
     @Test public void testPut1() {
-        JsonPath path = new JsonPath("$.test");
+        JsonPath path = JsonPath.create("$.test");
         JsonObject doc = new JsonObject();
         path.put(doc, "name");
         assertEquals("name", doc.getString("test"));
     }
 
     @Test public void testPut2() {
-        JsonPath path = new JsonPath("$[1]");
+        JsonPath path = JsonPath.create("$[1]");
         JsonArray doc = new JsonArray();
         path.put(doc, "name");
         assertNull(doc.getString(0));
@@ -81,21 +81,21 @@ public class JsonPathTest {
     }
 
     @Test public void testPut3() {
-        JsonPath path = new JsonPath("$.test[1]");
+        JsonPath path = JsonPath.create("$.test[1]");
         JsonObject doc = new JsonObject();
         path.put(doc, "name");
         assertEquals(new JsonObject().put("test", new JsonArray().addNull().add("name")), doc);
     }
 
     @Test public void testRemove1() {
-        JsonPath path = new JsonPath("$.test");
+        JsonPath path = JsonPath.create("$.test");
         JsonObject doc = new JsonObject().put("test", new JsonObject().put("name", "foobar"));
         path.remove(doc);
         assertEquals(new JsonObject(), doc);
     }
 
     @Test public void testRemove2() {
-        JsonPath path = new JsonPath("$.test.name");
+        JsonPath path = JsonPath.create("$.test.name");
         JsonObject doc = new JsonObject().put("test", new JsonObject().put("name", "foobar"));
         path.remove(doc);
         assertEquals(new JsonObject().put("test", new JsonObject()), doc);

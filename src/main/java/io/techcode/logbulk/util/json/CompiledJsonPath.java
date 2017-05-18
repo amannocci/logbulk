@@ -1,18 +1,18 @@
 /*
  * The MIT License (MIT)
- * <p/>
+ * <p>
  * Copyright (c) 2017
- * <p/>
+ * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * <p/>
+ * <p>
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * <p/>
+ * <p>
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.techcode.logbulk.util;
+package io.techcode.logbulk.util.json;
 
 import com.google.common.collect.Lists;
 import io.vertx.core.json.JsonArray;
@@ -37,9 +37,9 @@ import java.util.regex.Pattern;
 import static com.google.common.base.Preconditions.checkArgument;
 
 /**
- * Basic json path implementation.
+ * Compiled json path implementation.
  */
-public final class JsonPath {
+public class CompiledJsonPath extends JsonPath {
 
     // Pattern to validate json path
     private static final Pattern VALID_JSON_PATH = Pattern.compile("\\$((\\.[a-zA-Z]+)|(\\[[0-9]+\\]))*");
@@ -55,7 +55,7 @@ public final class JsonPath {
      *
      * @param path json path.
      */
-    public JsonPath(String path) {
+    CompiledJsonPath(String path) {
         checkArgument(VALID_JSON_PATH.matcher(path).matches(), "The path must be a valid jsonpath");
         if ("$".equals(path)) {
             accessors.add(new SelfAccessor());
@@ -71,14 +71,7 @@ public final class JsonPath {
         }
     }
 
-    /**
-     * Get a value based on json path.
-     *
-     * @param doc json document.
-     * @param <T> type of value.
-     * @return value if possible, otherwise false.
-     */
-    public <T> T get(@NonNull Object doc) {
+    @Override public <T> T get(@NonNull Object doc) {
         // Current document
         Object current = doc;
 
@@ -92,13 +85,7 @@ public final class JsonPath {
         return (T) current;
     }
 
-    /**
-     * Put a value based on json path.
-     *
-     * @param doc   json document.
-     * @param value value to put.
-     */
-    public void put(@NonNull Object doc, @NonNull Object value) {
+    @Override public void put(@NonNull Object doc, @NonNull Object value) {
         // Current document
         Object current = doc;
 
@@ -130,12 +117,7 @@ public final class JsonPath {
         accessors.get(step).put(current, value);
     }
 
-    /**
-     * Remove a value based on json path.
-     *
-     * @param doc json document.
-     */
-    public void remove(@NonNull Object doc) {
+    @Override public void remove(@NonNull Object doc) {
         // Current document
         Object current = doc;
 
