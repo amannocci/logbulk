@@ -26,6 +26,7 @@ package io.techcode.logbulk.util.json;
 import com.google.common.base.Strings;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -33,7 +34,20 @@ import static com.google.common.base.Preconditions.checkArgument;
 /**
  * Json path implementation.
  */
-public interface JsonPath {
+@EqualsAndHashCode(of = {"path"})
+public abstract class JsonPath implements Comparable<JsonPath> {
+
+    // Path
+    protected String path;
+
+    /**
+     * Create a new json path.
+     *
+     * @param path json path.
+     */
+    protected JsonPath(@NonNull String path) {
+        this.path = path;
+    }
 
     /**
      * Create a new json path.
@@ -41,7 +55,7 @@ public interface JsonPath {
      * @param path json path.
      * @return new json path.
      */
-    static JsonPath create(String path) {
+    public static JsonPath create(String path) {
         checkArgument(!Strings.isNullOrEmpty(path), "The json path must be valid");
         if (path.startsWith("$")) {
             return new CompiledJsonPath(path);
@@ -56,7 +70,7 @@ public interface JsonPath {
      * @param doc json document.
      * @return value if possible, otherwise false.
      */
-    default Object get(@NonNull JsonObject doc) {
+    public Object get(@NonNull JsonObject doc) {
         return null;
     }
 
@@ -66,18 +80,7 @@ public interface JsonPath {
      * @param doc json document.
      * @return value if possible, otherwise false.
      */
-    default Object get(@NonNull JsonArray doc) {
-        return null;
-    }
-
-    /**
-     * Get a value based on json path.
-     *
-     * @param doc json document.
-     * @param <T> type of value.
-     * @return value if possible, otherwise false.
-     */
-    default <T> T get(@NonNull JsonObject doc, Class<T> typed) {
+    public Object get(@NonNull JsonArray doc) {
         return null;
     }
 
@@ -88,7 +91,18 @@ public interface JsonPath {
      * @param <T> type of value.
      * @return value if possible, otherwise false.
      */
-    default <T> T get(@NonNull JsonArray doc, Class<T> typed) {
+    public <T> T get(@NonNull JsonObject doc, Class<T> typed) {
+        return null;
+    }
+
+    /**
+     * Get a value based on json path.
+     *
+     * @param doc json document.
+     * @param <T> type of value.
+     * @return value if possible, otherwise false.
+     */
+    public <T> T get(@NonNull JsonArray doc, Class<T> typed) {
         return null;
     }
 
@@ -98,7 +112,7 @@ public interface JsonPath {
      * @param doc   json document.
      * @param value value to put.
      */
-    default void put(@NonNull JsonObject doc, @NonNull Object value) {
+    public void put(@NonNull JsonObject doc, @NonNull Object value) {
     }
 
     /**
@@ -107,7 +121,7 @@ public interface JsonPath {
      * @param doc   json document.
      * @param value value to put.
      */
-    default void put(@NonNull JsonArray doc, @NonNull Object value) {
+    public void put(@NonNull JsonArray doc, @NonNull Object value) {
     }
 
     /**
@@ -115,7 +129,7 @@ public interface JsonPath {
      *
      * @param doc json document.
      */
-    default void remove(@NonNull JsonObject doc) {
+    public void remove(@NonNull JsonObject doc) {
     }
 
     /**
@@ -123,7 +137,15 @@ public interface JsonPath {
      *
      * @param doc json document.
      */
-    default void remove(@NonNull JsonArray doc) {
+    public void remove(@NonNull JsonArray doc) {
+    }
+
+    @Override public String toString() {
+        return path;
+    }
+
+    @Override public int compareTo(JsonPath o) {
+        return String.CASE_INSENSITIVE_ORDER.compare(path, o.path);
     }
 
 }

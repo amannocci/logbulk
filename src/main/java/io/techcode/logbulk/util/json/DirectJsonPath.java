@@ -29,35 +29,32 @@ import lombok.NonNull;
 /**
  * Direct json path implementation.
  */
-public class DirectJsonPath implements JsonPath {
-
-    // Target field
-    private String field;
+public class DirectJsonPath extends JsonPath {
 
     /**
      * Create a new direct json path.
      *
      * @param field target field.
      */
-    DirectJsonPath(@NonNull String field) {
-        this.field = field;
+    DirectJsonPath(String field) {
+        super(field);
     }
 
     @Override public Object get(@NonNull JsonObject doc) {
-        return doc.getValue(field);
+        return doc.getValue(path);
     }
 
     @Override public <T> T get(@NonNull JsonObject doc, @NonNull Class<T> typed) {
-        Object value = doc.getValue(field);
+        Object value = doc.getValue(path);
         return typed.isInstance(value) ? (T) value : null;
     }
 
     @Override public void put(@NonNull JsonObject doc, Object value) {
-        doc.put(field, value);
+        doc.put(path, value);
     }
 
     @Override public void remove(@NonNull JsonObject doc) {
-        doc.remove(field);
+        doc.remove(path);
     }
 
 }
