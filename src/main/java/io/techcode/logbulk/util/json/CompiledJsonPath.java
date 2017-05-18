@@ -71,22 +71,31 @@ public class CompiledJsonPath implements JsonPath {
         }
     }
 
-    @Override public <T> T get(@NonNull JsonObject doc) {
+    @Override public Object get(@NonNull JsonObject doc) {
         return getUnderlying(doc);
     }
 
-    @Override public <T> T get(@NonNull JsonArray doc) {
+    @Override public Object get(@NonNull JsonArray doc) {
         return getUnderlying(doc);
+    }
+
+    @Override public <T> T get(@NonNull JsonObject doc, @NonNull Class<T> typed) {
+        Object value = getUnderlying(doc);
+        return typed.isInstance(value) ? (T) value : null;
+    }
+
+    @Override public <T> T get(@NonNull JsonArray doc, @NonNull Class<T> typed) {
+        Object value = getUnderlying(doc);
+        return typed.isInstance(value) ? (T) value : null;
     }
 
     /**
      * Get a value based on json path.
      *
      * @param doc json document.
-     * @param <T> type of value.
      * @return value if possible, otherwise false.
      */
-    private <T> T getUnderlying(Object doc) {
+    private Object getUnderlying(Object doc) {
         // Current document
         Object current = doc;
 
@@ -97,14 +106,14 @@ public class CompiledJsonPath implements JsonPath {
         }
 
         // Result
-        return (T) current;
+        return current;
     }
 
-    @Override public void put(@NonNull JsonObject doc, @NonNull Object value) {
+    @Override public void put(@NonNull JsonObject doc, Object value) {
         putUnderlying(doc, value);
     }
 
-    @Override public void put(@NonNull JsonArray doc, @NonNull Object value) {
+    @Override public void put(@NonNull JsonArray doc, Object value) {
         putUnderlying(doc, value);
     }
 

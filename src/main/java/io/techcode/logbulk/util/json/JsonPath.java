@@ -54,10 +54,19 @@ public interface JsonPath {
      * Get a value based on json path.
      *
      * @param doc json document.
-     * @param <T> type of value.
      * @return value if possible, otherwise false.
      */
-    default <T> T get(@NonNull JsonObject doc) {
+    default Object get(@NonNull JsonObject doc) {
+        return null;
+    }
+
+    /**
+     * Get a value based on json path.
+     *
+     * @param doc json document.
+     * @return value if possible, otherwise false.
+     */
+    default Object get(@NonNull JsonArray doc) {
         return null;
     }
 
@@ -68,7 +77,18 @@ public interface JsonPath {
      * @param <T> type of value.
      * @return value if possible, otherwise false.
      */
-    default <T> T get(@NonNull JsonArray doc) {
+    default <T> T get(@NonNull JsonObject doc, Class<T> typed) {
+        return null;
+    }
+
+    /**
+     * Get a value based on json path.
+     *
+     * @param doc json document.
+     * @param <T> type of value.
+     * @return value if possible, otherwise false.
+     */
+    default <T> T get(@NonNull JsonArray doc, Class<T> typed) {
         return null;
     }
 
