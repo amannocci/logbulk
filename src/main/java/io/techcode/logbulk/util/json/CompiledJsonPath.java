@@ -212,7 +212,7 @@ public class CompiledJsonPath implements JsonPath {
             } else if (doc instanceof JsonArray) {
                 return get((JsonArray) doc);
             } else {
-                throw new IllegalStateException("The json path can't be access");
+                return null;
             }
         }
 
@@ -229,8 +229,6 @@ public class CompiledJsonPath implements JsonPath {
                 put((JsonObject) doc, value);
             } else if (doc instanceof JsonArray) {
                 put((JsonArray) doc, value);
-            } else {
-                throw new IllegalStateException("The json path can't be access");
             }
         }
 
@@ -245,8 +243,6 @@ public class CompiledJsonPath implements JsonPath {
                 remove((JsonObject) doc);
             } else if (doc instanceof JsonArray) {
                 remove((JsonArray) doc);
-            } else {
-                throw new IllegalStateException("The json path can't be access");
             }
         }
 
