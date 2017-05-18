@@ -43,23 +43,16 @@ public class DirectJsonPath implements JsonPath {
         this.field = field;
     }
 
-    @Override public <T> T get(Object doc) {
-        if (doc instanceof JsonObject) {
-            return (T) ((JsonObject) doc).getValue(field);
-        }
-        return null;
+    @Override public <T> T get(JsonObject doc) {
+        return (T) doc.getValue(field);
     }
 
-    @Override public void put(Object doc, Object value) {
-        if (doc instanceof JsonObject) {
-            ((JsonObject) doc).put(field, value);
-        }
+    @Override public void put(JsonObject doc, Object value) {
+        doc.put(field, value);
     }
 
-    @Override public void remove(Object doc) {
-        if (doc instanceof JsonObject) {
-            ((JsonObject) doc).remove(field);
-        }
+    @Override public void remove(JsonObject doc) {
+        doc.remove(field);
     }
 
 }

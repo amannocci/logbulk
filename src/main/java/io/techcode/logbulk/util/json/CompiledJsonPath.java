@@ -71,7 +71,22 @@ public class CompiledJsonPath implements JsonPath {
         }
     }
 
-    @Override public <T> T get(@NonNull Object doc) {
+    @Override public <T> T get(@NonNull JsonObject doc) {
+        return getUnderlying(doc);
+    }
+
+    @Override public <T> T get(@NonNull JsonArray doc) {
+        return getUnderlying(doc);
+    }
+
+    /**
+     * Get a value based on json path.
+     *
+     * @param doc json document.
+     * @param <T> type of value.
+     * @return value if possible, otherwise false.
+     */
+    private <T> T getUnderlying(Object doc) {
         // Current document
         Object current = doc;
 
@@ -85,7 +100,21 @@ public class CompiledJsonPath implements JsonPath {
         return (T) current;
     }
 
-    @Override public void put(@NonNull Object doc, @NonNull Object value) {
+    @Override public void put(@NonNull JsonObject doc, @NonNull Object value) {
+        putUnderlying(doc, value);
+    }
+
+    @Override public void put(@NonNull JsonArray doc, @NonNull Object value) {
+        putUnderlying(doc, value);
+    }
+
+    /**
+     * Put a value based on json path.
+     *
+     * @param doc   json document.
+     * @param value value to put.
+     */
+    private void putUnderlying(Object doc, Object value) {
         // Current document
         Object current = doc;
 
@@ -117,7 +146,20 @@ public class CompiledJsonPath implements JsonPath {
         accessors.get(step).put(current, value);
     }
 
-    @Override public void remove(@NonNull Object doc) {
+    @Override public void remove(@NonNull JsonObject doc) {
+        removeUnderlying(doc);
+    }
+
+    @Override public void remove(@NonNull JsonArray doc) {
+        removeUnderlying(doc);
+    }
+
+    /**
+     * Remove a value based on json path.
+     *
+     * @param doc json document.
+     */
+    private void removeUnderlying(Object doc) {
         // Current document
         Object current = doc;
 
@@ -155,12 +197,54 @@ public class CompiledJsonPath implements JsonPath {
      * Basic accessor.
      */
     private interface Accessor {
-        Object get(Object doc);
+        default Object get(Object doc) {
+            if (doc instanceof JsonObject) {
+                return get((JsonObject) doc);
+            } else if (doc instanceof JsonArray) {
+                return get((JsonArray) doc);
+            } else {
+                throw new IllegalStateException("The json path can't be access");
+            }
+        }
+
+        default Object get(JsonObject doc) {
+            return null;
+        }
+
+        default Object get(JsonArray doc) {
+            return null;
+        }
 
         default void put(Object doc, Object value) {
+            if (doc instanceof JsonObject) {
+                put((JsonObject) doc, value);
+            } else if (doc instanceof JsonArray) {
+                put((JsonArray) doc, value);
+            } else {
+                throw new IllegalStateException("The json path can't be access");
+            }
+        }
+
+        default void put(JsonObject doc, Object value) {
+        }
+
+        default void put(JsonArray doc, Object value) {
         }
 
         default void remove(Object doc) {
+            if (doc instanceof JsonObject) {
+                remove((JsonObject) doc);
+            } else if (doc instanceof JsonArray) {
+                remove((JsonArray) doc);
+            } else {
+                throw new IllegalStateException("The json path can't be access");
+            }
+        }
+
+        default void remove(JsonObject doc) {
+        }
+
+        default void remove(JsonArray doc) {
         }
     }
 
@@ -168,7 +252,11 @@ public class CompiledJsonPath implements JsonPath {
      * Self accessor.
      */
     private class SelfAccessor implements Accessor {
-        @Override public Object get(Object doc) {
+        @Override public Object get(JsonObject doc) {
+            return doc;
+        }
+
+        @Override public Object get(JsonArray doc) {
             return doc;
         }
     }
@@ -181,24 +269,16 @@ public class CompiledJsonPath implements JsonPath {
     private class ObjectAccessor implements Accessor {
         private String field;
 
-        @Override public Object get(Object doc) {
-            if (doc instanceof JsonObject) {
-                return ((JsonObject) doc).getValue(field);
-            } else {
-                return null;
-            }
+        @Override public Object get(JsonObject doc) {
+            return doc.getValue(field);
         }
 
-        @Override public void put(Object doc, Object value) {
-            if (doc instanceof JsonObject) {
-                ((JsonObject) doc).put(field, value);
-            }
+        @Override public void put(JsonObject doc, Object value) {
+            doc.put(field, value);
         }
 
-        @Override public void remove(Object doc) {
-            if (doc instanceof JsonObject) {
-                ((JsonObject) doc).remove(field);
-            }
+        @Override public void remove(JsonObject doc) {
+            doc.remove(field);
         }
     }
 
@@ -210,33 +290,24 @@ public class CompiledJsonPath implements JsonPath {
     private class ArrayAccessor implements Accessor {
         private int index;
 
-        @Override public Object get(Object doc) {
-            if (doc instanceof JsonArray) {
-                JsonArray array = (JsonArray) doc;
-                return index < array.size() ? array.getValue(index) : null;
-            } else {
-                return null;
-            }
+        @Override public Object get(JsonArray doc) {
+            return index < doc.size() ? doc.getValue(index) : null;
         }
 
-        @Override public void put(Object doc, Object value) {
-            if (doc instanceof JsonArray) {
-                List list = ((JsonArray) doc).getList();
-                if (index >= list.size()) {
-                    for (int i = index - list.size(); i > 0; i--) {
-                        list.add(null);
-                    }
-                    list.add(index, value);
-                } else {
-                    list.set(index, value);
+        @Override public void put(JsonArray doc, Object value) {
+            List list = doc.getList();
+            if (index >= list.size()) {
+                for (int i = index - list.size(); i > 0; i--) {
+                    list.add(null);
                 }
+                list.add(index, value);
+            } else {
+                list.set(index, value);
             }
         }
 
-        @Override public void remove(Object doc) {
-            if (doc instanceof JsonArray) {
-                ((JsonArray) doc).remove(index);
-            }
+        @Override public void remove(JsonArray doc) {
+            doc.remove(index);
         }
 
     }

@@ -24,6 +24,8 @@
 package io.techcode.logbulk.util.json;
 
 import com.google.common.base.Strings;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import lombok.NonNull;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -55,7 +57,20 @@ public interface JsonPath {
      * @param <T> type of value.
      * @return value if possible, otherwise false.
      */
-    <T> T get(@NonNull Object doc);
+    default <T> T get(@NonNull JsonObject doc) {
+        return null;
+    }
+
+    /**
+     * Get a value based on json path.
+     *
+     * @param doc json document.
+     * @param <T> type of value.
+     * @return value if possible, otherwise false.
+     */
+    default <T> T get(@NonNull JsonArray doc) {
+        return null;
+    }
 
     /**
      * Put a value based on json path.
@@ -63,13 +78,32 @@ public interface JsonPath {
      * @param doc   json document.
      * @param value value to put.
      */
-    void put(@NonNull Object doc, @NonNull Object value);
+    default void put(@NonNull JsonObject doc, @NonNull Object value) {
+    }
+
+    /**
+     * Put a value based on json path.
+     *
+     * @param doc   json document.
+     * @param value value to put.
+     */
+    default void put(@NonNull JsonArray doc, @NonNull Object value) {
+    }
 
     /**
      * Remove a value based on json path.
      *
      * @param doc json document.
      */
-    void remove(@NonNull Object doc);
+    default void remove(@NonNull JsonObject doc) {
+    }
+
+    /**
+     * Remove a value based on json path.
+     *
+     * @param doc json document.
+     */
+    default void remove(@NonNull JsonArray doc) {
+    }
 
 }
