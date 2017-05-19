@@ -112,7 +112,7 @@ public abstract class JsonPath implements Comparable<JsonPath> {
      * @param doc   json document.
      * @param value value to put.
      */
-    public void put(@NonNull JsonObject doc, @NonNull Object value) {
+    public void put(@NonNull JsonObject doc, Object value) {
     }
 
     /**
@@ -121,7 +121,7 @@ public abstract class JsonPath implements Comparable<JsonPath> {
      * @param doc   json document.
      * @param value value to put.
      */
-    public void put(@NonNull JsonArray doc, @NonNull Object value) {
+    public void put(@NonNull JsonArray doc, Object value) {
     }
 
     /**
