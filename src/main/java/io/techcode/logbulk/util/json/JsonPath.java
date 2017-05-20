@@ -23,11 +23,14 @@
  */
 package io.techcode.logbulk.util.json;
 
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
+
+import java.util.List;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -36,6 +39,9 @@ import static com.google.common.base.Preconditions.checkArgument;
  */
 @EqualsAndHashCode(of = {"path"})
 public abstract class JsonPath implements Comparable<JsonPath> {
+
+    // Splitter
+    private static final Splitter SPLITTER = Splitter.on('.').omitEmptyStrings().trimResults();
 
     // Path
     protected String path;
@@ -58,7 +64,13 @@ public abstract class JsonPath implements Comparable<JsonPath> {
     public static JsonPath create(String path) {
         checkArgument(!Strings.isNullOrEmpty(path), "The json path must be valid");
         if (path.startsWith("$")) {
-            return new CompiledJsonPath(path);
+            List<String> elements = SPLITTER.splitToList(path);
+            if (elements.size() == 2) {
+                String field = elements.get(1);
+                return field.endsWith("]") ? new CompiledJsonPath(path) : new DirectJsonPath(field);
+            } else {
+                return new CompiledJsonPath(path);
+            }
         } else {
             return new DirectJsonPath(path);
         }

@@ -26,79 +26,165 @@ package io.techcode.logbulk.util.json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.*;
 
 /**
  * Test for json path.
  */
 public class JsonPathTest {
 
-    @Test public void testGet1() {
-        JsonPath path = JsonPath.create("$.test");
-        assertEquals("test", path.get(new JsonObject().put("test", "test")));
+    @Test public void testCreate1() {
+        assertTrue(JsonPath.create("test") instanceof DirectJsonPath);
     }
 
-    @Test public void testGet2() {
-        JsonPath path = JsonPath.create("$");
-        assertEquals(new JsonObject(), path.get(new JsonObject()));
+    @Test public void testCreate2() {
+        assertTrue(JsonPath.create("$.test") instanceof DirectJsonPath);
+    }
+
+    @Test public void testCreate3() {
+        assertTrue(JsonPath.create("$.test.test") instanceof CompiledJsonPath);
+    }
+
+    @Test public void testCreate4() {
+        assertTrue(JsonPath.create("$.test[0]") instanceof CompiledJsonPath);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testCreate5() {
+        JsonPath.create(null);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testCreate6() {
+        JsonPath.create("");
+    }
+
+    @Test public void testGet1() {
+        JsonObject mock = mock(JsonObject.class);
+        assertNull(new Impl("test").get(mock));
+        verifyZeroInteractions(mock);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testGet2() {
+        JsonObject value = null;
+        new Impl("test").get(value);
     }
 
     @Test public void testGet3() {
-        JsonPath path = JsonPath.create("$[0]");
-        assertEquals(new JsonObject(), path.get(new JsonArray().add(new JsonObject())));
+        JsonArray mock = mock(JsonArray.class);
+        assertNull(new Impl("test").get(mock));
+        verifyZeroInteractions(mock);
     }
 
-    @Test public void testGet4() {
-        JsonPath path = JsonPath.create("$[1]");
-        assertNull(path.get(new JsonArray().add(new JsonObject())));
+    @Test(expected = NullPointerException.class)
+    public void testGet4() {
+        JsonArray value = null;
+        new Impl("test").get(value);
     }
 
     @Test public void testGet5() {
-        JsonPath path = JsonPath.create("$.test");
-        assertEquals(new JsonArray(), path.get(new JsonObject().put("test", new JsonArray())));
+        JsonArray mock = mock(JsonArray.class);
+        assertNull(new Impl("test").get(mock, String.class));
+        verifyZeroInteractions(mock);
     }
 
     @Test public void testGet6() {
-        JsonPath path = JsonPath.create("$.test[0].name");
-        assertEquals("test", path.get(new JsonObject().put("test", new JsonArray().add(new JsonObject().put("name", "test")))));
+        JsonObject mock = mock(JsonObject.class);
+        assertNull(new Impl("test").get(mock, String.class));
+        verifyZeroInteractions(mock);
     }
 
-    @Test public void testPut1() {
-        JsonPath path = JsonPath.create("$.test");
-        JsonObject doc = new JsonObject();
-        path.put(doc, "name");
-        assertEquals("name", doc.getString("test"));
+    @Test(expected = NullPointerException.class)
+    public void testGet7() {
+        JsonArray value = null;
+        new Impl("test").get(value, String.class);
     }
 
-    @Test public void testPut2() {
-        JsonPath path = JsonPath.create("$[1]");
-        JsonArray doc = new JsonArray();
-        path.put(doc, "name");
-        assertNull(doc.getString(0));
-        assertEquals("name", doc.getString(1));
+    @Test(expected = NullPointerException.class)
+    public void testGet8() {
+        JsonObject value = null;
+        new Impl("test").get(value, String.class);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testPut1() {
+        JsonObject value = null;
+        new Impl("test").put(value, "test");
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testPut2() {
+        JsonArray value = null;
+        new Impl("test").put(value, "test");
     }
 
     @Test public void testPut3() {
-        JsonPath path = JsonPath.create("$.test[1]");
-        JsonObject doc = new JsonObject();
-        path.put(doc, "name");
-        assertEquals(new JsonObject().put("test", new JsonArray().addNull().add("name")), doc);
+        JsonArray mock = mock(JsonArray.class);
+        new Impl("test").put(mock, "test");
+        verifyZeroInteractions(mock);
     }
 
-    @Test public void testRemove1() {
-        JsonPath path = JsonPath.create("$.test");
-        JsonObject doc = new JsonObject().put("test", new JsonObject().put("name", "foobar"));
-        path.remove(doc);
-        assertEquals(new JsonObject(), doc);
+    @Test public void testPut4() {
+        JsonObject mock = mock(JsonObject.class);
+        new Impl("test").put(mock, "test");
+        verifyZeroInteractions(mock);
     }
 
-    @Test public void testRemove2() {
-        JsonPath path = JsonPath.create("$.test.name");
-        JsonObject doc = new JsonObject().put("test", new JsonObject().put("name", "foobar"));
-        path.remove(doc);
-        assertEquals(new JsonObject().put("test", new JsonObject()), doc);
+    @Test(expected = NullPointerException.class)
+    public void testRemove1() {
+        JsonObject value = null;
+        new Impl("test").remove(value);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testRemove2() {
+        JsonArray value = null;
+        new Impl("test").remove(value);
+    }
+
+    @Test public void testRemove3() {
+        JsonArray mock = mock(JsonArray.class);
+        new Impl("test").remove(mock);
+        verifyZeroInteractions(mock);
+    }
+
+    @Test public void testRemove4() {
+        JsonObject mock = mock(JsonObject.class);
+        new Impl("test").remove(mock);
+        verifyZeroInteractions(mock);
+    }
+
+    @Test public void testToString() {
+        assertEquals("test", new Impl("test").toString());
+    }
+
+    @Test public void testCompareTo1() {
+        assertEquals(-1, new Impl("a").compareTo(new Impl("b")));
+    }
+
+    @Test public void testCompareTo2() {
+        assertEquals(1, new Impl("b").compareTo(new Impl("a")));
+    }
+
+    @Test public void testCompareTo3() {
+        assertEquals(0, new Impl("A").compareTo(new Impl("a")));
+    }
+
+    private class Impl extends JsonPath {
+        /**
+         * Create a new json path.
+         *
+         * @param path json path.
+         */
+        protected Impl(String path) {
+            super(path);
+        }
     }
 
 }
