@@ -102,12 +102,14 @@ public class ComponentVerticle extends AbstractVerticle {
     // Mailbox
     private boolean hasMailbox = true;
     private int toRelease = 0;
+    private JsonArray releaseOne;
 
     @Override public void start() {
         this.config = config();
         eventBus = vertx.eventBus();
         fallback = config.getString(AppConfig.FALLBACK, StringUtils.EMPTY);
         endpoint(config);
+        releaseOne = new JsonArray().add(endpoint);
 
         // Settings
         JsonObject settings = new Configuration(config.getJsonObject(AppConfig.SETTING, new JsonObject()));
@@ -303,8 +305,11 @@ public class ComponentVerticle extends AbstractVerticle {
      */
     public void release() {
         if (hasMailbox && toRelease > 0) {
-            JsonArray msg = new JsonArray().add(endpoint);
+            JsonArray msg = releaseOne;
+
+            // If we release more than one, generate a custom message otherwise use already defined
             if (toRelease > 1) {
+                msg = releaseOne.copy();
                 msg.add(toRelease);
             }
             eventBus.publish(parentWorkerEndpoint, msg, DELIVERY_OPTIONS);
