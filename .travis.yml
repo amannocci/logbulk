@@ -9,11 +9,14 @@ addons:
 jdk:
   - openjdk8
   - oraclejdk8
+install:
+  - curl -o $HOME/.m2/settings.xml https://raw.githubusercontent.com/amannocci/logbulk/master/settings.xml
+  - mvn dependency:go-offline
 script:
   - mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent test package sonar:sonar
 cache:
   directories:
-    - '$HOME/.m2/repository'
+    - '$HOME/.m2'
     - '$HOME/.sonar/cache'
 notifications:
   email: false
