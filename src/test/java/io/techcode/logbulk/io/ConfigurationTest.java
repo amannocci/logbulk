@@ -29,6 +29,8 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.junit.Test;
 
+import java.util.Map;
+
 import static org.junit.Assert.*;
 
 /**
@@ -63,6 +65,12 @@ public class ConfigurationTest {
         new Configuration(test);
     }
 
+    @Test public void testConstructor6() {
+        Map<String, Object> test = null;
+        Configuration configuration = new Configuration(test);
+        assertTrue(configuration.isEmpty());
+    }
+
     @Test public void testGetInteger1() {
         Configuration conf = new Configuration();
         conf.put("test", 1);
@@ -83,6 +91,12 @@ public class ConfigurationTest {
 
     @Test public void testGetInteger4() {
         assertEquals(1, (int) new Configuration().getInteger("test", 1));
+    }
+
+    @Test public void testGetInteger5() {
+        Configuration conf = new Configuration();
+        conf.put("test", "test");
+        assertNull(new Configuration().getInteger("test"));
     }
 
     @Test public void testGetLong1() {
@@ -107,6 +121,12 @@ public class ConfigurationTest {
         assertEquals(1L, (long) new Configuration().getLong("test", 1L));
     }
 
+    @Test public void testGetLong5() {
+        Configuration conf = new Configuration();
+        conf.put("test", "test");
+        assertNull(new Configuration().getLong("test"));
+    }
+
     @Test public void testGetDouble1() {
         Configuration conf = new Configuration();
         conf.put("test", 0.1D);
@@ -127,6 +147,12 @@ public class ConfigurationTest {
 
     @Test public void testGetDouble4() {
         assertEquals(0.1D, new Configuration().getDouble("test", 0.1D), 0.001);
+    }
+
+    @Test public void testGetDouble5() {
+        Configuration conf = new Configuration();
+        conf.put("test", "test");
+        assertNull(new Configuration().getDouble("test"));
     }
 
     @Test public void testGetFloat1() {
@@ -151,6 +177,12 @@ public class ConfigurationTest {
         assertEquals(0.1F, new Configuration().getFloat("test", 0.1F), 0.001);
     }
 
+    @Test public void testGetFloat5() {
+        Configuration conf = new Configuration();
+        conf.put("test", "test");
+        assertNull(new Configuration().getFloat("test"));
+    }
+
     @Test public void testGetBoolean1() {
         Configuration conf = new Configuration();
         conf.put("test", true);
@@ -171,6 +203,12 @@ public class ConfigurationTest {
 
     @Test public void testGetBoolean4() {
         assertTrue(new Configuration().getBoolean("test", true));
+    }
+
+    @Test public void testGetBoolean5() {
+        Configuration conf = new Configuration();
+        conf.put("test", "test");
+        assertNull(new Configuration().getBoolean("test"));
     }
 
     @Test public void testGetString1() {
@@ -211,6 +249,12 @@ public class ConfigurationTest {
         assertEquals(new JsonObject(), new Configuration().getJsonObject("test", new JsonObject()));
     }
 
+    @Test public void testGetJsonObject5() {
+        Configuration conf = new Configuration();
+        conf.put("test", "test");
+        assertNull(new Configuration().getJsonObject("test"));
+    }
+
     @Test public void testGetJsonArray1() {
         Configuration conf = new Configuration();
         conf.put("test", new JsonArray());
@@ -231,6 +275,12 @@ public class ConfigurationTest {
 
     @Test public void testGetJsonArray4() {
         assertEquals(new JsonArray(), new Configuration().getJsonArray("test", new JsonArray()));
+    }
+
+    @Test public void testGetJsonArray5() {
+        Configuration conf = new Configuration();
+        conf.put("test", "test");
+        assertNull(new Configuration().getJsonArray("test"));
     }
 
 }
