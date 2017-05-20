@@ -93,10 +93,11 @@ public class ConfigurationTest {
         assertEquals(1, (int) new Configuration().getInteger("test", 1));
     }
 
-    @Test public void testGetInteger5() {
+    @Test(expected = ClassCastException.class)
+    public void testGetInteger5() {
         Configuration conf = new Configuration();
         conf.put("test", "test");
-        assertNull(new Configuration().getInteger("test"));
+        conf.getInteger("test");
     }
 
     @Test public void testGetLong1() {
@@ -121,10 +122,11 @@ public class ConfigurationTest {
         assertEquals(1L, (long) new Configuration().getLong("test", 1L));
     }
 
-    @Test public void testGetLong5() {
+    @Test(expected = ClassCastException.class)
+    public void testGetLong5() {
         Configuration conf = new Configuration();
         conf.put("test", "test");
-        assertNull(new Configuration().getLong("test"));
+        conf.getLong("test");
     }
 
     @Test public void testGetDouble1() {
@@ -149,10 +151,11 @@ public class ConfigurationTest {
         assertEquals(0.1D, new Configuration().getDouble("test", 0.1D), 0.001);
     }
 
-    @Test public void testGetDouble5() {
+    @Test(expected = ClassCastException.class)
+    public void testGetDouble5() {
         Configuration conf = new Configuration();
         conf.put("test", "test");
-        assertNull(new Configuration().getDouble("test"));
+        conf.getDouble("test");
     }
 
     @Test public void testGetFloat1() {
@@ -177,10 +180,11 @@ public class ConfigurationTest {
         assertEquals(0.1F, new Configuration().getFloat("test", 0.1F), 0.001);
     }
 
-    @Test public void testGetFloat5() {
+    @Test(expected = ClassCastException.class)
+    public void testGetFloat5() {
         Configuration conf = new Configuration();
         conf.put("test", "test");
-        assertNull(new Configuration().getFloat("test"));
+        conf.getFloat("test");
     }
 
     @Test public void testGetBoolean1() {
@@ -208,7 +212,7 @@ public class ConfigurationTest {
     @Test public void testGetBoolean5() {
         Configuration conf = new Configuration();
         conf.put("test", "test");
-        assertNull(new Configuration().getBoolean("test"));
+        assertFalse(conf.getBoolean("test"));
     }
 
     @Test public void testGetString1() {
@@ -249,10 +253,11 @@ public class ConfigurationTest {
         assertEquals(new JsonObject(), new Configuration().getJsonObject("test", new JsonObject()));
     }
 
-    @Test public void testGetJsonObject5() {
+    @Test(expected = DecodeException.class)
+    public void testGetJsonObject5() {
         Configuration conf = new Configuration();
         conf.put("test", "test");
-        assertNull(new Configuration().getJsonObject("test"));
+        conf.getJsonObject("test");
     }
 
     @Test public void testGetJsonArray1() {
@@ -277,10 +282,11 @@ public class ConfigurationTest {
         assertEquals(new JsonArray(), new Configuration().getJsonArray("test", new JsonArray()));
     }
 
-    @Test public void testGetJsonArray5() {
+    @Test(expected = DecodeException.class)
+    public void testGetJsonArray5() {
         Configuration conf = new Configuration();
         conf.put("test", "test");
-        assertNull(new Configuration().getJsonArray("test"));
+        conf.getJsonArray("test");
     }
 
 }
