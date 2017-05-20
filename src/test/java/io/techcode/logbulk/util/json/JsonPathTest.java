@@ -26,17 +26,20 @@ package io.techcode.logbulk.util.json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.junit.Test;
-import org.mockito.Mockito;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 /**
  * Test for json path.
  */
 public class JsonPathTest {
+
+    @Test(expected = NullPointerException.class)
+    public void testExtends() {
+        new Impl(null);
+    }
 
     @Test public void testCreate1() {
         assertTrue(JsonPath.create("test") instanceof DirectJsonPath);
@@ -174,6 +177,14 @@ public class JsonPathTest {
 
     @Test public void testCompareTo3() {
         assertEquals(0, new Impl("A").compareTo(new Impl("a")));
+    }
+
+    @Test public void testEquals() {
+        assertEquals(new Impl("path"), new Impl("path"));
+    }
+
+    @Test public void testHashCode() {
+        assertEquals(new Impl("path").hashCode(), new Impl("path").hashCode());
     }
 
     private class Impl extends JsonPath {
