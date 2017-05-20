@@ -27,38 +27,26 @@ import com.google.common.primitives.Doubles;
 import com.google.common.primitives.Floats;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
-import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import lombok.EqualsAndHashCode;
-import lombok.NonNull;
 
-import java.time.Instant;
-import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
-import java.util.Spliterator;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 /**
  * Wrap json configuration to allow proper java properties overrides.
  */
-@EqualsAndHashCode(of = {"wrapConfig"}, callSuper = false)
 public class Configuration extends JsonObject {
-
-    // Wrap configuration
-    private final JsonObject wrapConfig;
 
     /**
      * Create a new configuration.
      *
      * @param config configuration to wrap.
      */
-    public Configuration(@NonNull JsonObject config) {
-        this.wrapConfig = config;
+    public Configuration(JsonObject config) {
+        super(config.getMap());
     }
 
     /**
@@ -67,14 +55,14 @@ public class Configuration extends JsonObject {
      * @param json the string of JSON.
      */
     public Configuration(String json) {
-        wrapConfig = new JsonObject(json);
+        super(new JsonObject(json).getMap());
     }
 
     /**
      * Create a new, empty instance.
      */
     public Configuration() {
-        wrapConfig = new JsonObject();
+        super();
     }
 
     /**
@@ -83,11 +71,12 @@ public class Configuration extends JsonObject {
      * @param map the map to create the instance from.
      */
     public Configuration(Map<String, Object> map) {
-        wrapConfig = new JsonObject(map);
+        // Warning : We can inject null map which generate an invalid json object state
+        super(map == null ? new LinkedHashMap<>() : map);
     }
 
     private <T> T getTyped(String key, Function<String, T> func, Supplier<T> supplier) {
-        Object value = wrapConfig.getValue(key);
+        Object value = super.getValue(key);
         if (value instanceof String) {
             T parse = func.apply((String) value);
             if (parse != null) {
@@ -99,219 +88,59 @@ public class Configuration extends JsonObject {
     }
 
     @Override public Integer getInteger(String key) {
-        return getTyped(key, Ints::tryParse, () -> wrapConfig.getInteger(key));
+        return getTyped(key, Ints::tryParse, () -> super.getInteger(key));
     }
 
     @Override public Integer getInteger(String key, Integer def) {
-        return getTyped(key, Ints::tryParse, () -> wrapConfig.getInteger(key, def));
+        return getTyped(key, Ints::tryParse, () -> super.getInteger(key, def));
     }
 
     @Override public Long getLong(String key) {
-        return getTyped(key, Longs::tryParse, () -> wrapConfig.getLong(key));
+        return getTyped(key, Longs::tryParse, () -> super.getLong(key));
     }
 
     @Override public Long getLong(String key, Long def) {
-        return getTyped(key, Longs::tryParse, () -> wrapConfig.getLong(key, def));
+        return getTyped(key, Longs::tryParse, () -> super.getLong(key, def));
     }
 
     @Override public Double getDouble(String key) {
-        return getTyped(key, Doubles::tryParse, () -> wrapConfig.getDouble(key));
+        return getTyped(key, Doubles::tryParse, () -> super.getDouble(key));
     }
 
     @Override public Double getDouble(String key, Double def) {
-        return getTyped(key, Doubles::tryParse, () -> wrapConfig.getDouble(key, def));
+        return getTyped(key, Doubles::tryParse, () -> super.getDouble(key, def));
     }
 
     @Override public Float getFloat(String key) {
-        return getTyped(key, Floats::tryParse, () -> wrapConfig.getFloat(key));
+        return getTyped(key, Floats::tryParse, () -> super.getFloat(key));
     }
 
     @Override public Float getFloat(String key, Float def) {
-        return getTyped(key, Floats::tryParse, () -> wrapConfig.getFloat(key, def));
+        return getTyped(key, Floats::tryParse, () -> super.getFloat(key, def));
     }
 
     @Override public Boolean getBoolean(String key) {
-        return getTyped(key, Boolean::valueOf, () -> wrapConfig.getBoolean(key));
+        return getTyped(key, Boolean::valueOf, () -> super.getBoolean(key));
     }
 
     @Override public Boolean getBoolean(String key, Boolean def) {
-        return getTyped(key, Boolean::valueOf, () -> wrapConfig.getBoolean(key, def));
-    }
-
-    @Override public String getString(String key) {
-        return wrapConfig.getString(key);
-    }
-
-    @Override public String getString(String key, String def) {
-        return wrapConfig.getString(key, def);
+        return getTyped(key, Boolean::valueOf, () -> super.getBoolean(key, def));
     }
 
     @Override public JsonObject getJsonObject(String key) {
-        return wrapConfig.getJsonObject(key);
+        return getTyped(key, JsonObject::new, () -> super.getJsonObject(key));
     }
 
     @Override public JsonObject getJsonObject(String key, JsonObject def) {
-        return wrapConfig.getJsonObject(key, def);
+        return getTyped(key, JsonObject::new, () -> super.getJsonObject(key, def));
     }
 
     @Override public JsonArray getJsonArray(String key) {
-        return getTyped(key, JsonArray::new, () -> wrapConfig.getJsonArray(key));
+        return getTyped(key, JsonArray::new, () -> super.getJsonArray(key));
     }
 
     @Override public JsonArray getJsonArray(String key, JsonArray def) {
-        return getTyped(key, JsonArray::new, () -> wrapConfig.getJsonArray(key, def));
-    }
-
-    @Override public byte[] getBinary(String key) {
-        return wrapConfig.getBinary(key);
-    }
-
-    @Override public Instant getInstant(String key) {
-        return wrapConfig.getInstant(key);
-    }
-
-    @Override public Object getValue(String key) {
-        return wrapConfig.getValue(key);
-    }
-
-    @Override public byte[] getBinary(String key, byte[] def) {
-        return wrapConfig.getBinary(key, def);
-    }
-
-    @Override public Instant getInstant(String key, Instant def) {
-        return wrapConfig.getInstant(key, def);
-    }
-
-    @Override public Object getValue(String key, Object def) {
-        return wrapConfig.getValue(key, def);
-    }
-
-    @Override public boolean containsKey(String key) {
-        return wrapConfig.containsKey(key);
-    }
-
-    @Override public Set<String> fieldNames() {
-        return wrapConfig.fieldNames();
-    }
-
-    @Override public JsonObject put(String key, Enum value) {
-        return wrapConfig.put(key, value);
-    }
-
-    @Override public JsonObject put(String key, CharSequence value) {
-        return wrapConfig.put(key, value);
-    }
-
-    @Override public JsonObject put(String key, String value) {
-        return wrapConfig.put(key, value);
-    }
-
-    @Override public JsonObject put(String key, Integer value) {
-        return wrapConfig.put(key, value);
-    }
-
-    @Override public JsonObject put(String key, Long value) {
-        return wrapConfig.put(key, value);
-    }
-
-    @Override public JsonObject put(String key, Double value) {
-        return wrapConfig.put(key, value);
-    }
-
-    @Override public JsonObject put(String key, Float value) {
-        return wrapConfig.put(key, value);
-    }
-
-    @Override public JsonObject put(String key, Boolean value) {
-        return wrapConfig.put(key, value);
-    }
-
-    @Override public JsonObject putNull(String key) {
-        return wrapConfig.putNull(key);
-    }
-
-    @Override public JsonObject put(String key, JsonObject value) {
-        return wrapConfig.put(key, value);
-    }
-
-    @Override public JsonObject put(String key, JsonArray value) {
-        return wrapConfig.put(key, value);
-    }
-
-    @Override public JsonObject put(String key, byte[] value) {
-        return wrapConfig.put(key, value);
-    }
-
-    @Override public JsonObject put(String key, Instant value) {
-        return wrapConfig.put(key, value);
-    }
-
-    @Override public JsonObject put(String key, Object value) {
-        return wrapConfig.put(key, value);
-    }
-
-    @Override public Object remove(String key) {
-        return wrapConfig.remove(key);
-    }
-
-    @Override public JsonObject mergeIn(JsonObject other) {
-        return wrapConfig.mergeIn(other);
-    }
-
-    @Override public String encode() {
-        return wrapConfig.encode();
-    }
-
-    @Override public String encodePrettily() {
-        return wrapConfig.encodePrettily();
-    }
-
-    @Override public JsonObject copy() {
-        return wrapConfig.copy();
-    }
-
-    @Override public Map<String, Object> getMap() {
-        return wrapConfig.getMap();
-    }
-
-    @Override public Stream<Map.Entry<String, Object>> stream() {
-        return wrapConfig.stream();
-    }
-
-    @Override public Iterator<Map.Entry<String, Object>> iterator() {
-        return wrapConfig.iterator();
-    }
-
-    @Override public int size() {
-        return wrapConfig.size();
-    }
-
-    @Override public JsonObject clear() {
-        return wrapConfig.clear();
-    }
-
-    @Override public boolean isEmpty() {
-        return wrapConfig.isEmpty();
-    }
-
-    @Override public String toString() {
-        return wrapConfig.toString();
-    }
-
-    @Override public void writeToBuffer(Buffer buffer) {
-        wrapConfig.writeToBuffer(buffer);
-    }
-
-    @Override public int readFromBuffer(int pos, Buffer buffer) {
-        return wrapConfig.readFromBuffer(pos, buffer);
-    }
-
-    @Override public void forEach(Consumer<? super Map.Entry<String, Object>> action) {
-        wrapConfig.forEach(action);
-    }
-
-    @Override public Spliterator<Map.Entry<String, Object>> spliterator() {
-        return wrapConfig.spliterator();
+        return getTyped(key, JsonArray::new, () -> super.getJsonArray(key, def));
     }
 
 }
