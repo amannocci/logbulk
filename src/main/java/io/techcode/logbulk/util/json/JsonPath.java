@@ -28,6 +28,7 @@ import com.google.common.base.Strings;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.EqualsAndHashCode;
+import lombok.Generated;
 import lombok.NonNull;
 
 import java.util.List;
@@ -37,6 +38,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 /**
  * Json path implementation.
  */
+@Generated
 @EqualsAndHashCode(of = {"path"})
 public abstract class JsonPath implements Comparable<JsonPath> {
 
