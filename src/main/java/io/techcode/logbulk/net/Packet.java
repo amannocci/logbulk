@@ -26,20 +26,43 @@ package io.techcode.logbulk.net;
 import io.vertx.core.json.JsonObject;
 import lombok.*;
 
+import java.util.Objects;
+
 /**
  * EventBus packet message.
  */
-@Data
-@Generated
+@Getter
+@Setter
 @Builder
+@ToString
 public class Packet {
 
     @NonNull private Header header;
     @NonNull private JsonObject body;
 
-    @Data
+    public Packet copy() {
+        return Packet.builder()
+                .header(header.copy())
+                .body(body.copy())
+                .build();
+    }
+
+    @Override public final boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Packet)) return false;
+        Packet packet = (Packet) o;
+        return Objects.equals(header, packet.header) &&
+                Objects.equals(body, packet.body);
+    }
+
+    @Override public final int hashCode() {
+        return Objects.hash(header, body);
+    }
+
+    @Getter
+    @Setter
     @Builder
-    @EqualsAndHashCode(callSuper = true)
+    @ToString
     public static class Header extends JsonObject {
         @NonNull private String source;
         @NonNull private String route;
@@ -66,13 +89,23 @@ public class Packet {
             cpy.getMap().putAll(super.copy().getMap());
             return cpy;
         }
-    }
 
-    public Packet copy() {
-        return Packet.builder()
-                .header(header.copy())
-                .body(body.copy())
-                .build();
+        @Override public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Header)) return false;
+            if (!super.equals(o)) return false;
+            Header entries = (Header) o;
+            return previous == entries.previous &&
+                    current == entries.current &&
+                    Objects.equals(source, entries.source) &&
+                    Objects.equals(route, entries.route) &&
+                    Objects.equals(oldRoute, entries.oldRoute);
+        }
+
+        @Override public int hashCode() {
+            return Objects.hash(super.hashCode(), source, route, oldRoute, previous, current);
+        }
+
     }
 
 }

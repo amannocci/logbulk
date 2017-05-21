@@ -24,11 +24,11 @@
 package io.techcode.logbulk.net;
 
 import io.vertx.core.json.JsonObject;
+import nl.jqno.equalsverifier.EqualsVerifier;
+import nl.jqno.equalsverifier.Warning;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Test for Packet.
@@ -37,29 +37,59 @@ public class PacketTest {
 
     private static final String TEST_ROUTE = "foobar";
 
-    @Test(expected = NullPointerException.class) public void testConstruct1() throws Exception {
-        Packet.builder()
-                .header(null)
-                .body(null)
-                .build();
-    }
-
-    @Test(expected = NullPointerException.class) public void testConstruct2() throws Exception {
+    @Test(expected = NullPointerException.class)
+    public void testConstruct1() throws Exception {
         Packet.builder()
                 .header(null)
                 .body(new JsonObject())
                 .build();
     }
 
-    @Test(expected = NullPointerException.class) public void testConstruct3() throws Exception {
+    @Test(expected = NullPointerException.class)
+    public void testConstruct2() throws Exception {
         Packet.builder()
-                .header(Packet.Header.builder().build())
+                .header(Packet.Header.builder()
+                        .source(TEST_ROUTE)
+                        .route("foobar").build())
                 .body(null)
                 .build();
     }
 
-    @Test public void testConstruct4() throws Exception {
-        createPacket();
+    @Test(expected = NullPointerException.class)
+    public void testConstruct3() throws Exception {
+        Packet.builder()
+                .header(Packet.Header.builder()
+                        .source(TEST_ROUTE)
+                        .route("foobar")
+                        .build())
+                .body(null)
+                .build();
+    }
+
+    @Test public void testConstruct5() throws Exception {
+        Packet.builder()
+                .header(Packet.Header.builder()
+                        .source(TEST_ROUTE)
+                        .route("foobar")
+                        .build())
+                .body(new JsonObject())
+                .build();
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testHeaderConstruct1() throws Exception {
+        Packet.Header.builder()
+                .source(null)
+                .route("foobar")
+                .build();
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testHeaderConstruct2() throws Exception {
+        Packet.Header.builder()
+                .source(TEST_ROUTE)
+                .route(null)
+                .build();
     }
 
     @Test public void testHeaderSource1() throws Exception {
@@ -82,8 +112,34 @@ public class PacketTest {
         assertEquals(TEST_ROUTE + "_mod", headers.getRoute());
     }
 
+    @Test public void testHeaderSetRoute1() throws Exception {
+        Packet.Header header = createPacket().getHeader();
+        assertNotEquals("random", header.getRoute());
+        header.setRoute("random");
+        assertEquals("random", header.getRoute());
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testHeaderSetRoute2() throws Exception {
+        Packet.Header header = createPacket().getHeader();
+        header.setRoute(null);
+    }
+
+    @Test public void testHeaderSetSource1() throws Exception {
+        Packet.Header header = createPacket().getHeader();
+        assertNotEquals("random", header.getSource());
+        header.setSource("random");
+        assertEquals("random", header.getSource());
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testHeaderSetSource2() throws Exception {
+        Packet.Header header = createPacket().getHeader();
+        header.setSource(null);
+    }
+
     @Test public void testHeaderOldRoute1() throws Exception {
-        assertEquals(null, createPacket().getHeader().getOldRoute());
+        assertNull(createPacket().getHeader().getOldRoute());
     }
 
     @Test public void testHeaderOldRoute2() throws Exception {
@@ -130,6 +186,70 @@ public class PacketTest {
         Packet copy = packet.copy();
         packet.getHeader().put("message", "foobar_mod");
         assertEquals("foobar", copy.getHeader().getString("message"));
+    }
+
+    @Test public void testHeaderEquals() {
+        EqualsVerifier.forClass(Packet.Header.class)
+                .usingGetClass()
+                .suppress(Warning.NONFINAL_FIELDS)
+                .suppress(Warning.NULL_FIELDS)
+                .verify();
+    }
+
+    @Test public void testEquals() {
+        EqualsVerifier.forClass(Packet.class)
+                .suppress(Warning.NONFINAL_FIELDS)
+                .suppress(Warning.NULL_FIELDS)
+                .verify();
+    }
+
+
+    @Test public void testHeaderToString1() {
+        assertEquals("Packet.Header(source=foobar, route=foobar, oldRoute=null, previous=-1, current=0)", createPacket().getHeader().toString());
+    }
+
+    @Test public void testHeaderToString2() {
+        assertEquals("Packet.Header.HeaderBuilder(source=null, route=null, oldRoute=null, previous=-1, current=0)", Packet.Header.builder().toString());
+    }
+
+    @Test public void testToString1() {
+        assertEquals("Packet(header=Packet.Header(source=foobar, route=foobar, oldRoute=null, previous=-1, current=0), body={})", createPacket().toString());
+    }
+
+    @Test public void testToString2() {
+        assertEquals("Packet.PacketBuilder(header=null, body=null)", Packet.builder().toString());
+    }
+
+
+    @Test public void testSetHeader1() {
+        Packet.Header header = Packet.Header.builder()
+                .source(TEST_ROUTE)
+                .route("foobar_test")
+                .build();
+        Packet packet = createPacket();
+        assertNotEquals(header, packet.getHeader());
+        packet.setHeader(header);
+        assertEquals(header, packet.getHeader());
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testSetHeader2() {
+        Packet packet = createPacket();
+        packet.setHeader(null);
+    }
+
+    @Test public void testSetBody1() {
+        JsonObject body = new JsonObject().put("test", "test");
+        Packet packet = createPacket();
+        assertNotEquals(body, packet.getBody());
+        packet.setBody(body);
+        assertEquals(body, packet.getBody());
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testSetBody2() {
+        Packet packet = createPacket();
+        packet.setBody(null);
     }
 
     private Packet createPacket() {
