@@ -25,6 +25,8 @@ package io.techcode.logbulk.util.json;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import nl.jqno.equalsverifier.EqualsVerifier;
+import nl.jqno.equalsverifier.Warning;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -65,6 +67,10 @@ public class JsonPathTest {
     @Test(expected = IllegalArgumentException.class)
     public void testCreate6() {
         JsonPath.create("");
+    }
+
+    @Test public void testCreate7() {
+        assertTrue(JsonPath.create("$") instanceof SelfJsonPath);
     }
 
     @Test public void testGet1() {
@@ -176,18 +182,18 @@ public class JsonPathTest {
     }
 
     @Test public void testCompareTo3() {
-        assertEquals(0, new Impl("A").compareTo(new Impl("a")));
+        assertEquals(0, new Impl("a").compareTo(new Impl("a")));
     }
 
     @Test public void testEquals() {
-        assertEquals(new Impl("path"), new Impl("path"));
+        EqualsVerifier.forClass(Impl.class).verify();
     }
 
     @Test public void testHashCode() {
         assertEquals(new Impl("path").hashCode(), new Impl("path").hashCode());
     }
 
-    private class Impl extends JsonPath {
+    private final class Impl extends JsonPath {
         /**
          * Create a new json path.
          *

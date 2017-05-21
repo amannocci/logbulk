@@ -27,26 +27,23 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import lombok.EqualsAndHashCode;
-import lombok.Generated;
 import lombok.NonNull;
 
 import java.util.List;
+import java.util.Objects;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * Json path implementation.
  */
-@Generated
-@EqualsAndHashCode(of = {"path"})
 public abstract class JsonPath implements Comparable<JsonPath> {
 
     // Splitter
     private static final Splitter SPLITTER = Splitter.on('.').omitEmptyStrings().trimResults();
 
     // Path
-    protected String path;
+    protected final String path;
 
     /**
      * Create a new json path.
@@ -65,7 +62,9 @@ public abstract class JsonPath implements Comparable<JsonPath> {
      */
     public static JsonPath create(String path) {
         checkArgument(!Strings.isNullOrEmpty(path), "The json path must be valid");
-        if (path.startsWith("$")) {
+        if ("$".equals(path)) {
+            return new SelfJsonPath(path);
+        } else if (path.startsWith("$")) {
             List<String> elements = SPLITTER.splitToList(path);
             if (elements.size() == 2) {
                 String field = elements.get(1);
@@ -154,12 +153,23 @@ public abstract class JsonPath implements Comparable<JsonPath> {
     public void remove(@NonNull JsonArray doc) {
     }
 
+    @Override public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof JsonPath)) return false;
+        JsonPath jsonPath = (JsonPath) o;
+        return Objects.equals(path, jsonPath.path);
+    }
+
+    @Override public int hashCode() {
+        return Objects.hash(path);
+    }
+
     @Override public String toString() {
         return path;
     }
 
     @Override public int compareTo(JsonPath o) {
-        return String.CASE_INSENSITIVE_ORDER.compare(path, o.path);
+        return path.compareTo(o.path);
     }
 
 }

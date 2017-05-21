@@ -28,9 +28,11 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
-import lombok.ToString;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -42,7 +44,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 public class CompiledJsonPath extends JsonPath {
 
     // Pattern to validate json path
-    private static final Pattern VALID_JSON_PATH = Pattern.compile("\\$((\\.[a-zA-Z]+)|(\\[[0-9]+\\]))*");
+    private static final Pattern VALID_JSON_PATH = Pattern.compile("\\$((\\.[a-zA-Z]+)|(\\[[0-9]+\\]))+");
 
     // Pattern to iterate based on json path
     private static final Pattern TREE_JSON_PATH = Pattern.compile("((\\.[a-zA-Z]+)|(\\[[0-9]+\\]))");
@@ -58,11 +60,7 @@ public class CompiledJsonPath extends JsonPath {
     CompiledJsonPath(String path) {
         super(path);
         checkArgument(VALID_JSON_PATH.matcher(path).matches(), "The path must be a valid jsonpath");
-        if ("$".equals(path)) {
-            accessors.add(new SelfAccessor());
-        } else {
-            parse(path.substring(1));
-        }
+        parse(path.substring(1));
 
         // Optimize
         if (accessors.size() == 1) {
@@ -141,7 +139,7 @@ public class CompiledJsonPath extends JsonPath {
                         Object next = new JsonObject();
                         currAcc.put(current, next);
                         current = next;
-                    } else if (nextAcc instanceof ArrayAccessor) {
+                    } else {
                         Object next = new JsonArray();
                         currAcc.put(current, next);
                         current = next;
@@ -174,7 +172,7 @@ public class CompiledJsonPath extends JsonPath {
         Object current = doc;
 
         // Iterate over each accessor and apply
-        ListIterator<Accessor> it = accessors.listIterator();
+        Iterator<Accessor> it = accessors.iterator();
         while (current != null) {
             Accessor accessor = it.next();
             if (it.hasNext()) {
@@ -197,7 +195,7 @@ public class CompiledJsonPath extends JsonPath {
             String match = matcher.group(0);
             if (match.startsWith(".")) {
                 accessors.add(new ObjectAccessor(match.substring(1)));
-            } else if (match.startsWith("[") && match.endsWith("]")) {
+            } else {
                 accessors.add(new ArrayAccessor(Integer.parseInt(match.substring(1, match.length() - 1))));
             }
         }
@@ -206,84 +204,58 @@ public class CompiledJsonPath extends JsonPath {
     /**
      * Basic accessor.
      */
-    private interface Accessor {
-        default Object get(Object doc) {
-            if (doc instanceof JsonObject) {
-                return get((JsonObject) doc);
-            } else if (doc instanceof JsonArray) {
-                return get((JsonArray) doc);
+    @AllArgsConstructor
+    private abstract class Accessor<T> {
+
+        private Class<T> typed;
+
+        public Object get(Object doc) {
+            if (typed.isInstance(doc)) {
+                return getTyped((T) doc);
             } else {
                 return null;
             }
         }
 
-        default Object get(JsonObject doc) {
-            return null;
-        }
+        public abstract Object getTyped(T doc);
 
-        default Object get(JsonArray doc) {
-            return null;
-        }
-
-        default void put(Object doc, Object value) {
-            if (doc instanceof JsonObject) {
-                put((JsonObject) doc, value);
-            } else if (doc instanceof JsonArray) {
-                put((JsonArray) doc, value);
+        public void put(Object doc, Object value) {
+            if (typed.isInstance(doc)) {
+                putTyped((T) doc, value);
             }
         }
 
-        default void put(JsonObject doc, Object value) {
-        }
+        public abstract void putTyped(T doc, Object value);
 
-        default void put(JsonArray doc, Object value) {
-        }
-
-        default void remove(Object doc) {
-            if (doc instanceof JsonObject) {
-                remove((JsonObject) doc);
-            } else if (doc instanceof JsonArray) {
-                remove((JsonArray) doc);
+        public void remove(Object doc) {
+            if (typed.isInstance(doc)) {
+                removeTyped((T) doc);
             }
         }
 
-        default void remove(JsonObject doc) {
-        }
-
-        default void remove(JsonArray doc) {
-        }
-    }
-
-    /**
-     * Self accessor.
-     */
-    private class SelfAccessor implements Accessor {
-        @Override public Object get(JsonObject doc) {
-            return doc;
-        }
-
-        @Override public Object get(JsonArray doc) {
-            return doc;
-        }
+        public abstract void removeTyped(T doc);
     }
 
     /**
      * Json object accessor.
      */
-    @AllArgsConstructor
-    @ToString
-    private class ObjectAccessor implements Accessor {
+    private class ObjectAccessor extends Accessor<JsonObject> {
         private String field;
 
-        @Override public Object get(JsonObject doc) {
+        public ObjectAccessor(String field) {
+            super(JsonObject.class);
+            this.field = field;
+        }
+
+        @Override public Object getTyped(JsonObject doc) {
             return doc.getValue(field);
         }
 
-        @Override public void put(JsonObject doc, Object value) {
+        @Override public void putTyped(JsonObject doc, Object value) {
             doc.put(field, value);
         }
 
-        @Override public void remove(JsonObject doc) {
+        @Override public void removeTyped(JsonObject doc) {
             doc.remove(field);
         }
     }
@@ -291,16 +263,19 @@ public class CompiledJsonPath extends JsonPath {
     /**
      * Json array accessor.
      */
-    @AllArgsConstructor
-    @ToString
-    private class ArrayAccessor implements Accessor {
+    private class ArrayAccessor extends Accessor<JsonArray> {
         private int index;
 
-        @Override public Object get(JsonArray doc) {
+        public ArrayAccessor(int index) {
+            super(JsonArray.class);
+            this.index = index;
+        }
+
+        @Override public Object getTyped(JsonArray doc) {
             return index < doc.size() ? doc.getValue(index) : null;
         }
 
-        @Override public void put(JsonArray doc, Object value) {
+        @Override public void putTyped(JsonArray doc, Object value) {
             List list = doc.getList();
             if (index >= list.size()) {
                 for (int i = index - list.size(); i > 0; i--) {
@@ -312,7 +287,7 @@ public class CompiledJsonPath extends JsonPath {
             }
         }
 
-        @Override public void remove(JsonArray doc) {
+        @Override public void removeTyped(JsonArray doc) {
             doc.remove(index);
         }
 

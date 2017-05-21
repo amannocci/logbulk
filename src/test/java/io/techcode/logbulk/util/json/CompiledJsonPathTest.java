@@ -27,36 +27,42 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 /**
  * Test for compiled json path.
  */
 public class CompiledJsonPathTest {
 
-    @Test public void testGet1() {
-        JsonPath path = JsonPath.create("$.test");
-        assertEquals("test", path.get(new JsonObject().put("test", "test")));
+    @Test(expected = NullPointerException.class)
+    public void testGet1() {
+        JsonPath path = JsonPath.create("$.test.test");
+        JsonObject doc = null;
+        path.get(doc);
     }
 
     @Test public void testGet2() {
-        JsonPath path = JsonPath.create("$");
-        assertEquals(new JsonObject(), path.get(new JsonObject()));
+        JsonPath path = JsonPath.create("$.test.test");
+        JsonObject doc = new JsonObject().put("test", new JsonObject().put("test", "test"));
+        assertEquals("test", path.get(doc));
     }
 
-    @Test public void testGet3() {
+    @Test(expected = NullPointerException.class)
+    public void testGet3() {
+        JsonPath path = JsonPath.create("$[0]");
+        JsonArray doc = null;
+        path.get(doc);
+    }
+
+    @Test public void testGet4() {
         JsonPath path = JsonPath.create("$[0]");
         assertEquals(new JsonObject(), path.get(new JsonArray().add(new JsonObject())));
     }
 
-    @Test public void testGet4() {
+    @Test public void testGet5() {
         JsonPath path = JsonPath.create("$[1]");
         assertNull(path.get(new JsonArray().add(new JsonObject())));
-    }
-
-    @Test public void testGet5() {
-        JsonPath path = JsonPath.create("$.test");
-        assertEquals(new JsonArray(), path.get(new JsonObject().put("test", new JsonArray())));
     }
 
     @Test public void testGet6() {
@@ -64,14 +70,72 @@ public class CompiledJsonPathTest {
         assertEquals("test", path.get(new JsonObject().put("test", new JsonArray().add(new JsonObject().put("name", "test")))));
     }
 
-    @Test public void testPut1() {
-        JsonPath path = JsonPath.create("$.test");
-        JsonObject doc = new JsonObject();
-        path.put(doc, "name");
-        assertEquals("name", doc.getString("test"));
+    @Test public void testGet7() {
+        JsonPath path = JsonPath.create("$.test[0].name");
+        assertNull(path.get(new JsonObject().put("test", "test")));
     }
 
-    @Test public void testPut2() {
+    @Test(expected = NullPointerException.class)
+    public void testGet8() {
+        JsonPath path = JsonPath.create("$[0]");
+        JsonObject doc = null;
+        path.get(doc, String.class);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testGet9() {
+        JsonPath path = JsonPath.create("$[0]");
+        JsonArray doc = null;
+        path.get(doc, String.class);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testGet10() {
+        JsonPath path = JsonPath.create("$[0]");
+        path.get(new JsonArray(), null);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testGet11() {
+        JsonPath path = JsonPath.create("$[0]");
+        path.get(new JsonObject(), null);
+    }
+
+    @Test public void testGet12() {
+        JsonPath path = JsonPath.create("$.test.test");
+        assertEquals("test", path.get(new JsonObject().put("test", new JsonObject().put("test", "test")), String.class));
+    }
+
+    @Test public void testGet13() {
+        JsonPath path = JsonPath.create("$.test.test");
+        assertNull(path.get(new JsonObject().put("test", new JsonObject().put("test", "test")), Integer.class));
+    }
+
+    @Test public void testGet14() {
+        JsonPath path = JsonPath.create("$[0]");
+        assertEquals("test", path.get(new JsonArray().add("test"), String.class));
+    }
+
+    @Test public void testGet15() {
+        JsonPath path = JsonPath.create("$[0]");
+        assertNull(path.get(new JsonArray().add("test"), Integer.class));
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testPut1() {
+        JsonPath path = JsonPath.create("$[0]");
+        JsonArray doc = null;
+        path.put(doc, null);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testPut2() {
+        JsonPath path = JsonPath.create("$[0]");
+        JsonObject doc = null;
+        path.put(doc, null);
+    }
+
+    @Test public void testPut3() {
         JsonPath path = JsonPath.create("$[1]");
         JsonArray doc = new JsonArray();
         path.put(doc, "name");
@@ -79,25 +143,74 @@ public class CompiledJsonPathTest {
         assertEquals("name", doc.getString(1));
     }
 
-    @Test public void testPut3() {
+    @Test public void testPut4() {
         JsonPath path = JsonPath.create("$.test[1]");
         JsonObject doc = new JsonObject();
         path.put(doc, "name");
         assertEquals(new JsonObject().put("test", new JsonArray().addNull().add("name")), doc);
     }
 
-    @Test public void testRemove1() {
-        JsonPath path = JsonPath.create("$.test");
-        JsonObject doc = new JsonObject().put("test", new JsonObject().put("name", "foobar"));
-        path.remove(doc);
-        assertEquals(new JsonObject(), doc);
+    @Test public void testPut5() {
+        JsonPath path = JsonPath.create("$.test[1]");
+        JsonObject doc = new JsonObject();
+        path.put(doc, "name");
+        assertEquals(new JsonObject().put("test", new JsonArray().addNull().add("name")), doc);
     }
 
-    @Test public void testRemove2() {
+    @Test public void testPut6() {
+        JsonPath path = JsonPath.create("$.test[1]");
+        JsonObject doc = new JsonObject().put("test", new JsonArray().addNull().addNull());
+        path.put(doc, "name");
+        assertEquals(new JsonObject().put("test", new JsonArray().addNull().add("name")), doc);
+    }
+
+    @Test public void testPut7() {
+        JsonPath path = JsonPath.create("$.test.test");
+        JsonObject doc = new JsonObject();
+        path.put(doc, "name");
+        assertEquals(new JsonObject().put("test", new JsonObject().put("test", "name")), doc);
+    }
+
+    @Test public void testPut8() {
+        JsonPath path = JsonPath.create("$.test.test.test");
+        JsonObject doc = new JsonObject().put("test", "invalid");
+        path.put(doc, "name");
+        assertEquals(new JsonObject().put("test", "invalid"), doc);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testRemove1() {
+        JsonPath path = JsonPath.create("$.test.test");
+        JsonObject doc = null;
+        path.remove(doc);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testRemove2() {
+        JsonPath path = JsonPath.create("$.test.test");
+        JsonArray doc = null;
+        path.remove(doc);
+    }
+
+    @Test public void testRemove3() {
         JsonPath path = JsonPath.create("$.test.name");
         JsonObject doc = new JsonObject().put("test", new JsonObject().put("name", "foobar"));
         path.remove(doc);
         assertEquals(new JsonObject().put("test", new JsonObject()), doc);
+    }
+
+    @Test public void testRemove4() {
+        JsonPath path = JsonPath.create("$[0]");
+        JsonArray doc = new JsonArray().add("test");
+        path.remove(doc);
+        assertEquals(new JsonArray(), doc);
+    }
+
+    @Test public void testRemove5() {
+        JsonPath path = JsonPath.create("$.test[0]");
+        JsonObject doc = new JsonObject().put("test", "invalid");
+        path.remove(doc);
+        assertEquals(new JsonObject().put("test", "invalid"), doc);
     }
 
 }
