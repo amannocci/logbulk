@@ -23,4 +23,6 @@ declare -a plugins=(
   "heartbeat"
   "syslog"
   "enclose"
+  "compress"
+  "riemann"
 )
