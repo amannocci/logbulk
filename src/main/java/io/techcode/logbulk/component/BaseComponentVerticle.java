@@ -26,6 +26,7 @@ package io.techcode.logbulk.component;
 import io.techcode.logbulk.net.Packet;
 import io.techcode.logbulk.util.ConvertHandler;
 import io.vertx.core.eventbus.Message;
+import io.vertx.core.eventbus.MessageConsumer;
 
 /**
  * Transform component verticle helper.
@@ -35,9 +36,12 @@ public abstract class BaseComponentVerticle extends ComponentVerticle implements
     // State pause
     private boolean pause = true;
 
+    // Message consumer
+    private MessageConsumer<Packet> consumer;
+
     @Override public void start() {
         super.start();
-        getEventBus().<Packet>localConsumer(endpoint).handler(this);
+        consumer = getEventBus().<Packet>localConsumer(endpoint).handler(this);
     }
 
     @Override public void handle(Message<Packet> event) {
@@ -68,6 +72,7 @@ public abstract class BaseComponentVerticle extends ComponentVerticle implements
     public void resume() {
         // Update flag
         pause = false;
+        consumer.resume();
 
         // Don't forget to release because refuse use forward-release mecanism
         release();
@@ -77,6 +82,7 @@ public abstract class BaseComponentVerticle extends ComponentVerticle implements
      * Pause packet handling.
      */
     public void pause() {
+        consumer.pause();
         pause = true;
     }
 
