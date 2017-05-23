@@ -44,10 +44,10 @@ import static com.google.common.base.Preconditions.checkArgument;
 public class CompiledJsonPath extends JsonPath {
 
     // Pattern to validate json path
-    private static final Pattern VALID_JSON_PATH = Pattern.compile("\\$((\\.[a-zA-Z]+)|(\\[[0-9]+\\]))+");
+    private static final Pattern VALID_JSON_PATH = Pattern.compile("\\$((\\.[a-zA-Z-_]+)|(\\[[0-9]+\\]))+");
 
     // Pattern to iterate based on json path
-    private static final Pattern TREE_JSON_PATH = Pattern.compile("((\\.[a-zA-Z]+)|(\\[[0-9]+\\]))");
+    private static final Pattern TREE_JSON_PATH = Pattern.compile("((\\.[a-zA-Z-_]+)|(\\[[0-9]+\\]))");
 
     // List of accessors
     private List<Accessor> accessors = Lists.newArrayList();
