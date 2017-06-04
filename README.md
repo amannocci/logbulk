@@ -1,4 +1,4 @@
-# Logbulk
+# Logbulk (Superseded by [Streamy](https://github.com/amannocci/streamy))
 [![Build Status](https://travis-ci.org/amannocci/logbulk.svg?branch=master)](https://travis-ci.org/amannocci/logbulk)
 [![Quality Gate](https://sonarqube.com/api/badges/gate?key=io.techcode.logbulk%3Alogbulk)](https://sonarqube.com/dashboard/index/io.techcode.logbulk%3Alogbulk)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
