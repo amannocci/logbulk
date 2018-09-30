@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <!-- Stdout appender -->
+  <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+      <layout class="io.techcode.logback.contrib.JsonLayout">
+      </layout>
+    </encoder>
+  </appender>
+
+  <!-- File appender -->
+  <!--<appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>log/logbulk.log</file>
+    <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+      <layout class="io.techcode.logback.contrib.JsonLayout">
+      </layout>
+    </encoder>
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+      <fileNamePattern>log/logbulk-%d{yyyy-MM-dd}-%i.zip</fileNamePattern>
+      <maxFileSize>128MB</maxFileSize>
+      <maxHistory>7</maxHistory>
+      <totalSizeCap>3GB</totalSizeCap>
+      <cleanHistoryOnStart>true</cleanHistoryOnStart>
+    </rollingPolicy>
+  </appender>-->
+
+  <!-- Async appenders -->
+  <!--<appender name="async-file" class="ch.qos.logback.classic.AsyncAppender">
+    <discardingThreshold>0</discardingThreshold>
+    <queueSize>8192</queueSize>
+    <appender-ref ref="file"/>
+  </appender>-->
+  <appender name="async-console" class="ch.qos.logback.classic.AsyncAppender">
+    <discardingThreshold>0</discardingThreshold>
+    <queueSize>8192</queueSize>
+    <appender-ref ref="stdout"/>
+  </appender>
+
+  <!-- Disable loggers -->
+  <logger name="net.jodah.lyra" level="WARN"/>
+
+  <!-- Root -->
+  <root level="info">
+    <appender-ref ref="async-console"/>
+    <!--<appender-ref ref="async-file"/>-->
+  </root>
+</configuration>
